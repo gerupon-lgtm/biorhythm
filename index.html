@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>運命相性診断 — バイオリズム × 四柱推命</title>
+<title>運命診断 — バイオリズム × 四柱推命</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -46,6 +46,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(192,132,252,.12)}
 input::placeholder{color:var(--text3)}
 .optional-hint{font-size:13px;color:var(--text3);margin-top:4px}
+.card-note{font-size:13px;color:var(--text3);text-align:center;margin-top:8px;line-height:1.6}
 .btn-wrap{text-align:center;margin:32px 0}
 .btn{display:inline-flex;align-items:center;gap:10px;padding:15px 44px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(192,132,252,.25)}
 .btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(192,132,252,.4)}
@@ -71,23 +72,24 @@ input::placeholder{color:var(--text3)}
 .score-value .pct{font-size:12px;color:var(--text2)}
 .score-breakdown{flex:1;display:flex;flex-direction:column;gap:10px}
 .bar-row{display:flex;align-items:center;gap:10px}
-.bar-row .bar-label{width:52px;font-size:12px;color:var(--text2);text-align:right;flex-shrink:0}
+.bar-row .bar-label{width:52px;font-size:14px;color:var(--text2);text-align:right;flex-shrink:0}
 .bar-row .bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
 .bar-row .bar-fill{height:100%;border-radius:4px;transition:width 1s ease;width:0}
-.bar-row .bar-val{width:34px;font-size:12px;font-weight:600;font-family:'Outfit',sans-serif}
+.bar-row .bar-val{width:40px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif}
 .bar-bio .bar-fill{background:linear-gradient(90deg,#a78bfa,#c084fc)}
 .bar-emo .bar-fill{background:linear-gradient(90deg,#f472b6,#fb7185)}
 .bar-int .bar-fill{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
-.section-label{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:600;color:var(--text2);margin:28px 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
+.section-label{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:600;color:var(--text2);margin:28px 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
 .section-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06)}
 .gogyo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.gogyo-grid.solo{grid-template-columns:1fr}
 .gogyo-card{border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.05)}
 .gogyo-card .elem-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
 .gogyo-card .elem-info{flex:1}
-.gogyo-card .elem-name{font-size:13px;font-weight:600;margin-bottom:2px}
-.gogyo-card .elem-sub{font-size:11px;opacity:.6}
+.gogyo-card .elem-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.gogyo-card .elem-sub{font-size:12px;opacity:.6}
 .gogyo-compat{border-radius:10px;padding:16px;margin-top:10px;background:var(--surface);border:1px solid rgba(255,255,255,.06);text-align:center}
-.gogyo-compat .compat-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+.gogyo-compat .compat-label{font-size:13px;color:var(--text2);margin-bottom:6px}
 .gogyo-compat .compat-type{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700}
 .diagnosis-text{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px;line-height:1.9;font-size:16px;color:var(--text);white-space:pre-wrap;margin-top:16px}
 .date-picker-row{display:flex;align-items:center;gap:12px;margin:0 0 8px;padding:12px 20px;background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius)}
@@ -101,9 +103,9 @@ footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
 <div class="bg-layer"></div>
 <div class="container">
   <header>
-    <div class="logo-jp">運命相性</div>
+    <div class="logo-jp">運命診断</div>
     <h1>バイオリズム × <em>四柱推命</em></h1>
-    <p class="subtitle">生年月日と五行の力で、二人の深い相性を紐解きます</p>
+    <p class="subtitle">二人の相性診断も、一人のコンディション診断もできます</p>
     <div class="gogyo-strip">
       <span style="background:var(--wood)"></span>
       <span style="background:var(--fire)"></span>
@@ -133,20 +135,21 @@ footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
       <div class="field-group"><label for="birthB">生年月日</label><input type="date" id="birthB" max="2026-12-31"></div>
       <div class="field-group" style="max-width:140px"><label for="timeB">出生時間</label><input type="time" id="timeB"><p class="optional-hint">不明なら空欄でOK</p></div>
     </div>
+    <p class="card-note">空欄の場合、一人目の個人診断になります</p>
   </div>
   <div class="date-picker-row">
     <label for="targetDate">判定日</label>
     <input type="date" id="targetDate">
-    <span class="optional-hint">未指定なら今日の相性を判定します</span>
+    <span class="optional-hint">未指定なら今日を判定</span>
   </div>
-  <div class="btn-wrap"><button class="btn" id="diagnoseBtn" onclick="runDiagnosis()"><span class="spinner"></span><span class="btn-text">運命の相性を診断</span></button></div>
+  <div class="btn-wrap"><button class="btn" id="diagnoseBtn" onclick="runDiagnosis()"><span class="spinner"></span><span class="btn-text">診断する</span></button></div>
   <div class="error-msg" id="errorMsg"></div>
   <div id="result">
     <h2 class="result-title" id="resultTitle"></h2>
     <div class="score-section">
       <div class="score-ring">
         <svg width="120" height="120" viewBox="0 0 120 120"><defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#f472b6"/></linearGradient></defs><circle class="track" cx="60" cy="60" r="50"/><circle class="fill" id="scoreCircle" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"/></svg>
-        <div class="score-value"><span class="num" id="scoreNum">0</span><span class="pct">%</span></div>
+        <div class="score-value"><span class="num" id="scoreNum">0</span><span class="pct" id="scorePct">%</span></div>
       </div>
       <div class="score-breakdown">
         <div class="bar-row bar-bio"><span class="bar-label">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
@@ -154,9 +157,9 @@ footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
         <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
       </div>
     </div>
-    <div class="section-label">五行プロフィール</div>
+    <div class="section-label" id="gogyoLabel">五行プロフィール</div>
     <div class="gogyo-grid" id="gogyoGrid"></div>
-    <div class="gogyo-compat" id="gogyoCompat"><div class="compat-label">五行の相性</div><div class="compat-type" id="gogyoType">—</div></div>
+    <div class="gogyo-compat" id="gogyoCompat"><div class="compat-label" id="gogyoCompatLabel">五行の相性</div><div class="compat-type" id="gogyoType">—</div></div>
     <div class="section-label">AI総合診断</div>
     <div class="diagnosis-text" id="diagnosisText"></div>
   </div>
@@ -166,31 +169,87 @@ footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
 function showError(m){const el=document.getElementById('errorMsg');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),8000)}
 const ELEM_STYLES={wood:{bg:'var(--wood-dim)',color:'var(--wood)',icon:'木',label:'木',trait:'成長・仁愛'},fire:{bg:'var(--fire-dim)',color:'var(--fire)',icon:'火',label:'火',trait:'情熱・礼節'},earth:{bg:'var(--earth-dim)',color:'var(--earth)',icon:'土',label:'土',trait:'安定・信義'},metal:{bg:'var(--metal-dim)',color:'var(--metal)',icon:'金',label:'金',trait:'決断・義理'},water:{bg:'var(--water-dim)',color:'var(--water)',icon:'水',label:'水',trait:'知恵・柔軟'}};
+
 async function runDiagnosis(){
-  const nameA=document.getElementById('nameA').value.trim()||'Aさん',nameB=document.getElementById('nameB').value.trim()||'Bさん',birthA=document.getElementById('birthA').value,birthB=document.getElementById('birthB').value,genderA=document.getElementById('genderA').value,genderB=document.getElementById('genderB').value,timeA=document.getElementById('timeA').value||null,timeB=document.getElementById('timeB').value||null,targetDate=document.getElementById('targetDate').value||null;
-  if(!birthA||!birthB){showError('二人の生年月日を入力してください');return}
-  const btn=document.getElementById('diagnoseBtn');btn.disabled=true;btn.classList.add('loading');document.getElementById('result').classList.remove('visible');document.getElementById('errorMsg').classList.remove('show');
+  const nameA=document.getElementById('nameA').value.trim()||'あなた';
+  const birthA=document.getElementById('birthA').value;
+  const genderA=document.getElementById('genderA').value;
+  const timeA=document.getElementById('timeA').value||null;
+  const nameB=document.getElementById('nameB').value.trim();
+  const birthB=document.getElementById('birthB').value;
+  const genderB=document.getElementById('genderB').value;
+  const timeB=document.getElementById('timeB').value||null;
+  const targetDate=document.getElementById('targetDate').value||null;
+
+  if(!birthA){showError('一人目の生年月日を入力してください');return}
+
+  const isSolo=!birthB;
+  const payload={nameA,birthA,genderA,timeA,targetDate,mode:isSolo?'solo':'pair'};
+  if(!isSolo){payload.nameB=nameB||'Bさん';payload.birthB=birthB;payload.genderB=genderB;payload.timeB=timeB;}
+
+  const btn=document.getElementById('diagnoseBtn');
+  btn.disabled=true;btn.classList.add('loading');
+  document.getElementById('result').classList.remove('visible');
+  document.getElementById('errorMsg').classList.remove('show');
+
   try{
-    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nameA,nameB,birthA,birthB,genderA,genderB,timeA,timeB,targetDate})});
+    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'サーバーエラー ('+res.status+')')}
-    const data=await res.json();displayResult(data,nameA,nameB);
+    const data=await res.json();
+    if(isSolo) displaySoloResult(data,nameA);
+    else displayPairResult(data,nameA,payload.nameB);
   }catch(e){showError('診断に失敗しました: '+e.message)}finally{btn.disabled=false;btn.classList.remove('loading')}
 }
-function displayResult(d,nA,nB){
+
+function displayPairResult(d,nA,nB){
   const dateLabel=d.targetDate?' （'+d.targetDate+'）':'';
   document.getElementById('resultTitle').textContent=nA+' × '+nB+' の運命相性'+dateLabel;
+  document.getElementById('scorePct').textContent='%';
   const sc=d.overallScore??50,circ=2*Math.PI*50;
-  document.getElementById('scoreCircle').style.strokeDashoffset=circ*(1-sc/100);animateNumber('scoreNum',sc);
-  setBar('barPhysical','valPhysical',d.physical??50);setBar('barEmotional','valEmotional',d.emotional??50);setBar('barIntellectual','valIntellectual',d.intellectual??50);
-  const grid=document.getElementById('gogyoGrid');grid.innerHTML='';
-  const eA=d.elementA||'wood',eB=d.elementB||'water',sA=ELEM_STYLES[eA]||ELEM_STYLES.wood,sB=ELEM_STYLES[eB]||ELEM_STYLES.water;
+  document.getElementById('scoreCircle').style.strokeDashoffset=circ*(1-sc/100);
+  animateNumber('scoreNum',sc);
+  setBar('barPhysical','valPhysical',d.physical??50);
+  setBar('barEmotional','valEmotional',d.emotional??50);
+  setBar('barIntellectual','valIntellectual',d.intellectual??50);
+  const grid=document.getElementById('gogyoGrid');
+  grid.className='gogyo-grid';
+  const sA=ELEM_STYLES[d.elementA]||ELEM_STYLES.wood,sB=ELEM_STYLES[d.elementB]||ELEM_STYLES.water;
   grid.innerHTML=gogyoCardHTML(nA,sA)+gogyoCardHTML(nB,sB);
+  document.getElementById('gogyoLabel').textContent='五行プロフィール';
+  document.getElementById('gogyoCompatLabel').textContent='五行の相性';
   document.getElementById('gogyoType').textContent=d.gogyoRelation||'—';
   const ce=document.getElementById('gogyoCompat'),ct=d.gogyoRelation||'';
+  ce.style.display='';
   ce.style.borderColor=ct.includes('相生')?'rgba(74,222,128,.25)':ct.includes('相剋')?'rgba(248,113,113,.2)':'rgba(255,255,255,.06)';
   document.getElementById('diagnosisText').textContent=d.diagnosis||'';
-  const r=document.getElementById('result');r.classList.add('visible');r.scrollIntoView({behavior:'smooth',block:'start'});
+  showResult();
 }
+
+function displaySoloResult(d,name){
+  const dateLabel=d.targetDate?' （'+d.targetDate+'）':'';
+  document.getElementById('resultTitle').textContent=name+' のコンディション'+dateLabel;
+  document.getElementById('scorePct').textContent='点';
+  const sc=d.overallScore??50,circ=2*Math.PI*50;
+  document.getElementById('scoreCircle').style.strokeDashoffset=circ*(1-sc/100);
+  animateNumber('scoreNum',sc);
+  setBar('barPhysical','valPhysical',d.physical??50);
+  setBar('barEmotional','valEmotional',d.emotional??50);
+  setBar('barIntellectual','valIntellectual',d.intellectual??50);
+  const grid=document.getElementById('gogyoGrid');
+  grid.className='gogyo-grid solo';
+  const sA=ELEM_STYLES[d.elementA]||ELEM_STYLES.wood;
+  grid.innerHTML=gogyoCardHTML(name,sA);
+  document.getElementById('gogyoLabel').textContent='五行プロフィール';
+  document.getElementById('gogyoCompatLabel').textContent='あなたの五行';
+  document.getElementById('gogyoType').textContent=(ELEM_STYLES[d.elementA]||ELEM_STYLES.wood).label+'の気質';
+  const ce=document.getElementById('gogyoCompat');
+  ce.style.display='';
+  ce.style.borderColor='rgba(255,255,255,.06)';
+  document.getElementById('diagnosisText').textContent=d.diagnosis||'';
+  showResult();
+}
+
+function showResult(){const r=document.getElementById('result');r.classList.add('visible');r.scrollIntoView({behavior:'smooth',block:'start'})}
 function gogyoCardHTML(n,s){return'<div class="gogyo-card" style="background:'+s.bg+'"><div class="elem-icon" style="background:'+s.color+';color:var(--bg)">'+s.icon+'</div><div class="elem-info"><div class="elem-name" style="color:'+s.color+'">'+n+'（'+s.label+'）</div><div class="elem-sub">'+s.trait+'</div></div></div>'}
 function setBar(b,v,p){setTimeout(()=>{document.getElementById(b).style.width=p+'%';document.getElementById(v).textContent=p+'%'},300)}
 function animateNumber(id,t){const el=document.getElementById(id);let c=0;const s=Math.max(1,Math.floor(t/40)),iv=setInterval(()=>{c+=s;if(c>=t){c=t;clearInterval(iv)}el.textContent=c},30)}

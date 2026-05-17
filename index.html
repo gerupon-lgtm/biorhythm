@@ -46,7 +46,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(192,132,252,.12)}
 input::placeholder{color:var(--text3)}
 .optional-hint{font-size:13px;color:var(--text3);margin-top:4px}
-.card-note{font-size:14px;color:var(--text);text-align:center;margin-top:8px;line-height:1.6}
+.card-note{font-size:15px;color:var(--text);text-align:center;margin-top:8px;line-height:1.6}
 .btn-wrap{text-align:center;margin:32px 0}
 .btn{display:inline-flex;align-items:center;gap:10px;padding:15px 44px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(192,132,252,.25)}
 .btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(192,132,252,.4)}
@@ -135,7 +135,7 @@ footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
       <div class="field-group"><label for="birthB">生年月日</label><input type="date" id="birthB" max="2026-12-31"></div>
       <div class="field-group" style="max-width:140px"><label for="timeB">出生時間</label><input type="time" id="timeB"><p class="optional-hint">不明なら空欄でOK</p></div>
     </div>
-    <p class="card-note">空欄の場合、一人目の個人診断になります</p>
+    <p class="card-note">生年月日未指定で一人目の個人診断になります</p>
   </div>
   <div class="date-picker-row">
     <label for="targetDate">判定日</label>

@@ -3,458 +3,200 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>バイオリズム相性診断</title>
+<title>運命相性診断 — バイオリズム × 四柱推命</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-  :root{
-    --bg:#0a0a12;
-    --surface:#12121e;
-    --surface2:#1a1a2e;
-    --accent:#6c5ce7;
-    --accent2:#a29bfe;
-    --accent3:#fd79a8;
-    --accent4:#ffeaa7;
-    --text:#e8e8f0;
-    --text2:#9090a8;
-    --radius:16px;
-  }
-  html{scroll-behavior:smooth}
-  body{
-    font-family:'Zen Maru Gothic','Hiragino Sans',sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    min-height:100vh;
-    overflow-x:hidden;
-  }
-
-  /* === 背景エフェクト === */
-  .bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-  .bg-orbs span{
-    position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;
-    animation:float 20s ease-in-out infinite alternate;
-  }
-  .bg-orbs span:nth-child(1){width:500px;height:500px;background:var(--accent);top:-10%;left:-10%;animation-delay:0s}
-  .bg-orbs span:nth-child(2){width:400px;height:400px;background:var(--accent3);bottom:-10%;right:-10%;animation-delay:-7s}
-  .bg-orbs span:nth-child(3){width:300px;height:300px;background:var(--accent4);top:40%;left:50%;animation-delay:-14s}
-  @keyframes float{
-    0%{transform:translate(0,0) scale(1)}
-    33%{transform:translate(30px,-40px) scale(1.1)}
-    66%{transform:translate(-20px,30px) scale(.95)}
-    100%{transform:translate(10px,-10px) scale(1.05)}
-  }
-
-  /* === レイアウト === */
-  .container{
-    position:relative;z-index:1;
-    max-width:640px;margin:0 auto;padding:40px 20px 60px;
-  }
-
-  /* === ヘッダー === */
-  header{text-align:center;margin-bottom:48px}
-  .logo{
-    font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;
-    letter-spacing:4px;text-transform:uppercase;color:var(--accent2);
-    margin-bottom:12px;
-  }
-  h1{
-    font-size:clamp(28px,6vw,40px);font-weight:700;line-height:1.3;
-    background:linear-gradient(135deg,var(--accent2),var(--accent3));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  }
-  .subtitle{color:var(--text2);font-size:14px;margin-top:8px}
-
-  /* === カード === */
-  .card{
-    background:var(--surface);
-    border:1px solid rgba(108,92,231,.15);
-    border-radius:var(--radius);
-    padding:32px 28px;
-    margin-bottom:24px;
-    position:relative;
-    transition:border-color .3s;
-  }
-  .card:hover{border-color:rgba(108,92,231,.35)}
-  .card-label{
-    position:absolute;top:-12px;left:24px;
-    background:var(--accent);color:#fff;
-    font-size:12px;font-weight:700;
-    padding:4px 14px;border-radius:20px;
-    letter-spacing:1px;
-  }
-  .card-label.person-b{background:var(--accent3)}
-
-  .field-group{margin-bottom:20px}
-  .field-group:last-child{margin-bottom:0}
-  label{
-    display:block;font-size:13px;font-weight:500;
-    color:var(--text2);margin-bottom:8px;letter-spacing:.5px;
-  }
-  input[type="text"],input[type="date"]{
-    width:100%;padding:14px 16px;
-    background:var(--surface2);border:1px solid rgba(255,255,255,.08);
-    border-radius:10px;color:var(--text);font-size:16px;
-    font-family:inherit;outline:none;
-    transition:border-color .3s,box-shadow .3s;
-  }
-  input:focus{
-    border-color:var(--accent);
-    box-shadow:0 0 0 3px rgba(108,92,231,.15);
-  }
-  input::placeholder{color:var(--text2);opacity:.5}
-
-  /* === ボタン === */
-  .btn-wrap{text-align:center;margin:36px 0}
-  .btn{
-    display:inline-flex;align-items:center;gap:10px;
-    padding:16px 48px;border:none;border-radius:50px;
-    background:linear-gradient(135deg,var(--accent),var(--accent3));
-    color:#fff;font-size:17px;font-weight:700;font-family:inherit;
-    cursor:pointer;position:relative;overflow:hidden;
-    transition:transform .2s,box-shadow .2s;
-    box-shadow:0 4px 24px rgba(108,92,231,.3);
-  }
-  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(108,92,231,.45)}
-  .btn:active{transform:translateY(0)}
-  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-  .btn .spinner{
-    width:20px;height:20px;border:2.5px solid rgba(255,255,255,.3);
-    border-top-color:#fff;border-radius:50%;
-    animation:spin .7s linear infinite;display:none;
-  }
-  .btn.loading .spinner{display:block}
-  .btn.loading .btn-text{opacity:.7}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* === 結果エリア === */
-  #result{
-    margin-top:20px;
-    opacity:0;transform:translateY(20px);
-    transition:opacity .6s,transform .6s;
-  }
-  #result.visible{opacity:1;transform:translateY(0)}
-
-  .result-header{
-    text-align:center;margin-bottom:28px;
-  }
-  .result-header h2{
-    font-size:24px;font-weight:700;margin-bottom:4px;
-  }
-  .score-ring{
-    width:140px;height:140px;margin:20px auto;position:relative;
-  }
-  .score-ring svg{transform:rotate(-90deg)}
-  .score-ring circle{fill:none;stroke-width:8;stroke-linecap:round}
-  .score-ring .track{stroke:var(--surface2)}
-  .score-ring .fill{
-    stroke:url(#scoreGrad);
-    transition:stroke-dashoffset 1.2s ease;
-  }
-  .score-value{
-    position:absolute;inset:0;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;
-    font-family:'Outfit',sans-serif;
-  }
-  .score-value .num{font-size:42px;font-weight:700;line-height:1}
-  .score-value .pct{font-size:14px;color:var(--text2)}
-
-  /* バイオリズムバー */
-  .bio-bars{display:flex;flex-direction:column;gap:14px;margin:24px 0}
-  .bio-bar{display:flex;align-items:center;gap:12px}
-  .bio-bar .bar-label{
-    width:80px;font-size:13px;font-weight:500;color:var(--text2);
-    text-align:right;flex-shrink:0;
-  }
-  .bio-bar .bar-track{
-    flex:1;height:10px;background:var(--surface2);border-radius:5px;
-    overflow:hidden;position:relative;
-  }
-  .bio-bar .bar-fill{
-    height:100%;border-radius:5px;
-    transition:width 1s ease;width:0;
-  }
-  .bio-bar .bar-val{
-    width:40px;font-size:13px;font-weight:600;
-    font-family:'Outfit',sans-serif;text-align:left;
-  }
-  .bar-physical .bar-fill{background:linear-gradient(90deg,#6c5ce7,#a29bfe)}
-  .bar-emotional .bar-fill{background:linear-gradient(90deg,#fd79a8,#fab1a0)}
-  .bar-intellectual .bar-fill{background:linear-gradient(90deg,#ffeaa7,#fdcb6e)}
-
-  /* AI診断テキスト */
-  .diagnosis-text{
-    background:var(--surface);
-    border:1px solid rgba(108,92,231,.15);
-    border-radius:var(--radius);
-    padding:28px;
-    line-height:1.9;font-size:15px;
-    color:var(--text);
-    white-space:pre-wrap;
-  }
-  .diagnosis-text h3{
-    font-size:16px;margin-bottom:12px;
-    color:var(--accent2);
-  }
-
-  /* === エラー === */
-  .error-msg{
-    text-align:center;padding:20px;
-    background:rgba(214,48,49,.1);border:1px solid rgba(214,48,49,.3);
-    border-radius:var(--radius);color:#ff7675;
-    font-size:14px;margin-top:20px;display:none;
-  }
-  .error-msg.show{display:block}
-
-  /* === 設定パネル === */
-  .settings{
-    margin-top:40px;padding-top:24px;
-    border-top:1px solid rgba(255,255,255,.06);
-  }
-  .settings summary{
-    font-size:13px;color:var(--text2);cursor:pointer;
-    list-style:none;text-align:center;
-  }
-  .settings summary::-webkit-details-marker{display:none}
-  .settings-inner{
-    margin-top:16px;
-  }
-  .settings-inner label{margin-bottom:4px}
-  .settings-inner input{margin-bottom:12px}
-  .settings-note{font-size:12px;color:var(--text2);opacity:.6;text-align:center;margin-top:8px}
-
-  /* === フッター === */
-  footer{
-    text-align:center;margin-top:48px;
-    font-size:12px;color:var(--text2);opacity:.4;
-  }
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08080e;--surface:rgba(18,18,28,.85);--surface2:#16162a;
+  --wood:#4ade80;--wood-dim:rgba(74,222,128,.12);
+  --fire:#f87171;--fire-dim:rgba(248,113,113,.12);
+  --earth:#fbbf24;--earth-dim:rgba(251,191,36,.12);
+  --metal:#e2e8f0;--metal-dim:rgba(226,232,240,.1);
+  --water:#60a5fa;--water-dim:rgba(96,165,250,.12);
+  --accent:#c084fc;--accent2:#a78bfa;--accent3:#f472b6;
+  --text:#e4e4ee;--text2:#8888a4;--text3:#5a5a72;
+  --radius:14px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Zen Maru Gothic','Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.bg-layer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-layer::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 600px 400px at 20% 20%,rgba(74,222,128,.06),transparent),radial-gradient(ellipse 500px 500px at 80% 70%,rgba(96,165,250,.06),transparent),radial-gradient(ellipse 400px 300px at 50% 50%,rgba(248,113,113,.04),transparent)}
+.container{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:40px 20px 60px}
+header{text-align:center;margin-bottom:44px}
+.logo-jp{font-family:'Shippori Mincho',serif;font-size:11px;font-weight:600;letter-spacing:8px;color:var(--text2);margin-bottom:8px}
+h1{font-family:'Shippori Mincho',serif;font-size:clamp(26px,5.5vw,36px);font-weight:700;line-height:1.4;color:var(--text)}
+h1 em{font-style:normal;color:var(--accent)}
+.subtitle{color:var(--text2);font-size:13px;margin-top:10px;line-height:1.7}
+.gogyo-strip{display:flex;justify-content:center;gap:6px;margin-top:16px}
+.gogyo-strip span{width:28px;height:4px;border-radius:2px;opacity:.7}
+.card{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:28px 24px;margin-bottom:20px;position:relative;backdrop-filter:blur(12px);transition:border-color .3s}
+.card:hover{border-color:rgba(255,255,255,.12)}
+.card-tag{position:absolute;top:-11px;left:20px;font-family:'Shippori Mincho',serif;font-size:11px;font-weight:600;letter-spacing:3px;padding:3px 14px;border-radius:20px;color:#fff}
+.card-tag.a{background:linear-gradient(135deg,var(--accent),var(--accent3))}
+.card-tag.b{background:linear-gradient(135deg,var(--water),var(--wood))}
+.field-row{display:flex;gap:12px;margin-bottom:16px}
+.field-row .field-group{flex:1}
+.field-group{margin-bottom:16px}
+.field-group:last-child{margin-bottom:0}
+label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;letter-spacing:.5px}
+input[type="text"],input[type="date"],input[type="time"],select{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid rgba(255,255,255,.07);border-radius:10px;color:var(--text);font-size:15px;font-family:inherit;outline:none;transition:border-color .3s,box-shadow .3s;-webkit-appearance:none;appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a4' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(192,132,252,.12)}
+input::placeholder{color:var(--text3)}
+.optional-hint{font-size:11px;color:var(--text3);margin-top:4px}
+.btn-wrap{text-align:center;margin:32px 0}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:15px 44px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(192,132,252,.25)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(192,132,252,.4)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.btn.loading .spinner{display:block}
+.btn.loading .btn-text{opacity:.7}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{text-align:center;padding:16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:var(--radius);color:var(--fire);font-size:13px;margin-top:16px;display:none}
+.error-msg.show{display:block}
+#result{margin-top:24px;opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+#result.visible{opacity:1;transform:translateY(0)}
+.result-title{text-align:center;font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700;margin-bottom:24px}
+.score-section{display:flex;align-items:center;gap:24px;margin-bottom:28px}
+.score-ring{width:120px;height:120px;flex-shrink:0;position:relative}
+.score-ring svg{transform:rotate(-90deg)}
+.score-ring circle{fill:none;stroke-width:7;stroke-linecap:round}
+.score-ring .track{stroke:var(--surface2)}
+.score-ring .fill{stroke:url(#scoreGrad);transition:stroke-dashoffset 1.2s ease}
+.score-value{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Outfit',sans-serif}
+.score-value .num{font-size:36px;font-weight:700;line-height:1}
+.score-value .pct{font-size:12px;color:var(--text2)}
+.score-breakdown{flex:1;display:flex;flex-direction:column;gap:10px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-row .bar-label{width:52px;font-size:12px;color:var(--text2);text-align:right;flex-shrink:0}
+.bar-row .bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.bar-row .bar-fill{height:100%;border-radius:4px;transition:width 1s ease;width:0}
+.bar-row .bar-val{width:34px;font-size:12px;font-weight:600;font-family:'Outfit',sans-serif}
+.bar-bio .bar-fill{background:linear-gradient(90deg,#a78bfa,#c084fc)}
+.bar-emo .bar-fill{background:linear-gradient(90deg,#f472b6,#fb7185)}
+.bar-int .bar-fill{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
+.section-label{font-family:'Shippori Mincho',serif;font-size:14px;font-weight:600;color:var(--text2);margin:28px 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06)}
+.gogyo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.gogyo-card{border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.05)}
+.gogyo-card .elem-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.gogyo-card .elem-info{flex:1}
+.gogyo-card .elem-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.gogyo-card .elem-sub{font-size:11px;opacity:.6}
+.gogyo-compat{border-radius:10px;padding:16px;margin-top:10px;background:var(--surface);border:1px solid rgba(255,255,255,.06);text-align:center}
+.gogyo-compat .compat-label{font-size:12px;color:var(--text2);margin-bottom:6px}
+.gogyo-compat .compat-type{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700}
+.diagnosis-text{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px;line-height:1.9;font-size:14px;color:var(--text);white-space:pre-wrap;margin-top:16px}
+.settings{margin-top:36px;padding-top:20px;border-top:1px solid rgba(255,255,255,.04)}
+.settings summary{font-size:12px;color:var(--text3);cursor:pointer;list-style:none;text-align:center}
+.settings summary::-webkit-details-marker{display:none}
+.settings-inner{margin-top:12px}
+.settings-inner label{margin-bottom:4px}
+.settings-inner input{margin-bottom:10px}
+.settings-note{font-size:11px;color:var(--text3);text-align:center;margin-top:6px}
+footer{text-align:center;margin-top:40px;font-size:11px;color:var(--text3)}
 </style>
 </head>
 <body>
-<div class="bg-orbs"><span></span><span></span><span></span></div>
+<div class="bg-layer"></div>
 <div class="container">
-
   <header>
-    <div class="logo">Biorhythm</div>
-    <h1>バイオリズム相性診断</h1>
-    <p class="subtitle">二人の生年月日から、身体・感情・知性の波長の相性を診断します</p>
+    <div class="logo-jp">運命相性</div>
+    <h1>バイオリズム × <em>四柱推命</em></h1>
+    <p class="subtitle">生年月日と五行の力で、二人の深い相性を紐解きます</p>
+    <div class="gogyo-strip">
+      <span style="background:var(--wood)"></span>
+      <span style="background:var(--fire)"></span>
+      <span style="background:var(--earth)"></span>
+      <span style="background:var(--metal)"></span>
+      <span style="background:var(--water)"></span>
+    </div>
   </header>
-
-  <!-- Person A -->
   <div class="card">
-    <span class="card-label">Person A</span>
-    <div class="field-group">
-      <label for="nameA">名前（ニックネーム可）</label>
-      <input type="text" id="nameA" placeholder="例：太郎" maxlength="20">
+    <span class="card-tag a">一人目</span>
+    <div class="field-row">
+      <div class="field-group"><label for="nameA">名前</label><input type="text" id="nameA" placeholder="ニックネーム可" maxlength="20"></div>
+      <div class="field-group" style="max-width:110px"><label for="genderA">性別</label><select id="genderA"><option value="male">男性</option><option value="female">女性</option></select></div>
     </div>
-    <div class="field-group">
-      <label for="birthA">生年月日</label>
-      <input type="date" id="birthA" max="2026-05-17">
+    <div class="field-row">
+      <div class="field-group"><label for="birthA">生年月日</label><input type="date" id="birthA" max="2026-12-31"></div>
+      <div class="field-group" style="max-width:140px"><label for="timeA">出生時間</label><input type="time" id="timeA"><p class="optional-hint">不明なら空欄でOK</p></div>
     </div>
   </div>
-
-  <!-- Person B -->
   <div class="card">
-    <span class="card-label person-b">Person B</span>
-    <div class="field-group">
-      <label for="nameB">名前（ニックネーム可）</label>
-      <input type="text" id="nameB" placeholder="例：花子" maxlength="20">
+    <span class="card-tag b">二人目</span>
+    <div class="field-row">
+      <div class="field-group"><label for="nameB">名前</label><input type="text" id="nameB" placeholder="ニックネーム可" maxlength="20"></div>
+      <div class="field-group" style="max-width:110px"><label for="genderB">性別</label><select id="genderB"><option value="female">女性</option><option value="male">男性</option></select></div>
     </div>
-    <div class="field-group">
-      <label for="birthB">生年月日</label>
-      <input type="date" id="birthB" max="2026-05-17">
+    <div class="field-row">
+      <div class="field-group"><label for="birthB">生年月日</label><input type="date" id="birthB" max="2026-12-31"></div>
+      <div class="field-group" style="max-width:140px"><label for="timeB">出生時間</label><input type="time" id="timeB"><p class="optional-hint">不明なら空欄でOK</p></div>
     </div>
   </div>
-
-  <!-- 診断ボタン -->
-  <div class="btn-wrap">
-    <button class="btn" id="diagnoseBtn" onclick="runDiagnosis()">
-      <span class="spinner"></span>
-      <span class="btn-text">相性を診断する</span>
-    </button>
-  </div>
-
-  <!-- エラー -->
+  <div class="btn-wrap"><button class="btn" id="diagnoseBtn" onclick="runDiagnosis()"><span class="spinner"></span><span class="btn-text">運命の相性を診断</span></button></div>
   <div class="error-msg" id="errorMsg"></div>
-
-  <!-- 結果 -->
   <div id="result">
-    <div class="result-header">
-      <h2 id="resultTitle"></h2>
-    </div>
-
-    <!-- スコアリング -->
-    <div class="score-ring">
-      <svg width="140" height="140" viewBox="0 0 140 140">
-        <defs>
-          <linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#6c5ce7"/>
-            <stop offset="100%" stop-color="#fd79a8"/>
-          </linearGradient>
-        </defs>
-        <circle class="track" cx="70" cy="70" r="60"/>
-        <circle class="fill" id="scoreCircle" cx="70" cy="70" r="60"
-          stroke-dasharray="377" stroke-dashoffset="377"/>
-      </svg>
-      <div class="score-value">
-        <span class="num" id="scoreNum">0</span>
-        <span class="pct">%</span>
+    <h2 class="result-title" id="resultTitle"></h2>
+    <div class="score-section">
+      <div class="score-ring">
+        <svg width="120" height="120" viewBox="0 0 120 120"><defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c084fc"/><stop offset="100%" stop-color="#f472b6"/></linearGradient></defs><circle class="track" cx="60" cy="60" r="50"/><circle class="fill" id="scoreCircle" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"/></svg>
+        <div class="score-value"><span class="num" id="scoreNum">0</span><span class="pct">%</span></div>
+      </div>
+      <div class="score-breakdown">
+        <div class="bar-row bar-bio"><span class="bar-label">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
+        <div class="bar-row bar-emo"><span class="bar-label">感情</span><div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div><span class="bar-val" id="valEmotional">0%</span></div>
+        <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
       </div>
     </div>
-
-    <!-- バイオリズムバー -->
-    <div class="bio-bars">
-      <div class="bio-bar bar-physical">
-        <span class="bar-label">身体</span>
-        <div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div>
-        <span class="bar-val" id="valPhysical">0%</span>
-      </div>
-      <div class="bio-bar bar-emotional">
-        <span class="bar-label">感情</span>
-        <div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div>
-        <span class="bar-val" id="valEmotional">0%</span>
-      </div>
-      <div class="bio-bar bar-intellectual">
-        <span class="bar-label">知性</span>
-        <div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div>
-        <span class="bar-val" id="valIntellectual">0%</span>
-      </div>
-    </div>
-
-    <!-- AI診断テキスト -->
+    <div class="section-label">五行プロフィール</div>
+    <div class="gogyo-grid" id="gogyoGrid"></div>
+    <div class="gogyo-compat" id="gogyoCompat"><div class="compat-label">五行の相性</div><div class="compat-type" id="gogyoType">—</div></div>
+    <div class="section-label">AI総合診断</div>
     <div class="diagnosis-text" id="diagnosisText"></div>
   </div>
-
-  <!-- API設定 -->
-  <details class="settings">
-    <summary>⚙ API接続設定（通常は変更不要）</summary>
-    <div class="settings-inner">
-      <label for="apiUrl">Vercel APIエンドポイントURL</label>
-      <input type="text" id="apiUrl" placeholder="https://your-project.vercel.app/api/diagnose"
-        value="">
-      <p class="settings-note">デフォルトURLが設定済みです。URLを変更した場合のみここで上書きできます</p>
-    </div>
-  </details>
-
-  <footer>Biorhythm Compatibility — Powered by Gemini AI</footer>
+  <details class="settings"><summary>API接続設定（通常は変更不要）</summary><div class="settings-inner"><label for="apiUrl">Vercel APIエンドポイントURL</label><input type="text" id="apiUrl" value=""><p class="settings-note">URLを変更した場合のみここで上書き</p></div></details>
+  <footer>Biorhythm × 四柱推命 — Powered by Gemini AI</footer>
 </div>
-
 <script>
-// =============================================
-// ★ ここにあなたのVercel URLを設定してください ★
-// =============================================
-const DEFAULT_API_URL = 'https://test-flax-omega-29.vercel.app/api/diagnose';
-
-// 優先順位: localStorage > デフォルトURL
-function getApiUrl() {
-  const saved = localStorage.getItem('biorhythm_api_url');
-  const input = document.getElementById('apiUrl').value.trim();
-  return input || saved || DEFAULT_API_URL;
+const DEFAULT_API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
+function getApiUrl(){const s=localStorage.getItem('biorhythm_api_url'),el=document.getElementById('apiUrl'),i=el?el.value.trim():'';return i||s||DEFAULT_API_URL}
+const savedUrl=localStorage.getItem('biorhythm_api_url'),apiInput=document.getElementById('apiUrl');
+if(apiInput)apiInput.value=savedUrl||DEFAULT_API_URL;
+if(apiInput)apiInput.addEventListener('change',function(){const v=this.value.trim();if(v&&v!==DEFAULT_API_URL)localStorage.setItem('biorhythm_api_url',v);else{localStorage.removeItem('biorhythm_api_url');this.value=DEFAULT_API_URL}});
+function showError(m){const el=document.getElementById('errorMsg');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),8000)}
+const ELEM_STYLES={wood:{bg:'var(--wood-dim)',color:'var(--wood)',icon:'木',label:'木',trait:'成長・仁愛'},fire:{bg:'var(--fire-dim)',color:'var(--fire)',icon:'火',label:'火',trait:'情熱・礼節'},earth:{bg:'var(--earth-dim)',color:'var(--earth)',icon:'土',label:'土',trait:'安定・信義'},metal:{bg:'var(--metal-dim)',color:'var(--metal)',icon:'金',label:'金',trait:'決断・義理'},water:{bg:'var(--water-dim)',color:'var(--water)',icon:'水',label:'水',trait:'知恵・柔軟'}};
+async function runDiagnosis(){
+  const nameA=document.getElementById('nameA').value.trim()||'Aさん',nameB=document.getElementById('nameB').value.trim()||'Bさん',birthA=document.getElementById('birthA').value,birthB=document.getElementById('birthB').value,genderA=document.getElementById('genderA').value,genderB=document.getElementById('genderB').value,timeA=document.getElementById('timeA').value||null,timeB=document.getElementById('timeB').value||null,apiUrl=getApiUrl();
+  if(!birthA||!birthB){showError('二人の生年月日を入力してください');return}
+  if(!apiUrl||apiUrl.includes('your-project')){showError('API設定からVercelのURLを設定してください');return}
+  const btn=document.getElementById('diagnoseBtn');btn.disabled=true;btn.classList.add('loading');document.getElementById('result').classList.remove('visible');document.getElementById('errorMsg').classList.remove('show');
+  try{
+    const res=await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nameA,nameB,birthA,birthB,genderA,genderB,timeA,timeB})});
+    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'サーバーエラー ('+res.status+')')}
+    const data=await res.json();displayResult(data,nameA,nameB);
+  }catch(e){showError('診断に失敗しました: '+e.message)}finally{btn.disabled=false;btn.classList.remove('loading')}
 }
-
-// 初期表示: localStorageに保存があればそれを、なければデフォルトを表示
-const savedUrl = localStorage.getItem('biorhythm_api_url');
-document.getElementById('apiUrl').value = savedUrl || DEFAULT_API_URL;
-
-document.getElementById('apiUrl').addEventListener('change', function() {
-  const val = this.value.trim();
-  if (val && val !== DEFAULT_API_URL) {
-    localStorage.setItem('biorhythm_api_url', val);
-  } else {
-    localStorage.removeItem('biorhythm_api_url');
-    this.value = DEFAULT_API_URL;
-  }
-});
-
-function showError(msg) {
-  const el = document.getElementById('errorMsg');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 6000);
+function displayResult(d,nA,nB){
+  document.getElementById('resultTitle').textContent=nA+' × '+nB+' の運命相性';
+  const sc=d.overallScore??50,circ=2*Math.PI*50;
+  document.getElementById('scoreCircle').style.strokeDashoffset=circ*(1-sc/100);animateNumber('scoreNum',sc);
+  setBar('barPhysical','valPhysical',d.physical??50);setBar('barEmotional','valEmotional',d.emotional??50);setBar('barIntellectual','valIntellectual',d.intellectual??50);
+  const grid=document.getElementById('gogyoGrid');grid.innerHTML='';
+  const eA=d.elementA||'wood',eB=d.elementB||'water',sA=ELEM_STYLES[eA]||ELEM_STYLES.wood,sB=ELEM_STYLES[eB]||ELEM_STYLES.water;
+  grid.innerHTML=gogyoCardHTML(nA,sA)+gogyoCardHTML(nB,sB);
+  document.getElementById('gogyoType').textContent=d.gogyoRelation||'—';
+  const ce=document.getElementById('gogyoCompat'),ct=d.gogyoRelation||'';
+  ce.style.borderColor=ct.includes('相生')?'rgba(74,222,128,.25)':ct.includes('相剋')?'rgba(248,113,113,.2)':'rgba(255,255,255,.06)';
+  document.getElementById('diagnosisText').textContent=d.diagnosis||'';
+  const r=document.getElementById('result');r.classList.add('visible');r.scrollIntoView({behavior:'smooth',block:'start'});
 }
-
-async function runDiagnosis() {
-  const nameA  = document.getElementById('nameA').value.trim() || 'Aさん';
-  const nameB  = document.getElementById('nameB').value.trim() || 'Bさん';
-  const birthA = document.getElementById('birthA').value;
-  const birthB = document.getElementById('birthB').value;
-  const apiUrl = getApiUrl();
-
-  if (!birthA || !birthB) { showError('二人の生年月日を入力してください'); return; }
-  if (!apiUrl || apiUrl.includes('your-project')) { showError('API接続設定でVercelのURLを設定してください（⚙ を開いてURLを書き換え）'); return; }
-
-  const btn = document.getElementById('diagnoseBtn');
-  btn.disabled = true;
-  btn.classList.add('loading');
-  document.getElementById('result').classList.remove('visible');
-  document.getElementById('errorMsg').classList.remove('show');
-
-  try {
-    const res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nameA, nameB, birthA, birthB }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || `サーバーエラー (${res.status})`);
-    }
-
-    const data = await res.json();
-    displayResult(data, nameA, nameB);
-  } catch (e) {
-    showError('診断に失敗しました: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.classList.remove('loading');
-  }
-}
-
-function displayResult(data, nameA, nameB) {
-  const resultEl = document.getElementById('result');
-
-  // タイトル
-  document.getElementById('resultTitle').textContent =
-    `${nameA} × ${nameB} の相性`;
-
-  // 総合スコア
-  const score = data.overallScore ?? 50;
-  const circumference = 2 * Math.PI * 60; // 377
-  const offset = circumference * (1 - score / 100);
-  document.getElementById('scoreCircle').style.strokeDashoffset = offset;
-  animateNumber('scoreNum', score);
-
-  // バー
-  setBar('barPhysical',     'valPhysical',     data.physical ?? 50);
-  setBar('barEmotional',    'valEmotional',    data.emotional ?? 50);
-  setBar('barIntellectual', 'valIntellectual', data.intellectual ?? 50);
-
-  // 診断テキスト
-  document.getElementById('diagnosisText').textContent = data.diagnosis || '';
-
-  // 表示
-  resultEl.classList.add('visible');
-  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function setBar(barId, valId, pct) {
-  setTimeout(() => {
-    document.getElementById(barId).style.width = pct + '%';
-    document.getElementById(valId).textContent = pct + '%';
-  }, 300);
-}
-
-function animateNumber(id, target) {
-  const el = document.getElementById(id);
-  let current = 0;
-  const step = Math.max(1, Math.floor(target / 40));
-  const interval = setInterval(() => {
-    current += step;
-    if (current >= target) { current = target; clearInterval(interval); }
-    el.textContent = current;
-  }, 30);
-}
+function gogyoCardHTML(n,s){return'<div class="gogyo-card" style="background:'+s.bg+'"><div class="elem-icon" style="background:'+s.color+';color:var(--bg)">'+s.icon+'</div><div class="elem-info"><div class="elem-name" style="color:'+s.color+'">'+n+'（'+s.label+'）</div><div class="elem-sub">'+s.trait+'</div></div></div>'}
+function setBar(b,v,p){setTimeout(()=>{document.getElementById(b).style.width=p+'%';document.getElementById(v).textContent=p+'%'},300)}
+function animateNumber(id,t){const el=document.getElementById(id);let c=0;const s=Math.max(1,Math.floor(t/40)),iv=setInterval(()=>{c+=s;if(c>=t){c=t;clearInterval(iv)}el.textContent=c},30)}
 </script>
 </body>
 </html>

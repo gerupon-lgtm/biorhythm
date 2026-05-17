@@ -67,7 +67,11 @@ input::placeholder{color:var(--text3)}
 .loading-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(8,8,14,.92);backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center}
 .loading-overlay.active{display:flex}
 .loading-stage{position:relative;width:280px;height:160px;margin-bottom:20px}
-.neko{position:absolute;bottom:12px;left:20px;width:40px;height:40px;animation:nekoRun 3s ease-in-out infinite;z-index:2;filter:drop-shadow(0 0 6px rgba(192,132,252,.4))}
+.neko{position:absolute;bottom:12px;left:20px;width:40px;height:40px;animation:nekoRun 3s ease-in-out infinite;z-index:2;--neko-body:#c084fc;--neko-face:#f472b6;--neko-glow:rgba(192,132,252,.4);filter:drop-shadow(0 0 6px var(--neko-glow));transition:filter .6s}
+.neko .nk-body{stroke:var(--neko-body);transition:stroke .6s,fill .6s}
+.neko .nk-fill{fill:var(--neko-body);transition:fill .6s}
+.neko .nk-face{fill:var(--neko-face);stroke:var(--neko-face);transition:fill .6s,stroke .6s}
+.neko .nk-whisker{stroke:var(--neko-body);transition:stroke .6s}
 @keyframes nekoRun{
   0%{left:20px;transform:scaleX(1)}
   45%{left:220px;transform:scaleX(1)}
@@ -167,18 +171,18 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <!-- 猫アニメーション待機画面 -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-stage">
-    <svg class="neko" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 56 L12 28 L6 10 L20 20 L32 16 L44 20 L58 10 L52 28 L52 56 Z" fill="var(--accent)" opacity=".15"/>
-      <path d="M12 56 L12 28 L6 10 L20 20 L32 16 L44 20 L58 10 L52 28 L52 56" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M20 56 L20 48 Q20 44 24 44 L40 44 Q44 44 44 48 L44 56" stroke="var(--accent)" stroke-width="1.5" fill="none" opacity=".5"/>
-      <circle cx="24" cy="32" r="2.5" fill="var(--accent3)"/>
-      <circle cx="40" cy="32" r="2.5" fill="var(--accent3)"/>
-      <path d="M30 37 L32 39 L34 37" stroke="var(--accent3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M22 38 L16 36" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
-      <path d="M22 40 L15 40" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
-      <path d="M42 38 L48 36" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
-      <path d="M42 40 L49 40" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
-      <path d="M52 50 Q58 44 60 52 Q62 58 56 56" stroke="var(--accent)" stroke-width="1.5" fill="none" opacity=".6"/>
+    <svg class="neko" id="nekoSvg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path class="nk-fill" d="M12 56 L12 28 L6 10 L20 20 L32 16 L44 20 L58 10 L52 28 L52 56 Z" opacity=".15"/>
+      <path class="nk-body" d="M12 56 L12 28 L6 10 L20 20 L32 16 L44 20 L58 10 L52 28 L52 56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path class="nk-body" d="M20 56 L20 48 Q20 44 24 44 L40 44 Q44 44 44 48 L44 56" stroke-width="1.5" fill="none" opacity=".5"/>
+      <circle class="nk-face" cx="24" cy="32" r="2.5"/>
+      <circle class="nk-face" cx="40" cy="32" r="2.5"/>
+      <path class="nk-face" d="M30 37 L32 39 L34 37" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path class="nk-whisker" d="M22 38 L16 36" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+      <path class="nk-whisker" d="M22 40 L15 40" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+      <path class="nk-whisker" d="M42 38 L48 36" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+      <path class="nk-whisker" d="M42 40 L49 40" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+      <path class="nk-body" d="M52 50 Q58 44 60 52 Q62 58 56 56" stroke-width="1.5" fill="none" opacity=".6"/>
     </svg>
     <div class="gogyo-orb" style="color:var(--wood)">🌿</div>
     <div class="gogyo-orb" style="color:var(--fire)">🔥</div>
@@ -290,6 +294,28 @@ const LOADING_MESSAGES=[
 ];
 let loadingTimer=null;
 let progressTimer=null;
+let nekoColorTimer=null;
+
+// 猫の色パレット（五行 + アクセントカラー）
+const NEKO_PALETTES=[
+  {body:'#c084fc',face:'#f472b6',glow:'rgba(192,132,252,.4)'},  // 紫（デフォルト）
+  {body:'#4ade80',face:'#86efac',glow:'rgba(74,222,128,.4)'},   // 木・緑
+  {body:'#f87171',face:'#fbbf24',glow:'rgba(248,113,113,.4)'},   // 火・赤
+  {body:'#fbbf24',face:'#fde68a',glow:'rgba(251,191,36,.4)'},    // 土・黄
+  {body:'#e2e8f0',face:'#cbd5e1',glow:'rgba(226,232,240,.35)'},  // 金・白
+  {body:'#60a5fa',face:'#93c5fd',glow:'rgba(96,165,250,.4)'},    // 水・青
+  {body:'#f472b6',face:'#c084fc',glow:'rgba(244,114,182,.4)'},   // ピンク
+  {body:'#a78bfa',face:'#60a5fa',glow:'rgba(167,139,250,.4)'},   // 薄紫
+];
+
+function changeNekoColor(){
+  const neko=document.getElementById('nekoSvg');
+  if(!neko) return;
+  const p=NEKO_PALETTES[Math.floor(Math.random()*NEKO_PALETTES.length)];
+  neko.style.setProperty('--neko-body',p.body);
+  neko.style.setProperty('--neko-face',p.face);
+  neko.style.setProperty('--neko-glow',p.glow);
+}
 
 function showLoading(){
   const overlay=document.getElementById('loadingOverlay');
@@ -310,6 +336,9 @@ function showLoading(){
     if(progress>90) progress=90;
     bar.style.width=progress+'%';
   },500);
+  // 猫の色をランダム切り替え
+  changeNekoColor();
+  nekoColorTimer=setInterval(changeNekoColor,1800);
 }
 
 function hideLoading(){
@@ -317,6 +346,7 @@ function hideLoading(){
   bar.style.width='100%';
   clearInterval(loadingTimer);
   clearInterval(progressTimer);
+  clearInterval(nekoColorTimer);
   setTimeout(()=>{
     document.getElementById('loadingOverlay').classList.remove('active');
     bar.style.width='0%';

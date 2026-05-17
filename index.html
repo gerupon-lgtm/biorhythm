@@ -327,12 +327,12 @@
 
   <!-- API設定 -->
   <details class="settings">
-    <summary>⚙ API接続設定</summary>
+    <summary>⚙ API接続設定（通常は変更不要）</summary>
     <div class="settings-inner">
       <label for="apiUrl">Vercel APIエンドポイントURL</label>
       <input type="text" id="apiUrl" placeholder="https://your-project.vercel.app/api/diagnose"
         value="">
-      <p class="settings-note">Vercelにデプロイした後、上記にURLを入力してください</p>
+      <p class="settings-note">デフォルトURLが設定済みです。URLを変更した場合のみここで上書きできます</p>
     </div>
   </details>
 
@@ -340,12 +340,30 @@
 </div>
 
 <script>
-// ローカルストレージからAPIエンドポイントを復元
+// =============================================
+// ★ ここにあなたのVercel URLを設定してください ★
+// =============================================
+const DEFAULT_API_URL = 'https://test-flax-omega-29.vercel.app/api/diagnose';
+
+// 優先順位: localStorage > デフォルトURL
+function getApiUrl() {
+  const saved = localStorage.getItem('biorhythm_api_url');
+  const input = document.getElementById('apiUrl').value.trim();
+  return input || saved || DEFAULT_API_URL;
+}
+
+// 初期表示: localStorageに保存があればそれを、なければデフォルトを表示
 const savedUrl = localStorage.getItem('biorhythm_api_url');
-if (savedUrl) document.getElementById('apiUrl').value = savedUrl;
+document.getElementById('apiUrl').value = savedUrl || DEFAULT_API_URL;
 
 document.getElementById('apiUrl').addEventListener('change', function() {
-  localStorage.setItem('biorhythm_api_url', this.value);
+  const val = this.value.trim();
+  if (val && val !== DEFAULT_API_URL) {
+    localStorage.setItem('biorhythm_api_url', val);
+  } else {
+    localStorage.removeItem('biorhythm_api_url');
+    this.value = DEFAULT_API_URL;
+  }
 });
 
 function showError(msg) {
@@ -360,10 +378,10 @@ async function runDiagnosis() {
   const nameB  = document.getElementById('nameB').value.trim() || 'Bさん';
   const birthA = document.getElementById('birthA').value;
   const birthB = document.getElementById('birthB').value;
-  const apiUrl = document.getElementById('apiUrl').value.trim();
+  const apiUrl = getApiUrl();
 
   if (!birthA || !birthB) { showError('二人の生年月日を入力してください'); return; }
-  if (!apiUrl) { showError('API接続設定からVercelのURLを入力してください'); return; }
+  if (!apiUrl || apiUrl.includes('your-project')) { showError('API接続設定でVercelのURLを設定してください（⚙ を開いてURLを書き換え）'); return; }
 
   const btn = document.getElementById('diagnoseBtn');
   btn.disabled = true;

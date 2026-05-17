@@ -118,7 +118,7 @@ footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
     <span class="card-tag a">一人目</span>
     <div class="field-row">
       <div class="field-group"><label for="nameA">名前</label><input type="text" id="nameA" placeholder="ニックネーム可" maxlength="20"></div>
-      <div class="field-group" style="max-width:110px"><label for="genderA">性別</label><select id="genderA"><option value="male">男性</option><option value="female">女性</option></select></div>
+      <div class="field-group" style="max-width:110px"><label for="genderA">性別</label><select id="genderA"><option value="" selected>未選択</option><option value="male">男性</option><option value="female">女性</option></select></div>
     </div>
     <div class="field-row">
       <div class="field-group"><label for="birthA">生年月日</label><input type="date" id="birthA" max="2026-12-31"></div>
@@ -129,7 +129,7 @@ footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
     <span class="card-tag b">二人目</span>
     <div class="field-row">
       <div class="field-group"><label for="nameB">名前</label><input type="text" id="nameB" placeholder="ニックネーム可" maxlength="20"></div>
-      <div class="field-group" style="max-width:110px"><label for="genderB">性別</label><select id="genderB"><option value="female">女性</option><option value="male">男性</option></select></div>
+      <div class="field-group" style="max-width:110px"><label for="genderB">性別</label><select id="genderB"><option value="" selected>未選択</option><option value="male">男性</option><option value="female">女性</option></select></div>
     </div>
     <div class="field-row">
       <div class="field-group"><label for="birthB">生年月日</label><input type="date" id="birthB" max="2026-12-31"></div>
@@ -173,11 +173,11 @@ const ELEM_STYLES={wood:{bg:'var(--wood-dim)',color:'var(--wood)',icon:'木',lab
 async function runDiagnosis(){
   const nameA=document.getElementById('nameA').value.trim()||'あなた';
   const birthA=document.getElementById('birthA').value;
-  const genderA=document.getElementById('genderA').value;
+  const genderA=document.getElementById('genderA').value||null;
   const timeA=document.getElementById('timeA').value||null;
   const nameB=document.getElementById('nameB').value.trim();
   const birthB=document.getElementById('birthB').value;
-  const genderB=document.getElementById('genderB').value;
+  const genderB=document.getElementById('genderB').value||null;
   const timeB=document.getElementById('timeB').value||null;
   const targetDate=document.getElementById('targetDate').value||null;
 

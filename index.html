@@ -16,7 +16,7 @@
   --metal:#e2e8f0;--metal-dim:rgba(226,232,240,.1);
   --water:#60a5fa;--water-dim:rgba(96,165,250,.12);
   --accent:#c084fc;--accent2:#a78bfa;--accent3:#f472b6;
-  --text:#e4e4ee;--text2:#8888a4;--text3:#5a5a72;
+  --text:#e4e4ee;--text2:#8888a4;--text3:#7e7e96;
   --radius:14px;
 }
 html{scroll-behavior:smooth}
@@ -62,7 +62,7 @@ input::placeholder{color:var(--text3)}
 .loading-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(8,8,14,.92);backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center}
 .loading-overlay.active{display:flex}
 .loading-stage{position:relative;width:280px;height:160px;margin-bottom:20px}
-.neko{position:absolute;bottom:20px;left:20px;font-size:32px;animation:nekoRun 3s ease-in-out infinite;z-index:2}
+.neko{position:absolute;bottom:12px;left:20px;width:40px;height:40px;animation:nekoRun 3s ease-in-out infinite;z-index:2;filter:drop-shadow(0 0 6px rgba(192,132,252,.4))}
 @keyframes nekoRun{
   0%{left:20px;transform:scaleX(1)}
   45%{left:220px;transform:scaleX(1)}
@@ -115,12 +115,12 @@ input::placeholder{color:var(--text3)}
 .meishiki-wrap{margin-bottom:16px}
 .meishiki-label{font-size:14px;color:var(--accent2);font-weight:600;margin-bottom:8px}
 .meishiki-table{width:100%;border-collapse:separate;border-spacing:2px;font-size:13px;text-align:center}
-.meishiki-table th{font-size:11px;color:var(--text3);font-weight:500;padding:4px 6px}
+.meishiki-table th{font-size:12px;color:var(--text2);font-weight:500;padding:4px 6px}
 .meishiki-table td{background:var(--surface2);border-radius:6px;padding:8px 4px;color:var(--text)}
 .meishiki-table .stem-cell{font-size:18px;font-weight:700;font-family:'Shippori Mincho',serif}
 .meishiki-table .branch-cell{font-size:16px;font-weight:600}
-.meishiki-table .tsuhen-cell{font-size:11px;color:var(--accent2)}
-.meishiki-table .juniun-cell{font-size:11px;color:var(--text2)}
+.meishiki-table .tsuhen-cell{font-size:12px;color:var(--accent2)}
+.meishiki-table .juniun-cell{font-size:12px;color:var(--text2)}
 .gogyo-balance{display:flex;gap:6px;margin:12px 0}
 .gogyo-bar-wrap{flex:1;text-align:center}
 .gogyo-bar-label{font-size:11px;margin-bottom:4px;font-weight:600}
@@ -129,14 +129,14 @@ input::placeholder{color:var(--text3)}
 .gogyo-bar-count{font-size:10px;color:var(--text3);margin-top:2px}
 .compat-row{display:flex;gap:10px;margin:12px 0}
 .compat-card{flex:1;background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;text-align:center}
-.compat-card .cc-label{font-size:11px;color:var(--text3);margin-bottom:4px}
+.compat-card .cc-label{font-size:12px;color:var(--text2);margin-bottom:4px}
 .compat-card .cc-value{font-size:14px;font-weight:700;font-family:'Shippori Mincho',serif}
 .diagnosis-text{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:24px;line-height:1.9;font-size:16px;color:var(--text);white-space:pre-wrap;margin-top:16px}
 .date-picker-row{display:flex;align-items:center;gap:12px;margin:0 0 8px;padding:12px 20px;background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius)}
 .date-picker-row label{font-size:16px;font-weight:500;color:var(--text2);white-space:nowrap;margin:0;flex-shrink:0}
 .date-picker-row input[type="date"]{max-width:170px;padding:8px 12px;font-size:16px;margin:0}
 .date-picker-row .optional-hint{font-size:13px;color:var(--text3);margin:0}
-footer{text-align:center;margin-top:40px;font-size:12px;color:var(--text3);line-height:1.8}
+footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-height:1.8}
 </style>
 </head>
 <body>
@@ -145,7 +145,19 @@ footer{text-align:center;margin-top:40px;font-size:12px;color:var(--text3);line-
 <!-- 猫アニメーション待機画面 -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-stage">
-    <div class="neko">🐱</div>
+    <svg class="neko" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 56 L12 28 L6 10 L20 20 L32 16 L44 20 L58 10 L52 28 L52 56 Z" fill="var(--accent)" opacity=".15"/>
+      <path d="M12 56 L12 28 L6 10 L20 20 L32 16 L44 20 L58 10 L52 28 L52 56" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M20 56 L20 48 Q20 44 24 44 L40 44 Q44 44 44 48 L44 56" stroke="var(--accent)" stroke-width="1.5" fill="none" opacity=".5"/>
+      <circle cx="24" cy="32" r="2.5" fill="var(--accent3)"/>
+      <circle cx="40" cy="32" r="2.5" fill="var(--accent3)"/>
+      <path d="M30 37 L32 39 L34 37" stroke="var(--accent3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M22 38 L16 36" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+      <path d="M22 40 L15 40" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+      <path d="M42 38 L48 36" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+      <path d="M42 40 L49 40" stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+      <path d="M52 50 Q58 44 60 52 Q62 58 56 56" stroke="var(--accent)" stroke-width="1.5" fill="none" opacity=".6"/>
+    </svg>
     <div class="gogyo-orb" style="color:var(--wood)">🌿</div>
     <div class="gogyo-orb" style="color:var(--fire)">🔥</div>
     <div class="gogyo-orb" style="color:var(--earth)">🪨</div>

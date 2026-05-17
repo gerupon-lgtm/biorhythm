@@ -58,6 +58,37 @@ input::placeholder{color:var(--text3)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .error-msg{text-align:center;padding:16px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:var(--radius);color:var(--fire);font-size:13px;margin-top:16px;display:none}
 .error-msg.show{display:block}
+/* === 猫アニメーション待機画面 === */
+.loading-overlay{display:none;position:fixed;inset:0;z-index:100;background:rgba(8,8,14,.92);backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center}
+.loading-overlay.active{display:flex}
+.loading-stage{position:relative;width:280px;height:160px;margin-bottom:20px}
+.neko{position:absolute;bottom:20px;left:20px;font-size:32px;animation:nekoRun 3s ease-in-out infinite;z-index:2}
+@keyframes nekoRun{
+  0%{left:20px;transform:scaleX(1)}
+  45%{left:220px;transform:scaleX(1)}
+  50%{left:220px;transform:scaleX(-1)}
+  95%{left:20px;transform:scaleX(-1)}
+  100%{left:20px;transform:scaleX(1)}
+}
+.gogyo-orb{position:absolute;font-size:20px;opacity:.7;animation:orbFloat 4s ease-in-out infinite}
+.gogyo-orb:nth-child(2){top:30px;left:60px;animation-delay:0s}
+.gogyo-orb:nth-child(3){top:50px;left:140px;animation-delay:-.8s}
+.gogyo-orb:nth-child(4){top:20px;left:200px;animation-delay:-1.6s}
+.gogyo-orb:nth-child(5){top:60px;left:100px;animation-delay:-2.4s}
+.gogyo-orb:nth-child(6){top:40px;left:170px;animation-delay:-3.2s}
+@keyframes orbFloat{
+  0%,100%{transform:translateY(0) scale(1);opacity:.7}
+  50%{transform:translateY(-15px) scale(1.2);opacity:1}
+}
+.loading-text{font-family:'Shippori Mincho',serif;font-size:15px;color:var(--text2);text-align:center;letter-spacing:2px}
+.loading-sub{font-size:12px;color:var(--text3);margin-top:8px;text-align:center}
+.loading-dots::after{content:'';animation:dots 1.5s steps(4) infinite}
+@keyframes dots{
+  0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}
+}
+.loading-progress{width:200px;height:3px;background:var(--surface2);border-radius:2px;margin-top:16px;overflow:hidden}
+.loading-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:2px;width:0;transition:width .3s}
+/* === 結果エリア === */
 #result{margin-top:24px;opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
 #result.visible{opacity:1;transform:translateY(0)}
 .result-title{text-align:center;font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700;margin-bottom:24px}
@@ -81,7 +112,6 @@ input::placeholder{color:var(--text3)}
 .bar-int .bar-fill{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
 .section-label{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:600;color:var(--text2);margin:28px 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
 .section-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06)}
-/* 命式表 */
 .meishiki-wrap{margin-bottom:16px}
 .meishiki-label{font-size:14px;color:var(--accent2);font-weight:600;margin-bottom:8px}
 .meishiki-table{width:100%;border-collapse:separate;border-spacing:2px;font-size:13px;text-align:center}
@@ -91,14 +121,12 @@ input::placeholder{color:var(--text3)}
 .meishiki-table .branch-cell{font-size:16px;font-weight:600}
 .meishiki-table .tsuhen-cell{font-size:11px;color:var(--accent2)}
 .meishiki-table .juniun-cell{font-size:11px;color:var(--text2)}
-/* 五行バランス */
 .gogyo-balance{display:flex;gap:6px;margin:12px 0}
 .gogyo-bar-wrap{flex:1;text-align:center}
 .gogyo-bar-label{font-size:11px;margin-bottom:4px;font-weight:600}
 .gogyo-bar-outer{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
 .gogyo-bar-inner{height:100%;border-radius:3px;transition:width .8s ease}
 .gogyo-bar-count{font-size:10px;color:var(--text3);margin-top:2px}
-/* 相性カード */
 .compat-row{display:flex;gap:10px;margin:12px 0}
 .compat-card{flex:1;background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px;text-align:center}
 .compat-card .cc-label{font-size:11px;color:var(--text3);margin-bottom:4px}
@@ -108,11 +136,27 @@ input::placeholder{color:var(--text3)}
 .date-picker-row label{font-size:16px;font-weight:500;color:var(--text2);white-space:nowrap;margin:0;flex-shrink:0}
 .date-picker-row input[type="date"]{max-width:170px;padding:8px 12px;font-size:16px;margin:0}
 .date-picker-row .optional-hint{font-size:13px;color:var(--text3);margin:0}
-footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
+footer{text-align:center;margin-top:40px;font-size:12px;color:var(--text3);line-height:1.8}
 </style>
 </head>
 <body>
 <div class="bg-layer"></div>
+
+<!-- 猫アニメーション待機画面 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-stage">
+    <div class="neko">🐱</div>
+    <div class="gogyo-orb" style="color:var(--wood)">🌿</div>
+    <div class="gogyo-orb" style="color:var(--fire)">🔥</div>
+    <div class="gogyo-orb" style="color:var(--earth)">🪨</div>
+    <div class="gogyo-orb" style="color:var(--metal)">⚔️</div>
+    <div class="gogyo-orb" style="color:var(--water)">💧</div>
+  </div>
+  <div class="loading-text" id="loadingText">命式を読み解いています</div>
+  <div class="loading-sub"><span class="loading-dots">占術を組み合わせ中</span></div>
+  <div class="loading-progress"><div class="loading-progress-bar" id="progressBar"></div></div>
+</div>
+
 <div class="container">
   <header>
     <div class="logo-jp">運命診断</div>
@@ -176,12 +220,64 @@ footer{text-align:center;margin-top:40px;font-size:14px;color:var(--text3)}
     <div class="section-label">AI総合診断</div>
     <div class="diagnosis-text" id="diagnosisText"></div>
   </div>
-  <footer>Biorhythm × 四柱推命 — Powered by Gemini AI</footer>
+  <footer>
+    Biorhythm × 四柱推命 — Powered by Gemini AI<br>
+    ver 2.0.0
+  </footer>
 </div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
+const APP_VERSION='2.0.0';
+
 function showError(m){const el=document.getElementById('errorMsg');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),8000)}
 
+// === 待機アニメーション ===
+const LOADING_MESSAGES=[
+  '命式を読み解いています',
+  '四柱八字を算出中',
+  '通変星を照合しています',
+  '十二運を計算中',
+  '五行バランスを分析中',
+  'バイオリズムの波長を測定中',
+  '星の配置を組み合わせています',
+  '運命の糸を紡いでいます',
+];
+let loadingTimer=null;
+let progressTimer=null;
+
+function showLoading(){
+  const overlay=document.getElementById('loadingOverlay');
+  overlay.classList.add('active');
+  let msgIdx=0;
+  const textEl=document.getElementById('loadingText');
+  textEl.textContent=LOADING_MESSAGES[0];
+  loadingTimer=setInterval(()=>{
+    msgIdx=(msgIdx+1)%LOADING_MESSAGES.length;
+    textEl.textContent=LOADING_MESSAGES[msgIdx];
+  },2200);
+  // プログレスバー
+  let progress=0;
+  const bar=document.getElementById('progressBar');
+  bar.style.width='0%';
+  progressTimer=setInterval(()=>{
+    progress+=Math.random()*8+2;
+    if(progress>90) progress=90;
+    bar.style.width=progress+'%';
+  },500);
+}
+
+function hideLoading(){
+  const bar=document.getElementById('progressBar');
+  bar.style.width='100%';
+  clearInterval(loadingTimer);
+  clearInterval(progressTimer);
+  setTimeout(()=>{
+    document.getElementById('loadingOverlay').classList.remove('active');
+    bar.style.width='0%';
+  },400);
+}
+
+// === メイン ===
 const ELEM_COLORS={wood:'var(--wood)',fire:'var(--fire)',earth:'var(--earth)',metal:'var(--metal)',water:'var(--water)'};
 const ELEM_JP={wood:'木',fire:'火',earth:'土',metal:'金',water:'水'};
 
@@ -197,16 +293,23 @@ async function runDiagnosis(){
   const targetDate=document.getElementById('targetDate').value||null;
   if(!birthA){showError('一人目の生年月日を入力してください');return}
   const isSolo=!birthB;
-  const payload={nameA,birthA,genderA,timeA,targetDate,mode:isSolo?'solo':'pair'};
+
+  // ユーザーのタイムゾーンを送信
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const payload={nameA,birthA,genderA,timeA,targetDate,timezone:tz,mode:isSolo?'solo':'pair'};
   if(!isSolo){payload.nameB=nameB||'Bさん';payload.birthB=birthB;payload.genderB=genderB;payload.timeB=timeB}
+
   const btn=document.getElementById('diagnoseBtn');btn.disabled=true;btn.classList.add('loading');
   document.getElementById('result').classList.remove('visible');document.getElementById('errorMsg').classList.remove('show');
+  showLoading();
   try{
     const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'サーバーエラー ('+res.status+')')}
     const data=await res.json();
+    hideLoading();
     if(isSolo) displaySolo(data,nameA); else displayPair(data,nameA,payload.nameB);
-  }catch(e){showError('診断に失敗しました: '+e.message)}finally{btn.disabled=false;btn.classList.remove('loading')}
+  }catch(e){hideLoading();showError('診断に失敗しました: '+e.message)}finally{btn.disabled=false;btn.classList.remove('loading')}
 }
 
 function displaySolo(d,name){

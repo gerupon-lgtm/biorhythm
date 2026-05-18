@@ -164,6 +164,23 @@ input::placeholder{color:var(--text3)}
 .date-picker-row .field-group{margin-bottom:0}
 .date-picker-row .picker-icon{right:12px}
 .date-picker-row .optional-hint{font-size:13px;color:var(--text3);margin:0}
+/* ヘルプボタン */
+.help-btn{display:inline-flex;align-items:center;gap:5px;margin-top:12px;padding:6px 16px;border:1px solid rgba(167,139,250,.25);border-radius:20px;background:transparent;color:var(--accent2);font-size:13px;font-family:inherit;cursor:pointer;transition:background .2s,border-color .2s}
+.help-btn:hover{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.45)}
+.help-btn svg{width:14px;height:14px;flex-shrink:0}
+/* モーダル */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(8,8,14,.88);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+.modal-overlay.active{display:flex}
+.modal-box{background:var(--surface2);border:1px solid rgba(255,255,255,.08);border-radius:16px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto;padding:28px 24px;position:relative;animation:modalIn .3s ease}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border:none;border-radius:50%;background:rgba(255,255,255,.06);color:var(--text2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.modal-close:hover{background:rgba(255,255,255,.12)}
+.modal-title{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;margin-bottom:20px;color:var(--text)}
+.term-item{margin-bottom:18px}
+.term-item:last-child{margin-bottom:0}
+.term-name{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.term-name .term-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.term-desc{font-size:14px;color:var(--text2);line-height:1.7;padding-left:16px}
 footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-height:1.8}
 </style>
 </head>
@@ -202,6 +219,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     <div class="logo-jp">運命診断</div>
     <h1>バイオリズム × <em>四柱推命</em></h1>
     <p class="subtitle">四柱八字・通変星・十二運・五行バランスで深く読み解きます</p>
+    <button class="help-btn" onclick="document.getElementById('termModal').classList.add('active')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>用語を知る</button>
     <div class="gogyo-strip">
       <span style="background:var(--wood)"></span>
       <span style="background:var(--fire)"></span>
@@ -266,6 +284,59 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
     ver 2.1.0
   </footer>
+</div>
+
+<!-- 用語解説モーダル -->
+<div class="modal-overlay" id="termModal" onclick="if(event.target===this)this.classList.remove('active')">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('termModal').classList.remove('active')">✕</button>
+    <div class="modal-title">用語ガイド</div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--accent)"></span>四柱推命</div>
+      <div class="term-desc">生年月日と出生時間から「年・月・日・時」の4つの柱を立て、その人の運命や性格を読み解く東洋の占術です。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--accent3)"></span>四柱八字</div>
+      <div class="term-desc">4つの柱それぞれに「天干」と「地支」の2文字が入り、合計8文字になります。この8文字があなたの生まれ持った設計図のようなものです。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--water)"></span>天干と地支</div>
+      <div class="term-desc">天干（甲・乙・丙…）は空の気、地支（子・丑・寅…）は地の気を表します。天干が「表に出る性格」、地支が「内面や環境」と考えるとわかりやすいです。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--fire)"></span>通変星</div>
+      <div class="term-desc">あなたの日干（生まれた日の天干）と他の天干との関係から導かれる10種類の星です。才能や行動パターン、人との関わり方を示します。例えば「食神」なら楽しみ上手、「正官」なら責任感が強い、といった特徴です。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--earth)"></span>十二運</div>
+      <div class="term-desc">人の一生を「胎→養→長生→…→死→墓→絶」の12段階で表したもので、エネルギーの強さを示します。「帝旺」が最も強く、「絶」が最も弱い状態です。日運では「その日のエネルギーレベル」として使います。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--wood)"></span>五行</div>
+      <div class="term-desc">「木・火・土・金・水」の5つの要素です。すべてのものはこの5つに分類され、互いに「生む関係（相生）」と「抑える関係（相剋）」を持ちます。相性診断では二人の五行の関係が重要な指標になります。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--metal)"></span>五行バランス</div>
+      <div class="term-desc">命式の中に木・火・土・金・水がそれぞれいくつ含まれるかの偏りです。バランスが良い人は安定しやすく、偏りがある人はその要素の特徴が強く出る傾向があります。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--accent2)"></span>日運</div>
+      <div class="term-desc">指定した日の干支（天干・地支）があなたの命式にどう影響するかを示します。同じ命式の人でも、日によって巡る通変星や十二運が変わるため、日ごとにコンディションが変化します。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--accent3)"></span>バイオリズム</div>
+      <div class="term-desc">生年月日から計算される3つの波です。身体（23日周期）・感情（28日周期）・知性（33日周期）がそれぞれ独立して上下し、その日の体調・気分・頭の回転に影響するとされています。</div>
+    </div>
+  </div>
 </div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';

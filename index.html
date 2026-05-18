@@ -277,7 +277,9 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     <div id="fortuneArea"></div>
     <div class="section-label" id="compatLabel" style="display:none">相性分析</div>
     <div id="compatArea"></div>
-    <div class="section-label">AI総合診断</div>
+    <div class="section-label" id="baseDiagLabel" style="display:none">基本相性</div>
+    <div class="diagnosis-text" id="baseDiagText" style="display:none"></div>
+    <div class="section-label" id="dailyDiagLabel">AI総合診断</div>
     <div class="diagnosis-text" id="diagnosisText"></div>
   </div>
   <footer>
@@ -471,6 +473,9 @@ function displaySolo(d,name){
   document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:name,fortune:d.fortuneA}],true);
   document.getElementById('compatLabel').style.display='none';
   document.getElementById('compatArea').innerHTML='';
+  document.getElementById('baseDiagLabel').style.display='none';
+  document.getElementById('baseDiagText').style.display='none';
+  document.getElementById('dailyDiagLabel').textContent='AI総合診断';
   document.getElementById('diagnosisText').textContent=d.diagnosis||'';
   showResult();
 }
@@ -484,7 +489,19 @@ function displayPair(d,nA,nB){
   document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:nA,fortune:d.fortuneA},{name:nB,fortune:d.fortuneB}],false);
   document.getElementById('compatLabel').style.display='';
   document.getElementById('compatArea').innerHTML=renderCompat(d);
-  document.getElementById('diagnosisText').textContent=d.diagnosis||'';
+  // 基本相性 + 指定日相性の2セクション表示
+  if(d.baseDiagnosis){
+    document.getElementById('baseDiagLabel').style.display='';
+    document.getElementById('baseDiagText').style.display='';
+    document.getElementById('baseDiagText').textContent=d.baseDiagnosis;
+    document.getElementById('dailyDiagLabel').textContent='指定日の相性'+(d.targetDate?' （'+d.targetDate+'）':'');
+    document.getElementById('diagnosisText').textContent=d.dailyDiagnosis||'';
+  } else {
+    document.getElementById('baseDiagLabel').style.display='none';
+    document.getElementById('baseDiagText').style.display='none';
+    document.getElementById('dailyDiagLabel').textContent='AI総合診断';
+    document.getElementById('diagnosisText').textContent=d.diagnosis||'';
+  }
   showResult();
 }
 

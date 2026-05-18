@@ -352,6 +352,7 @@ const APP_VERSION='2.1.0';
   if(el&&!el.value) el.value=y+'-'+m+'-'+d;
 })();
 
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function showError(m){const el=document.getElementById('errorMsg');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),8000)}
 
 // === 待機アニメーション ===
@@ -462,7 +463,7 @@ async function runDiagnosis(){
 }
 
 function displaySolo(d,name){
-  document.getElementById('resultTitle').textContent=name+'のコンディション'+(d.targetDate?' （'+d.targetDate+'）':'');
+  document.getElementById('resultTitle').innerHTML=esc(name)+'のコンディション'+(d.targetDate?'<br>（'+esc(d.targetDate)+'）':'');
   document.getElementById('scorePct').textContent='点';
   setScore(d.overallScore);setBars(d);
   document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,name);
@@ -475,7 +476,7 @@ function displaySolo(d,name){
 }
 
 function displayPair(d,nA,nB){
-  document.getElementById('resultTitle').textContent=nA+' × '+nB+' の運命相性'+(d.targetDate?' （'+d.targetDate+'）':'');
+  document.getElementById('resultTitle').innerHTML=esc(nA)+' × '+esc(nB)+' の運命相性'+(d.targetDate?'<br>（'+esc(d.targetDate)+'）':'');
   document.getElementById('scorePct').textContent='%';
   setScore(d.overallScore);setBars(d);
   document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,nA)+renderMeishiki(d.meishikiB,nB);

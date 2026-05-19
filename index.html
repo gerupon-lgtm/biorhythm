@@ -187,10 +187,17 @@ input::placeholder{color:var(--text3)}
 .tab-btn:hover{color:var(--text);background:rgba(167,139,250,.08)}
 .tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;box-shadow:0 2px 12px rgba(192,132,252,.3)}
 .tab-pane{margin-top:12px;min-height:300px}
+/* 5運勢レーダー */
+#fortuneRadarWrap{text-align:center;margin:16px 0 4px}
+#radarCanvas{width:260px;height:260px;margin:0 auto;display:block}
 /* 共有ボタン */
 .share-bar{text-align:center;margin-top:24px}
 .share-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;border:1px solid rgba(167,139,250,.25);border-radius:24px;background:transparent;color:var(--accent2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .2s}
 .share-btn:hover{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.45)}
+.share-menu{display:none;margin-top:10px;gap:8px;justify-content:center;flex-wrap:wrap}
+.share-menu.open{display:flex}
+.share-opt{padding:8px 16px;border:1px solid rgba(255,255,255,.1);border-radius:20px;background:var(--surface2);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;transition:all .2s}
+.share-opt:hover{border-color:var(--accent);color:var(--accent2)}
 .share-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 24px;border-radius:24px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
 .share-toast.show{opacity:1}
 /* バイオリズムグラフ */
@@ -299,6 +306,10 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
         <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
       </div>
     </div>
+    <!-- 5運勢レーダーチャート -->
+    <div id="fortuneRadarWrap" style="display:none">
+      <canvas id="radarCanvas" width="300" height="300"></canvas>
+    </div>
     <!-- タブ（スコア直下） -->
     <div class="tab-bar" id="tabBar">
       <button class="tab-btn active" data-tab="daily" onclick="switchTab('daily')">この日</button>
@@ -328,14 +339,19 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
       <canvas id="bioCanvas" width="640" height="260"></canvas>
       <div class="bio-legend" id="bioLegend"></div>
     </div>
-    <!-- 共有ボタン -->
+    <!-- 共有 -->
     <div class="share-bar" id="shareBar">
-      <button class="share-btn" onclick="shareResult()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>結果を共有</button>
+      <button class="share-btn" onclick="toggleShareMenu()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>結果を共有</button>
+      <div class="share-menu" id="shareMenu">
+        <button class="share-opt" onclick="shareResult('x')">X（短縮版）</button>
+        <button class="share-opt" onclick="shareResult('line')">LINE</button>
+        <button class="share-opt" onclick="shareResult('full')">全文コピー</button>
+      </div>
     </div>
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 2.3.0
+    ver 2.4.0
   </footer>
 </div>
 
@@ -394,7 +410,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='2.3.0';
+const APP_VERSION='2.4.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -531,6 +547,13 @@ function displaySolo(d,name){
   document.getElementById('baseDiagText').style.display='none';
   document.getElementById('dailyDiagLabel').textContent='AI診断';
   document.getElementById('diagnosisText').textContent=d.diagnosis||'';
+  // 5運勢レーダー
+  if(d.fiveScores){
+    document.getElementById('fortuneRadarWrap').style.display='';
+    setTimeout(()=>drawRadar(d.fiveScores),200);
+  } else {
+    document.getElementById('fortuneRadarWrap').style.display='none';
+  }
   showResult();
   setTimeout(()=>showRangeTabs(d,name,null),300);
 }
@@ -558,6 +581,7 @@ function displayPair(d,nA,nB){
     document.getElementById('dailyDiagLabel').textContent='AI診断';
     document.getElementById('diagnosisText').textContent=d.diagnosis||'';
   }
+  document.getElementById('fortuneRadarWrap').style.display='none';
   showResult();
   setTimeout(()=>showRangeTabs(d,nA,nB),300);
 }
@@ -809,39 +833,163 @@ function showRangeTabs(d,nameA,nameB){
   }
 }
 
-// ========== 結果共有 ==========
+// ========== 5運勢レーダーチャート ==========
+function drawRadar(scores){
+  const canvas=document.getElementById('radarCanvas');
+  if(!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  const size=260;
+  canvas.width=size*dpr;canvas.height=size*dpr;
+  canvas.style.width=size+'px';canvas.style.height=size+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const cx=size/2,cy=size/2,r=95;
+  const labels=['金運','恋愛運','仕事運','健康運','対人運'];
+  const vals=[scores.money,scores.love,scores.work,scores.health,scores.social];
+  const colors=['#fbbf24','#f472b6','#a78bfa','#4ade80','#60a5fa'];
+  const n=5;
+  const angleStep=(Math.PI*2)/n;
+  const startAngle=-Math.PI/2;
+
+  // 背景グリッド
+  ctx.fillStyle='rgba(22,22,42,.6)';
+  ctx.beginPath();ctx.arc(cx,cy,r+10,0,Math.PI*2);ctx.fill();
+  [20,40,60,80,100].forEach(v=>{
+    const gr=r*(v/100);
+    ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){
+      const a=startAngle+i*angleStep;
+      const x=cx+gr*Math.cos(a),y=cy+gr*Math.sin(a);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  });
+  // 軸線
+  for(let i=0;i<n;i++){
+    const a=startAngle+i*angleStep;
+    ctx.strokeStyle='rgba(255,255,255,.08)';
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.stroke();
+  }
+
+  // データ塗りつぶし
+  ctx.fillStyle='rgba(192,132,252,.15)';ctx.strokeStyle='rgba(192,132,252,.6)';ctx.lineWidth=2;
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const a=startAngle+i*angleStep;
+    const vr=r*(v/100);
+    const x=cx+vr*Math.cos(a),y=cy+vr*Math.sin(a);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.closePath();ctx.fill();ctx.stroke();
+
+  // ドット＋数値＋ラベル
+  vals.forEach((v,i)=>{
+    const a=startAngle+i*angleStep;
+    const vr=r*(v/100);
+    const x=cx+vr*Math.cos(a),y=cy+vr*Math.sin(a);
+    ctx.fillStyle=colors[i];
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+
+    // ラベル（外側）
+    const lx=cx+(r+22)*Math.cos(a),ly=cy+(r+22)*Math.sin(a);
+    ctx.fillStyle=colors[i];ctx.font='bold 13px "Zen Maru Gothic",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(labels[i],lx,ly-8);
+    ctx.fillStyle='rgba(255,255,255,.8)';ctx.font='bold 14px Outfit,sans-serif';
+    ctx.fillText(v,lx,ly+8);
+  });
+}
+
+// ========== 共有機能 ==========
 let lastDiagData=null;
 
-function shareResult(){
-  if(!lastDiagData) return;
-  const d=lastDiagData;
-  let text='';
-  if(d.mode==='solo'){
-    text='【運命診断】'+d._nameA+'のコンディション（'+d.targetDate+'）\n';
-    text+='総合: '+d.overallScore+'点\n';
-    text+='身体: '+d.physical+'% / 感情: '+d.emotional+'% / 知性: '+d.intellectual+'%\n';
-  } else {
-    text='【運命相性診断】'+d._nameA+' × '+d._nameB+'（'+d.targetDate+'）\n';
-    text+='総合相性: '+d.overallScore+'%\n';
-    text+='身体: '+d.physical+'% / 感情: '+d.emotional+'% / 知性: '+d.intellectual+'%\n';
-  }
-  if(d.diagnosis){
-    const short=d.baseDiagnosis||d.diagnosis;
-    text+='\n'+short.substring(0,120)+'…\n';
-  }
-  text+='\n▶ '+location.href;
+function toggleShareMenu(){
+  document.getElementById('shareMenu').classList.toggle('open');
+}
 
-  if(navigator.share){
-    navigator.share({title:'運命診断',text:text}).catch(()=>{});
+function buildShareText(mode){
+  const d=lastDiagData;
+  if(!d) return '';
+  const fs=d.fiveScores;
+  const isSolo=d.mode==='solo';
+
+  // ヘッダー
+  let head='';
+  if(isSolo){
+    head='🔮 '+d._nameA+'の運命診断（'+d.targetDate+'）\n';
+    head+='総合: '+d.overallScore+'点\n';
   } else {
-    navigator.clipboard.writeText(text).then(()=>{
-      const toast=document.getElementById('shareToast');
-      toast.classList.add('show');
-      setTimeout(()=>toast.classList.remove('show'),2000);
-    }).catch(()=>{
-      prompt('以下をコピーしてください:',text);
-    });
+    head='🔮 '+d._nameA+' × '+d._nameB+' の運命相性（'+d.targetDate+'）\n';
+    head+='総合相性: '+d.overallScore+'%\n';
   }
+
+  // バイオリズム
+  const bio='身体'+d.physical+'% / 感情'+d.emotional+'% / 知性'+d.intellectual+'%';
+
+  // 5運勢（solo時のみ）
+  let fortune='';
+  if(fs && isSolo){
+    fortune='金運'+fs.money+' 恋愛'+fs.love+' 仕事'+fs.work+' 健康'+fs.health+' 対人'+fs.social;
+  }
+
+  // 診断文
+  const diag=d.baseDiagnosis||d.diagnosis||'';
+  const dailyDiag=d.dailyDiagnosis||'';
+
+  const url=location.href;
+
+  if(mode==='x'){
+    // X: 140文字制限（URL分を除く約100文字）
+    let t=head;
+    if(fortune) t+=fortune+'\n';
+    t+=diag.substring(0,80)+'…\n'+url;
+    return t;
+  }
+  if(mode==='line'){
+    // LINE: 比較的長文OK（500文字目安）
+    let t=head+bio+'\n';
+    if(fortune) t+=fortune+'\n';
+    t+='\n'+diag.substring(0,300);
+    if(dailyDiag) t+='\n\n'+dailyDiag.substring(0,150);
+    t+='…\n\n▶ '+url;
+    return t;
+  }
+  // full: 全文
+  let t=head+bio+'\n';
+  if(fortune) t+=fortune+'\n';
+  t+='\n'+diag;
+  if(dailyDiag) t+='\n\n'+dailyDiag;
+  t+='\n\n▶ '+url;
+  return t;
+}
+
+function shareResult(mode){
+  if(!lastDiagData) return;
+  const text=buildShareText(mode);
+  document.getElementById('shareMenu').classList.remove('open');
+
+  if(mode==='x'){
+    window.open('https://x.com/intent/tweet?text='+encodeURIComponent(text),'_blank');
+    return;
+  }
+  if(mode==='line'){
+    window.open('https://social-plugins.line.me/lineit/share?text='+encodeURIComponent(text),'_blank');
+    return;
+  }
+  // full → clipboard
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast('クリップボードにコピーしました');
+  }).catch(()=>{
+    prompt('以下をコピーしてください:',text);
+  });
+}
+
+function showToast(msg){
+  const t=document.getElementById('shareToast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
 }
 </script>
 </body>

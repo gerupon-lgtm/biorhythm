@@ -206,6 +206,11 @@ input::placeholder{color:var(--text3)}
 .bio-legend span{display:flex;align-items:center;gap:5px}
 .bio-legend .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 /* 運勢テーブル */
+.range-comment{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:16px;font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px;text-align:center}
+.lucky-badges{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
+.lucky-badge{padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600}
+.lucky-badge.lucky{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:var(--earth)}
+.lucky-badge.unlucky{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:var(--water)}
 .range-table{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:13px}
 .range-table th{font-size:13px;color:var(--text2);font-weight:500;padding:6px 8px;text-align:left}
 .range-table td{background:var(--surface);padding:8px;border:none;color:var(--text)}
@@ -346,12 +351,13 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
         <button class="share-opt" onclick="shareResult('x')">X（短縮版）</button>
         <button class="share-opt" onclick="shareResult('line')">LINE</button>
         <button class="share-opt" onclick="shareResult('full')">全文コピー</button>
+        <button class="share-opt" onclick="downloadShareImage()">📷 画像保存</button>
       </div>
     </div>
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 2.4.0
+    ver 2.5.0
   </footer>
 </div>
 
@@ -410,7 +416,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='2.4.0';
+const APP_VERSION='2.5.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -786,9 +792,27 @@ function drawBioGraph(data,nameA,nameB){
 window.addEventListener('resize',()=>{if(lastBioGraph)drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b)});
 
 // ========== 運勢テーブル生成 ==========
-function renderRangeTable(data,targetDate,isPair){
+function renderRangeTable(data,targetDate,isPair,label){
+  if(!data||data.length===0) return '<p style="text-align:center;color:var(--text2);padding:20px">データがありません</p>';
+
+  // ラッキー/アンラッキーDAYを特定
+  let maxScore=-1,minScore=999,maxDate='',minDate='';
+  data.forEach(r=>{
+    if(r.score>maxScore){maxScore=r.score;maxDate=r.date}
+    if(r.score<minScore){minScore=r.score;minDate=r.date}
+  });
+
+  // コメント生成
+  const avg=Math.round(data.reduce((s,r)=>s+r.score,0)/data.length);
+  const comment=buildRangeComment(label,avg,maxScore,minScore,maxDate,minDate);
+
   const days=['日','月','火','水','木','金','土'];
-  let h='<table class="range-table"><tr><th>日付</th><th>干支</th>';
+  let h='<div class="range-comment">'+comment+'</div>';
+  h+='<div class="lucky-badges">';
+  h+='<span class="lucky-badge lucky">✨ ラッキーDAY: '+maxDate.slice(5)+' ('+days[new Date(maxDate+'T00:00:00').getDay()]+') — '+maxScore+'点</span>';
+  h+='<span class="lucky-badge unlucky">🌧️ 要注意DAY: '+minDate.slice(5)+' ('+days[new Date(minDate+'T00:00:00').getDay()]+') — '+minScore+'点</span>';
+  h+='</div>';
+  h+='<table class="range-table"><tr><th></th><th>日付</th><th>干支</th>';
   if(!isPair) h+='<th>星</th>';
   h+='<th>スコア</th></tr>';
   data.forEach(r=>{
@@ -797,7 +821,11 @@ function renderRangeTable(data,targetDate,isPair){
     const isTarget=r.date===targetDate;
     const sc=r.score;
     const scClass=sc>=70?'score-hi':sc>=45?'score-mid':'score-lo';
+    let icon='';
+    if(r.date===maxDate) icon='✨';
+    else if(r.date===minDate) icon='🌧️';
     h+='<tr'+(isTarget?' class="today-row"':'')+'>';
+    h+='<td style="text-align:center;width:28px">'+icon+'</td>';
     h+='<td>'+r.date.slice(5)+' ('+dow+')</td>';
     h+='<td>'+r.dayPillar+'</td>';
     if(!isPair) h+='<td>'+r.tsuhen+'</td>';
@@ -806,6 +834,24 @@ function renderRangeTable(data,targetDate,isPair){
   });
   h+='</table>';
   return h;
+}
+
+function buildRangeComment(label,avg,max,min,maxDate,minDate){
+  const maxMM=maxDate.slice(5);
+  const minMM=minDate.slice(5);
+  if(label==='week'){
+    if(avg>=65) return '☀️ 全体的に好調な1週間です。'+maxMM+'が特にキラキラ✨ 勢いに乗っていきましょう！';
+    if(avg>=50) return '⛅ まずまずの1週間。'+maxMM+'に運気のピークが来るので、大事な予定はこの日がおすすめ。';
+    if(avg>=35) return '🌥️ 少しおとなしめの1週間。'+minMM+'は無理せずのんびりと。'+maxMM+'を楽しみに乗り切りましょう！';
+    return '☁️ じっくり力を蓄える1週間。'+maxMM+'だけは風向きが変わるので、ここぞの場面に活用を。';
+  }
+  if(label==='month'){
+    if(avg>=65) return '🌈 運気が高い月です！特に'+maxMM+'あたりは絶好調。積極的にチャレンジしてみて。';
+    if(avg>=50) return '🌤️ 安定した1ヶ月。波はありますが'+maxMM+'が最高潮。'+minMM+'前後は少し慎重に。';
+    if(avg>=35) return '🌦️ 浮き沈みのある月。'+maxMM+'に良い波が来ます。'+minMM+'は休息に充てて。';
+    return '🌧️ 準備と内省に向く月。'+maxMM+'に少し光が差すので、そこに合わせて動くのが吉。';
+  }
+  return '';
 }
 
 // ========== 結果表示にタブ追加 ==========
@@ -821,15 +867,27 @@ function showRangeTabs(d,nameA,nameB){
   const monthPane=document.getElementById('paneMonth');
 
   if(d.weeklyData && d.weeklyData.length>0 && weekPane){
-    weekPane.innerHTML=renderRangeTable(d.weeklyData,d.targetDate,isPair);
+    weekPane.innerHTML=renderRangeTable(d.weeklyData,d.targetDate,isPair,'week');
   } else if(weekPane){
     weekPane.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px">週間データを取得できませんでした</p>';
   }
 
   if(d.monthlyData && d.monthlyData.length>0 && monthPane){
-    monthPane.innerHTML=renderRangeTable(d.monthlyData,d.targetDate,isPair);
+    monthPane.innerHTML=renderRangeTable(d.monthlyData,d.targetDate,isPair,'month');
   } else if(monthPane){
     monthPane.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px">月間データを取得できませんでした</p>';
+  }
+
+  // バイオリズムタブのコメント
+  const bioPane=document.getElementById('paneBio');
+  if(d.bioGraph && bioPane){
+    const existing=bioPane.querySelector('.range-comment');
+    if(!existing){
+      const cmt=document.createElement('div');
+      cmt.className='range-comment';
+      cmt.textContent='📊 判定日を中心に前後15日間のバイオリズム波形です。山の頂上付近が好調期、谷底付近が低調期。波のリズムを掴んで計画を立ててみましょう。';
+      bioPane.insertBefore(cmt,bioPane.firstChild);
+    }
   }
 }
 
@@ -901,6 +959,80 @@ function drawRadar(scores){
   });
 }
 
+// ========== OG:Image生成（Canvas→画像） ==========
+function generateShareImage(){
+  return new Promise(resolve=>{
+    const d=lastDiagData;
+    if(!d){resolve(null);return}
+    const W=600,H=400;
+    const c=document.createElement('canvas');
+    c.width=W;c.height=H;
+    const ctx=c.getContext('2d');
+
+    // 背景グラデーション
+    const bg=ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,'#12121e');bg.addColorStop(1,'#1a1a30');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+    // 上部アクセント線
+    const acc=ctx.createLinearGradient(0,0,W,0);
+    acc.addColorStop(0,'#c084fc');acc.addColorStop(1,'#f472b6');
+    ctx.fillStyle=acc;ctx.fillRect(0,0,W,4);
+
+    // タイトル
+    ctx.fillStyle='#e4e4ee';ctx.font='bold 22px sans-serif';ctx.textAlign='center';
+    const isSolo=d.mode==='solo';
+    const title=isSolo?d._nameA+'のコンディション':d._nameA+' × '+d._nameB+' の運命相性';
+    ctx.fillText(title,W/2,44);
+
+    // 日付
+    ctx.fillStyle='#8888a4';ctx.font='14px sans-serif';
+    ctx.fillText(d.targetDate,W/2,68);
+
+    // スコアリング
+    ctx.fillStyle='#c084fc';ctx.font='bold 64px sans-serif';
+    ctx.fillText(d.overallScore,W/2,140);
+    ctx.fillStyle='#8888a4';ctx.font='18px sans-serif';
+    ctx.fillText(isSolo?'点':'%',W/2+40,140);
+
+    // バイオリズムバー
+    const barY=170;
+    ['身体','感情','知性'].forEach((label,i)=>{
+      const val=[d.physical,d.emotional,d.intellectual][i];
+      const colors=['#a78bfa','#f472b6','#fbbf24'];
+      const y=barY+i*28;
+      ctx.fillStyle='#8888a4';ctx.font='13px sans-serif';ctx.textAlign='right';
+      ctx.fillText(label,100,y+4);
+      ctx.fillStyle='#1e1e32';ctx.fillRect(112,y-8,360,14);
+      ctx.fillStyle=colors[i];ctx.fillRect(112,y-8,360*(val/100),14);
+      ctx.fillStyle='#e4e4ee';ctx.font='bold 13px sans-serif';ctx.textAlign='left';
+      ctx.fillText(val+'%',480,y+4);
+    });
+
+    // 5運勢（solo時のみ）
+    if(d.fiveScores && isSolo){
+      const fs=d.fiveScores;
+      const labels=['💰金運','💕恋愛','💼仕事','🏃健康','🤝対人'];
+      const vals=[fs.money,fs.love,fs.work,fs.health,fs.social];
+      const startY=268;
+      ctx.textAlign='center';
+      labels.forEach((l,i)=>{
+        const x=60+i*120;
+        ctx.fillStyle='#8888a4';ctx.font='13px sans-serif';
+        ctx.fillText(l,x,startY);
+        ctx.fillStyle='#e4e4ee';ctx.font='bold 20px sans-serif';
+        ctx.fillText(vals[i],x,startY+26);
+      });
+    }
+
+    // フッター
+    ctx.fillStyle='#5a5a72';ctx.font='12px sans-serif';ctx.textAlign='center';
+    ctx.fillText('運命診断 — バイオリズム × 四柱推命',W/2,H-20);
+
+    c.toBlob(blob=>resolve(blob),'image/png');
+  });
+}
+
 // ========== 共有機能 ==========
 let lastDiagData=null;
 
@@ -914,7 +1046,6 @@ function buildShareText(mode){
   const fs=d.fiveScores;
   const isSolo=d.mode==='solo';
 
-  // ヘッダー
   let head='';
   if(isSolo){
     head='🔮 '+d._nameA+'の運命診断（'+d.targetDate+'）\n';
@@ -924,30 +1055,24 @@ function buildShareText(mode){
     head+='総合相性: '+d.overallScore+'%\n';
   }
 
-  // バイオリズム
   const bio='身体'+d.physical+'% / 感情'+d.emotional+'% / 知性'+d.intellectual+'%';
 
-  // 5運勢（solo時のみ）
   let fortune='';
   if(fs && isSolo){
-    fortune='金運'+fs.money+' 恋愛'+fs.love+' 仕事'+fs.work+' 健康'+fs.health+' 対人'+fs.social;
+    fortune='💰'+fs.money+' 💕'+fs.love+' 💼'+fs.work+' 🏃'+fs.health+' 🤝'+fs.social;
   }
 
-  // 診断文
   const diag=d.baseDiagnosis||d.diagnosis||'';
   const dailyDiag=d.dailyDiagnosis||'';
-
   const url=location.href;
 
   if(mode==='x'){
-    // X: 140文字制限（URL分を除く約100文字）
     let t=head;
     if(fortune) t+=fortune+'\n';
     t+=diag.substring(0,80)+'…\n'+url;
     return t;
   }
   if(mode==='line'){
-    // LINE: 比較的長文OK（500文字目安）
     let t=head+bio+'\n';
     if(fortune) t+=fortune+'\n';
     t+='\n'+diag.substring(0,300);
@@ -955,7 +1080,7 @@ function buildShareText(mode){
     t+='…\n\n▶ '+url;
     return t;
   }
-  // full: 全文
+  // full
   let t=head+bio+'\n';
   if(fortune) t+=fortune+'\n';
   t+='\n'+diag;
@@ -964,7 +1089,7 @@ function buildShareText(mode){
   return t;
 }
 
-function shareResult(mode){
+async function shareResult(mode){
   if(!lastDiagData) return;
   const text=buildShareText(mode);
   document.getElementById('shareMenu').classList.remove('open');
@@ -974,17 +1099,46 @@ function shareResult(mode){
     return;
   }
   if(mode==='line'){
-    // メッセージ送信用のLINEスキームを使用
-    const lineUrl='https://line.me/R/msg/text/?' + encodeURIComponent(text);
+    const lineUrl='https://line.me/R/msg/text/?'+encodeURIComponent(text);
     window.open(lineUrl,'_blank');
     return;
   }
-  // full → clipboard
-  navigator.clipboard.writeText(text).then(()=>{
-    showToast('クリップボードにコピーしました');
-  }).catch(()=>{
-    prompt('以下をコピーしてください:',text);
-  });
+
+  // full → 画像生成してクリップボードに（対応ブラウザ）、非対応ならテキストのみ
+  try {
+    const blob=await generateShareImage();
+    if(blob && navigator.clipboard && navigator.clipboard.write){
+      const textBlob=new Blob([text],{type:'text/plain'});
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/plain':textBlob,
+          'image/png':blob
+        })
+      ]);
+      showToast('テキストと画像をコピーしました');
+    } else {
+      await navigator.clipboard.writeText(text);
+      showToast('クリップボードにコピーしました');
+    }
+  } catch(e){
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('テキストをコピーしました');
+    } catch(e2){
+      prompt('以下をコピーしてください:',text);
+    }
+  }
+}
+
+// 画像を単独でダウンロード
+async function downloadShareImage(){
+  const blob=await generateShareImage();
+  if(!blob) return;
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='fortune-result.png';a.click();
+  URL.revokeObjectURL(url);
+  showToast('画像を保存しました');
 }
 
 function showToast(msg){

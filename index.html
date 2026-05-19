@@ -974,7 +974,8 @@ function shareResult(mode){
     return;
   }
   if(mode==='line'){
-    const lineUrl='https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(location.href)+'&text='+encodeURIComponent(text);
+    // メッセージ送信用のLINEスキームを使用
+    const lineUrl='https://line.me/R/msg/text/?' + encodeURIComponent(text);
     window.open(lineUrl,'_blank');
     return;
   }

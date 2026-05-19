@@ -357,7 +357,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 2.5.0
+    ver 2.6.0
   </footer>
 </div>
 
@@ -416,7 +416,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='2.5.0';
+const APP_VERSION='2.6.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -429,6 +429,15 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+// 日付フォーマット: YYYY-MM-DD → M月d日 or yyyy年M月d日
+function fmtDate(ds,withYear){
+  if(!ds) return '';
+  const p=ds.split('-');
+  const y=parseInt(p[0]),m=parseInt(p[1]),d=parseInt(p[2]);
+  return withYear ? y+'年'+m+'月'+d+'日' : m+'月'+d+'日';
+}
+function fmtDateFull(ds){ return fmtDate(ds,true); }
+function fmtDateShort(ds){ return fmtDate(ds,false); }
 function showError(m){const el=document.getElementById('errorMsg');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),8000)}
 
 // === 待機アニメーション ===
@@ -541,7 +550,7 @@ async function runDiagnosis(){
 function displaySolo(d,name){
   d._nameA=name;
   lastDiagData=d;
-  document.getElementById('resultTitle').innerHTML=esc(name)+'のコンディション'+(d.targetDate?'<br>（'+esc(d.targetDate)+'）':'');
+  document.getElementById('resultTitle').innerHTML=esc(name)+'のコンディション'+(d.targetDate?'<br>（'+esc(fmtDateFull(d.targetDate))+'）':'');
   document.getElementById('scorePct').textContent='点';
   setScore(d.overallScore);setBars(d);
   document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,name);
@@ -567,7 +576,7 @@ function displaySolo(d,name){
 function displayPair(d,nA,nB){
   d._nameA=nA;d._nameB=nB;
   lastDiagData=d;
-  document.getElementById('resultTitle').innerHTML=esc(nA)+' × '+esc(nB)+' の運命相性'+(d.targetDate?'<br>（'+esc(d.targetDate)+'）':'');
+  document.getElementById('resultTitle').innerHTML=esc(nA)+' × '+esc(nB)+' の運命相性'+(d.targetDate?'<br>（'+esc(fmtDateFull(d.targetDate))+'）':'');
   document.getElementById('scorePct').textContent='%';
   setScore(d.overallScore);setBars(d);
   document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,nA)+renderMeishiki(d.meishikiB,nB);
@@ -579,7 +588,7 @@ function displayPair(d,nA,nB){
     document.getElementById('baseDiagLabel').style.display='';
     document.getElementById('baseDiagText').style.display='';
     document.getElementById('baseDiagText').textContent=d.baseDiagnosis;
-    document.getElementById('dailyDiagLabel').textContent='この日の相性'+(d.targetDate?' （'+d.targetDate+'）':'');
+    document.getElementById('dailyDiagLabel').textContent='この日の相性'+(d.targetDate?' （'+fmtDateFull(d.targetDate)+'）':'');
     document.getElementById('diagnosisText').textContent=d.dailyDiagnosis||'';
   } else {
     document.getElementById('baseDiagLabel').style.display='none';
@@ -809,8 +818,8 @@ function renderRangeTable(data,targetDate,isPair,label){
   const days=['日','月','火','水','木','金','土'];
   let h='<div class="range-comment">'+comment+'</div>';
   h+='<div class="lucky-badges">';
-  h+='<span class="lucky-badge lucky">✨ ラッキーDAY: '+maxDate.slice(5)+' ('+days[new Date(maxDate+'T00:00:00').getDay()]+') — '+maxScore+'点</span>';
-  h+='<span class="lucky-badge unlucky">🌧️ 要注意DAY: '+minDate.slice(5)+' ('+days[new Date(minDate+'T00:00:00').getDay()]+') — '+minScore+'点</span>';
+  h+='<span class="lucky-badge lucky">✨ ラッキーDAY: '+fmtDateShort(maxDate)+' ('+days[new Date(maxDate+'T00:00:00').getDay()]+') — '+maxScore+'点</span>';
+  h+='<span class="lucky-badge unlucky">🌧️ 要注意DAY: '+fmtDateShort(minDate)+' ('+days[new Date(minDate+'T00:00:00').getDay()]+') — '+minScore+'点</span>';
   h+='</div>';
   h+='<table class="range-table"><tr><th></th><th>日付</th><th>干支</th>';
   if(!isPair) h+='<th>星</th>';
@@ -826,7 +835,7 @@ function renderRangeTable(data,targetDate,isPair,label){
     else if(r.date===minDate) icon='🌧️';
     h+='<tr'+(isTarget?' class="today-row"':'')+'>';
     h+='<td style="text-align:center;width:28px">'+icon+'</td>';
-    h+='<td>'+r.date.slice(5)+' ('+dow+')</td>';
+    h+='<td>'+fmtDateShort(r.date)+' ('+dow+')</td>';
     h+='<td>'+r.dayPillar+'</td>';
     if(!isPair) h+='<td>'+r.tsuhen+'</td>';
     h+='<td class="score-cell '+scClass+'">'+sc+'</td>';
@@ -837,19 +846,19 @@ function renderRangeTable(data,targetDate,isPair,label){
 }
 
 function buildRangeComment(label,avg,max,min,maxDate,minDate){
-  const maxMM=maxDate.slice(5);
-  const minMM=minDate.slice(5);
+  const maxMD=fmtDateShort(maxDate);
+  const minMD=fmtDateShort(minDate);
   if(label==='week'){
-    if(avg>=65) return '☀️ 全体的に好調な1週間です。'+maxMM+'が特にキラキラ✨ 勢いに乗っていきましょう！';
-    if(avg>=50) return '⛅ まずまずの1週間。'+maxMM+'に運気のピークが来るので、大事な予定はこの日がおすすめ。';
-    if(avg>=35) return '🌥️ 少しおとなしめの1週間。'+minMM+'は無理せずのんびりと。'+maxMM+'を楽しみに乗り切りましょう！';
-    return '☁️ じっくり力を蓄える1週間。'+maxMM+'だけは風向きが変わるので、ここぞの場面に活用を。';
+    if(avg>=65) return '☀️ 全体的に好調な1週間です。'+maxMD+'が特にキラキラ✨ 勢いに乗っていきましょう！';
+    if(avg>=50) return '⛅ まずまずの1週間。'+maxMD+'に運気のピークが来るので、大事な予定はこの日がおすすめ。';
+    if(avg>=35) return '🌥️ 少しおとなしめの1週間。'+minMD+'は無理せずのんびりと。'+maxMD+'を楽しみに乗り切りましょう！';
+    return '☁️ じっくり力を蓄える1週間。'+maxMD+'だけは風向きが変わるので、ここぞの場面に活用を。';
   }
   if(label==='month'){
-    if(avg>=65) return '🌈 運気が高い月です！特に'+maxMM+'あたりは絶好調。積極的にチャレンジしてみて。';
-    if(avg>=50) return '🌤️ 安定した1ヶ月。波はありますが'+maxMM+'が最高潮。'+minMM+'前後は少し慎重に。';
-    if(avg>=35) return '🌦️ 浮き沈みのある月。'+maxMM+'に良い波が来ます。'+minMM+'は休息に充てて。';
-    return '🌧️ 準備と内省に向く月。'+maxMM+'に少し光が差すので、そこに合わせて動くのが吉。';
+    if(avg>=65) return '🌈 運気が高い月です！特に'+maxMD+'あたりは絶好調。積極的にチャレンジしてみて。';
+    if(avg>=50) return '🌤️ 安定した1ヶ月。波はありますが'+maxMD+'が最高潮。'+minMD+'前後は少し慎重に。';
+    if(avg>=35) return '🌦️ 浮き沈みのある月。'+maxMD+'に良い波が来ます。'+minMD+'は休息に充てて。';
+    return '🌧️ 準備と内省に向く月。'+maxMD+'に少し光が差すので、そこに合わせて動くのが吉。';
   }
   return '';
 }
@@ -959,78 +968,151 @@ function drawRadar(scores){
   });
 }
 
-// ========== OG:Image生成（Canvas→画像） ==========
+// ========== OG:Image生成（円グラフ+棒グラフ+レーダーチャート 1枚） ==========
 function generateShareImage(){
   return new Promise(resolve=>{
     const d=lastDiagData;
     if(!d){resolve(null);return}
-    const W=600,H=400;
+    const isSolo=d.mode==='solo';
+    const fs=d.fiveScores;
+    const W=720,H=isSolo&&fs?680:480;
     const c=document.createElement('canvas');
     c.width=W;c.height=H;
     const ctx=c.getContext('2d');
 
-    // 背景グラデーション
+    // 背景
     const bg=ctx.createLinearGradient(0,0,W,H);
-    bg.addColorStop(0,'#12121e');bg.addColorStop(1,'#1a1a30');
+    bg.addColorStop(0,'#0a0a14');bg.addColorStop(1,'#14142a');
     ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-
     // 上部アクセント線
     const acc=ctx.createLinearGradient(0,0,W,0);
     acc.addColorStop(0,'#c084fc');acc.addColorStop(1,'#f472b6');
     ctx.fillStyle=acc;ctx.fillRect(0,0,W,4);
 
     // タイトル
-    ctx.fillStyle='#e4e4ee';ctx.font='bold 22px sans-serif';ctx.textAlign='center';
-    const isSolo=d.mode==='solo';
+    ctx.fillStyle='#e4e4ee';ctx.font='bold 20px sans-serif';ctx.textAlign='center';
     const title=isSolo?d._nameA+'のコンディション':d._nameA+' × '+d._nameB+' の運命相性';
-    ctx.fillText(title,W/2,44);
-
-    // 日付
+    ctx.fillText(title,W/2,36);
     ctx.fillStyle='#8888a4';ctx.font='14px sans-serif';
-    ctx.fillText(d.targetDate,W/2,68);
+    ctx.fillText(fmtDateFull(d.targetDate),W/2,58);
 
-    // スコアリング
-    ctx.fillStyle='#c084fc';ctx.font='bold 64px sans-serif';
-    ctx.fillText(d.overallScore,W/2,140);
-    ctx.fillStyle='#8888a4';ctx.font='18px sans-serif';
-    ctx.fillText(isSolo?'点':'%',W/2+40,140);
+    // ===== 円グラフ（総合スコア）左側 =====
+    const ringCx=130,ringCy=140,ringR=55;
+    // トラック
+    ctx.beginPath();ctx.arc(ringCx,ringCy,ringR,0,Math.PI*2);
+    ctx.strokeStyle='#1e1e32';ctx.lineWidth=10;ctx.stroke();
+    // 値
+    const scoreVal=d.overallScore/100;
+    const startA=-Math.PI/2;
+    const endA=startA+Math.PI*2*scoreVal;
+    const grad=ctx.createLinearGradient(ringCx-ringR,ringCy,ringCx+ringR,ringCy);
+    grad.addColorStop(0,'#c084fc');grad.addColorStop(1,'#f472b6');
+    ctx.beginPath();ctx.arc(ringCx,ringCy,ringR,startA,endA);
+    ctx.strokeStyle=grad;ctx.lineWidth=10;ctx.lineCap='round';ctx.stroke();
+    ctx.lineCap='butt';
+    // 中央数値
+    ctx.fillStyle='#e4e4ee';ctx.font='bold 36px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(d.overallScore,ringCx,ringCy-6);
+    ctx.fillStyle='#8888a4';ctx.font='14px sans-serif';
+    ctx.fillText(isSolo?'点':'%',ringCx,ringCy+20);
 
-    // バイオリズムバー
-    const barY=170;
-    ['身体','感情','知性'].forEach((label,i)=>{
-      const val=[d.physical,d.emotional,d.intellectual][i];
-      const colors=['#a78bfa','#f472b6','#fbbf24'];
-      const y=barY+i*28;
-      ctx.fillStyle='#8888a4';ctx.font='13px sans-serif';ctx.textAlign='right';
-      ctx.fillText(label,100,y+4);
-      ctx.fillStyle='#1e1e32';ctx.fillRect(112,y-8,360,14);
-      ctx.fillStyle=colors[i];ctx.fillRect(112,y-8,360*(val/100),14);
+    // ===== 棒グラフ（バイオリズム）右側 =====
+    const barX=260,barW=380,barH=18;
+    const bLabels=['身体','感情','知性'];
+    const bVals=[d.physical,d.emotional,d.intellectual];
+    const bColors=['#a78bfa','#f472b6','#fbbf24'];
+    bLabels.forEach((label,i)=>{
+      const y=100+i*36;
+      ctx.fillStyle='#8888a4';ctx.font='13px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+      ctx.fillText(label,barX-8,y+barH/2);
+      // トラック
+      ctx.fillStyle='#1e1e32';
+      roundRect(ctx,barX,y,barW,barH,6);ctx.fill();
+      // 値
+      ctx.fillStyle=bColors[i];
+      const vw=barW*(bVals[i]/100);
+      if(vw>0){roundRect(ctx,barX,y,vw,barH,6);ctx.fill();}
       ctx.fillStyle='#e4e4ee';ctx.font='bold 13px sans-serif';ctx.textAlign='left';
-      ctx.fillText(val+'%',480,y+4);
+      ctx.fillText(bVals[i]+'%',barX+barW+8,y+barH/2);
     });
 
-    // 5運勢（solo時のみ）
-    if(d.fiveScores && isSolo){
-      const fs=d.fiveScores;
-      const labels=['💰金運','💕恋愛','💼仕事','🏃健康','🤝対人'];
-      const vals=[fs.money,fs.love,fs.work,fs.health,fs.social];
-      const startY=268;
-      ctx.textAlign='center';
-      labels.forEach((l,i)=>{
-        const x=60+i*120;
-        ctx.fillStyle='#8888a4';ctx.font='13px sans-serif';
-        ctx.fillText(l,x,startY);
-        ctx.fillStyle='#e4e4ee';ctx.font='bold 20px sans-serif';
-        ctx.fillText(vals[i],x,startY+26);
+    // ===== レーダーチャート（5運勢）solo時のみ =====
+    if(isSolo&&fs){
+      const rCx=180,rCy=370,rR=110;
+      const rLabels=['金運','恋愛運','仕事運','健康運','対人運'];
+      const rVals=[fs.money,fs.love,fs.work,fs.health,fs.social];
+      const rColors=['#fbbf24','#f472b6','#a78bfa','#4ade80','#60a5fa'];
+      const n=5,aStep=(Math.PI*2)/n,sA=-Math.PI/2;
+
+      // 背景円
+      ctx.fillStyle='rgba(30,30,50,.5)';
+      ctx.beginPath();ctx.arc(rCx,rCy,rR+5,0,Math.PI*2);ctx.fill();
+
+      // グリッド
+      [25,50,75,100].forEach(v=>{
+        const gr=rR*(v/100);
+        ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+        ctx.beginPath();
+        for(let i=0;i<=n;i++){
+          const a=sA+i*aStep;
+          const x=rCx+gr*Math.cos(a),y=rCy+gr*Math.sin(a);
+          i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+        }ctx.stroke();
+      });
+
+      // データ
+      ctx.fillStyle='rgba(192,132,252,.15)';ctx.strokeStyle='rgba(192,132,252,.6)';ctx.lineWidth=2;
+      ctx.beginPath();
+      rVals.forEach((v,i)=>{
+        const a=sA+i*aStep;
+        const x=rCx+rR*(v/100)*Math.cos(a),y=rCy+rR*(v/100)*Math.sin(a);
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      });ctx.closePath();ctx.fill();ctx.stroke();
+
+      // ラベル
+      rVals.forEach((v,i)=>{
+        const a=sA+i*aStep;
+        const lx=rCx+(rR+24)*Math.cos(a),ly=rCy+(rR+24)*Math.sin(a);
+        ctx.fillStyle=rColors[i];ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(rLabels[i],lx,ly-8);
+        ctx.fillStyle='#e4e4ee';ctx.font='bold 15px sans-serif';
+        ctx.fillText(v,lx,ly+10);
+      });
+
+      // 右側に5運勢のバー表示
+      const fBarX=370,fBarW=270,fBarH=14;
+      ctx.fillStyle='#e4e4ee';ctx.font='bold 14px sans-serif';ctx.textAlign='left';
+      ctx.fillText('各運勢スコア',fBarX,280);
+      rLabels.forEach((label,i)=>{
+        const y=300+i*32;
+        ctx.fillStyle='#8888a4';ctx.font='13px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+        ctx.fillText(label,fBarX+50,y+fBarH/2);
+        ctx.fillStyle='#1e1e32';
+        roundRect(ctx,fBarX+58,y,fBarW-58,fBarH,5);ctx.fill();
+        ctx.fillStyle=rColors[i];
+        const vw=(fBarW-58)*(rVals[i]/100);
+        if(vw>0){roundRect(ctx,fBarX+58,y,vw,fBarH,5);ctx.fill();}
+        ctx.fillStyle='#e4e4ee';ctx.font='bold 13px sans-serif';ctx.textAlign='left';
+        ctx.fillText(rVals[i],fBarX+fBarW+6,y+fBarH/2);
       });
     }
 
     // フッター
-    ctx.fillStyle='#5a5a72';ctx.font='12px sans-serif';ctx.textAlign='center';
-    ctx.fillText('運命診断 — バイオリズム × 四柱推命',W/2,H-20);
+    ctx.fillStyle='#5a5a72';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.fillText('運命診断 — バイオリズム × 四柱推命  ver '+APP_VERSION,W/2,H-14);
 
     c.toBlob(blob=>resolve(blob),'image/png');
   });
+}
+
+// Canvas角丸rect
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
 }
 
 // ========== 共有機能 ==========
@@ -1048,10 +1130,10 @@ function buildShareText(mode){
 
   let head='';
   if(isSolo){
-    head='🔮 '+d._nameA+'の運命診断（'+d.targetDate+'）\n';
+    head='🔮 '+d._nameA+'の運命診断（'+fmtDateFull(d.targetDate)+'）\n';
     head+='総合: '+d.overallScore+'点\n';
   } else {
-    head='🔮 '+d._nameA+' × '+d._nameB+' の運命相性（'+d.targetDate+'）\n';
+    head='🔮 '+d._nameA+' × '+d._nameB+' の運命相性（'+fmtDateFull(d.targetDate)+'）\n';
     head+='総合相性: '+d.overallScore+'%\n';
   }
 
@@ -1104,29 +1186,42 @@ async function shareResult(mode){
     return;
   }
 
-  // full → 画像生成してクリップボードに（対応ブラウザ）、非対応ならテキストのみ
+  // full → スマホならWeb Share APIで画像付き共有、PCならクリップボード
+  const blob=await generateShareImage();
+
+  // スマホ: Web Share API（画像+テキスト）
+  if(navigator.share && blob){
+    try {
+      const file=new File([blob],'fortune-result.png',{type:'image/png'});
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({
+          title:'運命診断',
+          text:text,
+          files:[file]
+        });
+        return;
+      }
+    } catch(e){
+      // ユーザーがキャンセルした場合は何もしない
+      if(e.name==='AbortError') return;
+    }
+  }
+
+  // PC: クリップボードに画像+テキスト
   try {
-    const blob=await generateShareImage();
     if(blob && navigator.clipboard && navigator.clipboard.write){
       const textBlob=new Blob([text],{type:'text/plain'});
       await navigator.clipboard.write([
-        new ClipboardItem({
-          'text/plain':textBlob,
-          'image/png':blob
-        })
+        new ClipboardItem({'text/plain':textBlob,'image/png':blob})
       ]);
       showToast('テキストと画像をコピーしました');
     } else {
       await navigator.clipboard.writeText(text);
-      showToast('クリップボードにコピーしました');
+      showToast('テキストをコピーしました');
     }
   } catch(e){
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast('テキストをコピーしました');
-    } catch(e2){
-      prompt('以下をコピーしてください:',text);
-    }
+    try { await navigator.clipboard.writeText(text); showToast('テキストをコピーしました'); }
+    catch(e2){ prompt('以下をコピーしてください:',text); }
   }
 }
 

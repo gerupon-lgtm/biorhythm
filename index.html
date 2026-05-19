@@ -510,6 +510,10 @@ async function runDiagnosis(){
     const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'サーバーエラー ('+res.status+')')}
     const data=await res.json();
+    console.log('API response keys:', Object.keys(data));
+    console.log('weeklyData:', data.weeklyData ? data.weeklyData.length + ' items' : 'missing');
+    console.log('monthlyData:', data.monthlyData ? data.monthlyData.length + ' items' : 'missing');
+    console.log('bioGraph:', data.bioGraph ? 'labels=' + data.bioGraph.labels.length : 'missing');
     hideLoading();
     if(isSolo) displaySolo(data,nameA); else displayPair(data,nameA,payload.nameB);
   }catch(e){hideLoading();showError('診断に失敗しました: '+e.message)}finally{btn.disabled=false;btn.classList.remove('loading')}

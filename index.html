@@ -530,8 +530,8 @@ function displaySolo(d,name){
   document.getElementById('baseDiagText').style.display='none';
   document.getElementById('dailyDiagLabel').textContent='AI診断';
   document.getElementById('diagnosisText').textContent=d.diagnosis||'';
-  showRangeTabs(d,name,null);
   showResult();
+  setTimeout(()=>showRangeTabs(d,name,null),300);
 }
 
 function displayPair(d,nA,nB){
@@ -557,8 +557,8 @@ function displayPair(d,nA,nB){
     document.getElementById('dailyDiagLabel').textContent='AI診断';
     document.getElementById('diagnosisText').textContent=d.diagnosis||'';
   }
-  showRangeTabs(d,nA,nB);
   showResult();
+  setTimeout(()=>showRangeTabs(d,nA,nB),300);
 }
 
 function renderMeishiki(m,name){
@@ -649,11 +649,11 @@ function animateNumber(id,t){const el=document.getElementById(id);let c=0;const 
 // ========== タブ切り替え ==========
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-  document.getElementById('paneDaily').style.display=tab==='daily'?'':'none';
-  document.getElementById('paneWeek').style.display=tab==='week'?'':'none';
-  document.getElementById('paneMonth').style.display=tab==='month'?'':'none';
-  document.getElementById('paneBio').style.display=tab==='bio'?'':'none';
-  if(tab==='bio'&&lastBioGraph) setTimeout(()=>drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b),50);
+  document.getElementById('paneDaily').style.display=tab==='daily'?'block':'none';
+  document.getElementById('paneWeek').style.display=tab==='week'?'block':'none';
+  document.getElementById('paneMonth').style.display=tab==='month'?'block':'none';
+  document.getElementById('paneBio').style.display=tab==='bio'?'block':'none';
+  if(tab==='bio'&&lastBioGraph) setTimeout(()=>drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b),100);
 }
 
 // ========== バイオリズムグラフ描画 ==========
@@ -663,8 +663,15 @@ let lastBioNames=null;
 function drawBioGraph(data,nameA,nameB){
   lastBioGraph=data;lastBioNames={a:nameA,b:nameB};
   const canvas=document.getElementById('bioCanvas');
+  if(!canvas) return;
+  const parent=canvas.parentElement;
+  let w=parent.offsetWidth||parent.clientWidth||640;
+  if(w<100){
+    // まだ表示されていない→再試行
+    setTimeout(()=>drawBioGraph(data,nameA,nameB),200);
+    return;
+  }
   const dpr=window.devicePixelRatio||1;
-  const w=canvas.parentElement.offsetWidth;
   const h=260;
   canvas.width=w*dpr;canvas.height=h*dpr;
   canvas.style.width=w+'px';canvas.style.height=h+'px';
@@ -779,14 +786,20 @@ function showRangeTabs(d,nameA,nameB){
     lastBioNames={a:nameA,b:nameB};
   }
 
-  if(d.weeklyData){
-    document.getElementById('paneWeek').innerHTML=renderRangeTable(d.weeklyData,d.targetDate,isPair);
-  }
-  if(d.monthlyData){
-    document.getElementById('paneMonth').innerHTML=renderRangeTable(d.monthlyData,d.targetDate,isPair);
+  const weekPane=document.getElementById('paneWeek');
+  const monthPane=document.getElementById('paneMonth');
+
+  if(d.weeklyData && d.weeklyData.length>0 && weekPane){
+    weekPane.innerHTML=renderRangeTable(d.weeklyData,d.targetDate,isPair);
+  } else if(weekPane){
+    weekPane.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px">週間データを取得できませんでした</p>';
   }
 
-  switchTab('daily');
+  if(d.monthlyData && d.monthlyData.length>0 && monthPane){
+    monthPane.innerHTML=renderRangeTable(d.monthlyData,d.targetDate,isPair);
+  } else if(monthPane){
+    monthPane.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px">月間データを取得できませんでした</p>';
+  }
 }
 
 // ========== 結果共有 ==========

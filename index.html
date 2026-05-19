@@ -181,6 +181,41 @@ input::placeholder{color:var(--text3)}
 .term-name{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .term-name .term-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .term-desc{font-size:14px;color:var(--text2);line-height:1.7;padding-left:16px}
+/* タブUI */
+.tab-bar{display:flex;gap:4px;margin:20px 0 0;background:var(--surface2);border-radius:12px;padding:4px;border:1px solid rgba(167,139,250,.15)}
+.tab-btn{flex:1;padding:12px 0;border:none;border-radius:9px;background:transparent;color:var(--text2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:.5px}
+.tab-btn:hover{color:var(--text);background:rgba(167,139,250,.08)}
+.tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;box-shadow:0 2px 12px rgba(192,132,252,.3)}
+.tab-pane{margin-top:12px;min-height:300px}
+/* 5運勢レーダー */
+#fortuneRadarWrap{text-align:center;margin:16px 0 4px}
+#radarCanvas{width:260px;height:260px;margin:0 auto;display:block}
+/* 共有ボタン */
+.share-bar{text-align:center;margin-top:24px}
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;border:1px solid rgba(167,139,250,.25);border-radius:24px;background:transparent;color:var(--accent2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .2s}
+.share-btn:hover{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.45)}
+.share-menu{display:none;margin-top:10px;gap:8px;justify-content:center;flex-wrap:wrap}
+.share-menu.open{display:flex}
+.share-opt{padding:8px 16px;border:1px solid rgba(255,255,255,.1);border-radius:20px;background:var(--surface2);color:var(--text);font-size:13px;font-family:inherit;cursor:pointer;transition:all .2s}
+.share-opt:hover{border-color:var(--accent);color:var(--accent2)}
+.share-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 24px;border-radius:24px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.share-toast.show{opacity:1}
+/* バイオリズムグラフ */
+#bioCanvas{width:100%;height:auto;border-radius:10px;background:var(--surface);border:1px solid rgba(255,255,255,.06)}
+.bio-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:13px;justify-content:center}
+.bio-legend span{display:flex;align-items:center;gap:5px}
+.bio-legend .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* 運勢テーブル */
+.range-table{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:13px}
+.range-table th{font-size:13px;color:var(--text2);font-weight:500;padding:6px 8px;text-align:left}
+.range-table td{background:var(--surface);padding:8px;border:none;color:var(--text)}
+.range-table tr td:first-child{border-radius:6px 0 0 6px}
+.range-table tr td:last-child{border-radius:0 6px 6px 0}
+.range-table .score-cell{font-weight:700;font-family:'Outfit',sans-serif;text-align:center;width:50px}
+.range-table .score-hi{color:var(--wood)}
+.range-table .score-mid{color:var(--earth)}
+.range-table .score-lo{color:var(--fire)}
+.range-table .today-row td{border-top:2px solid var(--accent);border-bottom:2px solid var(--accent)}
 footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-height:1.8}
 </style>
 </head>
@@ -271,20 +306,52 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
         <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
       </div>
     </div>
-    <div class="section-label">命式</div>
-    <div id="meishikiArea"></div>
-    <div class="section-label" id="fortuneLabel" style="display:none">この日の日運</div>
-    <div id="fortuneArea"></div>
-    <div class="section-label" id="compatLabel" style="display:none">相性分析</div>
-    <div id="compatArea"></div>
-    <div class="section-label" id="baseDiagLabel" style="display:none">基本相性</div>
-    <div class="diagnosis-text" id="baseDiagText" style="display:none"></div>
-    <div class="section-label" id="dailyDiagLabel">AI総合診断</div>
-    <div class="diagnosis-text" id="diagnosisText"></div>
+    <!-- 5運勢レーダーチャート -->
+    <div id="fortuneRadarWrap" style="display:none">
+      <canvas id="radarCanvas" width="300" height="300"></canvas>
+    </div>
+    <!-- タブ（スコア直下） -->
+    <div class="tab-bar" id="tabBar">
+      <button class="tab-btn active" data-tab="daily" onclick="switchTab('daily')">この日</button>
+      <button class="tab-btn" data-tab="week" onclick="switchTab('week')">この週</button>
+      <button class="tab-btn" data-tab="month" onclick="switchTab('month')">この月</button>
+      <button class="tab-btn" data-tab="bio" onclick="switchTab('bio')">バイオリズム</button>
+    </div>
+    <!-- この日 -->
+    <div class="tab-pane" id="paneDaily">
+      <div class="section-label">命式</div>
+      <div id="meishikiArea"></div>
+      <div class="section-label" id="fortuneLabel" style="display:none">この日の運気</div>
+      <div id="fortuneArea"></div>
+      <div class="section-label" id="compatLabel" style="display:none">相性分析</div>
+      <div id="compatArea"></div>
+      <div class="section-label" id="baseDiagLabel" style="display:none">基本相性</div>
+      <div class="diagnosis-text" id="baseDiagText" style="display:none"></div>
+      <div class="section-label" id="dailyDiagLabel">AI診断</div>
+      <div class="diagnosis-text" id="diagnosisText"></div>
+    </div>
+    <!-- この週 -->
+    <div class="tab-pane" id="paneWeek" style="display:none"></div>
+    <!-- この月 -->
+    <div class="tab-pane" id="paneMonth" style="display:none"></div>
+    <!-- バイオリズム -->
+    <div class="tab-pane" id="paneBio" style="display:none">
+      <canvas id="bioCanvas" width="640" height="260"></canvas>
+      <div class="bio-legend" id="bioLegend"></div>
+    </div>
+    <!-- 共有 -->
+    <div class="share-bar" id="shareBar">
+      <button class="share-btn" onclick="toggleShareMenu()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>結果を共有</button>
+      <div class="share-menu" id="shareMenu">
+        <button class="share-opt" onclick="shareResult('x')">X（短縮版）</button>
+        <button class="share-opt" onclick="shareResult('line')">LINE</button>
+        <button class="share-opt" onclick="shareResult('full')">全文コピー</button>
+      </div>
+    </div>
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 2.1.0
+    ver 2.4.0
   </footer>
 </div>
 
@@ -340,19 +407,20 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     </div>
   </div>
 </div>
+<div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='2.1.0';
+const APP_VERSION='2.4.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
-(function(){
+document.addEventListener('DOMContentLoaded',function(){
   const now=new Date();
   const y=now.getFullYear()-20;
   const m=String(now.getMonth()+1).padStart(2,'0');
   const d=String(now.getDate()).padStart(2,'0');
   const el=document.getElementById('birthA');
   if(el&&!el.value) el.value=y+'-'+m+'-'+d;
-})();
+});
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function showError(m){const el=document.getElementById('errorMsg');el.textContent=m;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),8000)}
@@ -465,6 +533,8 @@ async function runDiagnosis(){
 }
 
 function displaySolo(d,name){
+  d._nameA=name;
+  lastDiagData=d;
   document.getElementById('resultTitle').innerHTML=esc(name)+'のコンディション'+(d.targetDate?'<br>（'+esc(d.targetDate)+'）':'');
   document.getElementById('scorePct').textContent='点';
   setScore(d.overallScore);setBars(d);
@@ -475,12 +545,22 @@ function displaySolo(d,name){
   document.getElementById('compatArea').innerHTML='';
   document.getElementById('baseDiagLabel').style.display='none';
   document.getElementById('baseDiagText').style.display='none';
-  document.getElementById('dailyDiagLabel').textContent='AI総合診断';
+  document.getElementById('dailyDiagLabel').textContent='AI診断';
   document.getElementById('diagnosisText').textContent=d.diagnosis||'';
+  // 5運勢レーダー
+  if(d.fiveScores){
+    document.getElementById('fortuneRadarWrap').style.display='';
+    setTimeout(()=>drawRadar(d.fiveScores),200);
+  } else {
+    document.getElementById('fortuneRadarWrap').style.display='none';
+  }
   showResult();
+  setTimeout(()=>showRangeTabs(d,name,null),300);
 }
 
 function displayPair(d,nA,nB){
+  d._nameA=nA;d._nameB=nB;
+  lastDiagData=d;
   document.getElementById('resultTitle').innerHTML=esc(nA)+' × '+esc(nB)+' の運命相性'+(d.targetDate?'<br>（'+esc(d.targetDate)+'）':'');
   document.getElementById('scorePct').textContent='%';
   setScore(d.overallScore);setBars(d);
@@ -489,20 +569,21 @@ function displayPair(d,nA,nB){
   document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:nA,fortune:d.fortuneA},{name:nB,fortune:d.fortuneB}],false);
   document.getElementById('compatLabel').style.display='';
   document.getElementById('compatArea').innerHTML=renderCompat(d);
-  // 基本相性 + 指定日相性の2セクション表示
   if(d.baseDiagnosis){
     document.getElementById('baseDiagLabel').style.display='';
     document.getElementById('baseDiagText').style.display='';
     document.getElementById('baseDiagText').textContent=d.baseDiagnosis;
-    document.getElementById('dailyDiagLabel').textContent='指定日の相性'+(d.targetDate?' （'+d.targetDate+'）':'');
+    document.getElementById('dailyDiagLabel').textContent='この日の相性'+(d.targetDate?' （'+d.targetDate+'）':'');
     document.getElementById('diagnosisText').textContent=d.dailyDiagnosis||'';
   } else {
     document.getElementById('baseDiagLabel').style.display='none';
     document.getElementById('baseDiagText').style.display='none';
-    document.getElementById('dailyDiagLabel').textContent='AI総合診断';
+    document.getElementById('dailyDiagLabel').textContent='AI診断';
     document.getElementById('diagnosisText').textContent=d.diagnosis||'';
   }
+  document.getElementById('fortuneRadarWrap').style.display='none';
   showResult();
+  setTimeout(()=>showRangeTabs(d,nA,nB),300);
 }
 
 function renderMeishiki(m,name){
@@ -589,6 +670,328 @@ function setBars(d){
 function showResult(){const r=document.getElementById('result');r.classList.add('visible');r.scrollIntoView({behavior:'smooth',block:'start'})}
 function setBar(b,v,p){setTimeout(()=>{document.getElementById(b).style.width=p+'%';document.getElementById(v).textContent=p+'%'},300)}
 function animateNumber(id,t){const el=document.getElementById(id);let c=0;const s=Math.max(1,Math.floor(t/40)),iv=setInterval(()=>{c+=s;if(c>=t){c=t;clearInterval(iv)}el.textContent=c},30)}
+
+// ========== タブ切り替え ==========
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.getElementById('paneDaily').style.display=tab==='daily'?'block':'none';
+  document.getElementById('paneWeek').style.display=tab==='week'?'block':'none';
+  document.getElementById('paneMonth').style.display=tab==='month'?'block':'none';
+  document.getElementById('paneBio').style.display=tab==='bio'?'block':'none';
+
+  // タブバーが画面上部に来るようにスクロール
+  requestAnimationFrame(()=>{
+    document.getElementById('tabBar').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+
+  if(tab==='bio'&&lastBioGraph) setTimeout(()=>drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b),150);
+}
+
+// ========== バイオリズムグラフ描画 ==========
+let lastBioGraph=null;
+let lastBioNames=null;
+
+function drawBioGraph(data,nameA,nameB){
+  lastBioGraph=data;lastBioNames={a:nameA,b:nameB};
+  const canvas=document.getElementById('bioCanvas');
+  if(!canvas) return;
+  const parent=canvas.parentElement;
+  let w=parent.offsetWidth||parent.clientWidth||640;
+  if(w<100){
+    // まだ表示されていない→再試行
+    setTimeout(()=>drawBioGraph(data,nameA,nameB),200);
+    return;
+  }
+  const dpr=window.devicePixelRatio||1;
+  const h=260;
+  canvas.width=w*dpr;canvas.height=h*dpr;
+  canvas.style.width=w+'px';canvas.style.height=h+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const pad={top:20,right:16,bottom:36,left:36};
+  const gw=w-pad.left-pad.right,gh=h-pad.top-pad.bottom;
+  const n=data.labels.length;
+  const step=gw/(n-1);
+
+  // 背景
+  ctx.fillStyle='rgba(22,22,42,.9)';
+  ctx.fillRect(0,0,w,h);
+
+  // グリッド
+  ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+  [0,25,50,75,100].forEach(v=>{
+    const y=pad.top+gh-(v/100)*gh;
+    ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(w-pad.right,y);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.3)';ctx.font='11px Outfit';ctx.textAlign='right';
+    ctx.fillText(v+'%',pad.left-6,y+4);
+  });
+
+  // 判定日ライン（中央）
+  const midIdx=Math.floor(n/2);
+  const midX=pad.left+midIdx*step;
+  ctx.strokeStyle='rgba(192,132,252,.3)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(midX,pad.top);ctx.lineTo(midX,h-pad.bottom);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 日付ラベル
+  ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='11px Outfit';ctx.textAlign='center';
+  const labelStep=Math.max(1,Math.floor(n/7));
+  for(let i=0;i<n;i+=labelStep){
+    const x=pad.left+i*step;
+    const lbl=data.labels[i].slice(5);// MM-DD
+    ctx.fillText(lbl,x,h-pad.bottom+16);
+  }
+
+  const colors={physical:'#a78bfa',emotional:'#f472b6',intellectual:'#fbbf24'};
+  const colorsB={physical:'#6ee7b7',emotional:'#fb7185',intellectual:'#93c5fd'};
+
+  function drawLine(vals,color,dashed){
+    ctx.strokeStyle=color;ctx.lineWidth=2;
+    if(dashed) ctx.setLineDash([6,4]); else ctx.setLineDash([]);
+    ctx.beginPath();
+    vals.forEach((v,i)=>{
+      const x=pad.left+i*step,y=pad.top+gh-(v/100)*gh;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();ctx.setLineDash([]);
+  }
+
+  // A の線
+  drawLine(data.a.physical,colors.physical,false);
+  drawLine(data.a.emotional,colors.emotional,false);
+  drawLine(data.a.intellectual,colors.intellectual,false);
+
+  // B の線（ある場合、破線）
+  if(data.b){
+    drawLine(data.b.physical,colorsB.physical,true);
+    drawLine(data.b.emotional,colorsB.emotional,true);
+    drawLine(data.b.intellectual,colorsB.intellectual,true);
+  }
+
+  // 凡例
+  const legend=document.getElementById('bioLegend');
+  let lh='<span><span class="dot" style="background:#a78bfa"></span>身体'+(nameA?'('+nameA+')':'')+'</span>';
+  lh+='<span><span class="dot" style="background:#f472b6"></span>感情</span>';
+  lh+='<span><span class="dot" style="background:#fbbf24"></span>知性</span>';
+  if(data.b&&nameB){
+    lh+='<span><span class="dot" style="background:#6ee7b7;border:1px dashed #6ee7b7"></span>身体('+nameB+')</span>';
+    lh+='<span><span class="dot" style="background:#fb7185;border:1px dashed #fb7185"></span>感情</span>';
+    lh+='<span><span class="dot" style="background:#93c5fd;border:1px dashed #93c5fd"></span>知性</span>';
+  }
+  legend.innerHTML=lh;
+}
+
+// リサイズ対応
+window.addEventListener('resize',()=>{if(lastBioGraph)drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b)});
+
+// ========== 運勢テーブル生成 ==========
+function renderRangeTable(data,targetDate,isPair){
+  const days=['日','月','火','水','木','金','土'];
+  let h='<table class="range-table"><tr><th>日付</th><th>干支</th>';
+  if(!isPair) h+='<th>星</th>';
+  h+='<th>スコア</th></tr>';
+  data.forEach(r=>{
+    const d=new Date(r.date+'T00:00:00');
+    const dow=days[d.getDay()];
+    const isTarget=r.date===targetDate;
+    const sc=r.score;
+    const scClass=sc>=70?'score-hi':sc>=45?'score-mid':'score-lo';
+    h+='<tr'+(isTarget?' class="today-row"':'')+'>';
+    h+='<td>'+r.date.slice(5)+' ('+dow+')</td>';
+    h+='<td>'+r.dayPillar+'</td>';
+    if(!isPair) h+='<td>'+r.tsuhen+'</td>';
+    h+='<td class="score-cell '+scClass+'">'+sc+'</td>';
+    h+='</tr>';
+  });
+  h+='</table>';
+  return h;
+}
+
+// ========== 結果表示にタブ追加 ==========
+function showRangeTabs(d,nameA,nameB){
+  const isPair=d.mode==='pair';
+
+  if(d.bioGraph){
+    lastBioGraph=d.bioGraph;
+    lastBioNames={a:nameA,b:nameB};
+  }
+
+  const weekPane=document.getElementById('paneWeek');
+  const monthPane=document.getElementById('paneMonth');
+
+  if(d.weeklyData && d.weeklyData.length>0 && weekPane){
+    weekPane.innerHTML=renderRangeTable(d.weeklyData,d.targetDate,isPair);
+  } else if(weekPane){
+    weekPane.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px">週間データを取得できませんでした</p>';
+  }
+
+  if(d.monthlyData && d.monthlyData.length>0 && monthPane){
+    monthPane.innerHTML=renderRangeTable(d.monthlyData,d.targetDate,isPair);
+  } else if(monthPane){
+    monthPane.innerHTML='<p style="text-align:center;color:var(--text2);padding:20px">月間データを取得できませんでした</p>';
+  }
+}
+
+// ========== 5運勢レーダーチャート ==========
+function drawRadar(scores){
+  const canvas=document.getElementById('radarCanvas');
+  if(!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  const size=260;
+  canvas.width=size*dpr;canvas.height=size*dpr;
+  canvas.style.width=size+'px';canvas.style.height=size+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const cx=size/2,cy=size/2,r=95;
+  const labels=['金運','恋愛運','仕事運','健康運','対人運'];
+  const vals=[scores.money,scores.love,scores.work,scores.health,scores.social];
+  const colors=['#fbbf24','#f472b6','#a78bfa','#4ade80','#60a5fa'];
+  const n=5;
+  const angleStep=(Math.PI*2)/n;
+  const startAngle=-Math.PI/2;
+
+  // 背景グリッド
+  ctx.fillStyle='rgba(22,22,42,.6)';
+  ctx.beginPath();ctx.arc(cx,cy,r+10,0,Math.PI*2);ctx.fill();
+  [20,40,60,80,100].forEach(v=>{
+    const gr=r*(v/100);
+    ctx.strokeStyle='rgba(255,255,255,.06)';ctx.lineWidth=1;
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){
+      const a=startAngle+i*angleStep;
+      const x=cx+gr*Math.cos(a),y=cy+gr*Math.sin(a);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  });
+  // 軸線
+  for(let i=0;i<n;i++){
+    const a=startAngle+i*angleStep;
+    ctx.strokeStyle='rgba(255,255,255,.08)';
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.stroke();
+  }
+
+  // データ塗りつぶし
+  ctx.fillStyle='rgba(192,132,252,.15)';ctx.strokeStyle='rgba(192,132,252,.6)';ctx.lineWidth=2;
+  ctx.beginPath();
+  vals.forEach((v,i)=>{
+    const a=startAngle+i*angleStep;
+    const vr=r*(v/100);
+    const x=cx+vr*Math.cos(a),y=cy+vr*Math.sin(a);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.closePath();ctx.fill();ctx.stroke();
+
+  // ドット＋数値＋ラベル
+  vals.forEach((v,i)=>{
+    const a=startAngle+i*angleStep;
+    const vr=r*(v/100);
+    const x=cx+vr*Math.cos(a),y=cy+vr*Math.sin(a);
+    ctx.fillStyle=colors[i];
+    ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();
+
+    // ラベル（外側）
+    const lx=cx+(r+22)*Math.cos(a),ly=cy+(r+22)*Math.sin(a);
+    ctx.fillStyle=colors[i];ctx.font='bold 13px "Zen Maru Gothic",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(labels[i],lx,ly-8);
+    ctx.fillStyle='rgba(255,255,255,.8)';ctx.font='bold 14px Outfit,sans-serif';
+    ctx.fillText(v,lx,ly+8);
+  });
+}
+
+// ========== 共有機能 ==========
+let lastDiagData=null;
+
+function toggleShareMenu(){
+  document.getElementById('shareMenu').classList.toggle('open');
+}
+
+function buildShareText(mode){
+  const d=lastDiagData;
+  if(!d) return '';
+  const fs=d.fiveScores;
+  const isSolo=d.mode==='solo';
+
+  // ヘッダー
+  let head='';
+  if(isSolo){
+    head='🔮 '+d._nameA+'の運命診断（'+d.targetDate+'）\n';
+    head+='総合: '+d.overallScore+'点\n';
+  } else {
+    head='🔮 '+d._nameA+' × '+d._nameB+' の運命相性（'+d.targetDate+'）\n';
+    head+='総合相性: '+d.overallScore+'%\n';
+  }
+
+  // バイオリズム
+  const bio='身体'+d.physical+'% / 感情'+d.emotional+'% / 知性'+d.intellectual+'%';
+
+  // 5運勢（solo時のみ）
+  let fortune='';
+  if(fs && isSolo){
+    fortune='金運'+fs.money+' 恋愛'+fs.love+' 仕事'+fs.work+' 健康'+fs.health+' 対人'+fs.social;
+  }
+
+  // 診断文
+  const diag=d.baseDiagnosis||d.diagnosis||'';
+  const dailyDiag=d.dailyDiagnosis||'';
+
+  const url=location.href;
+
+  if(mode==='x'){
+    // X: 140文字制限（URL分を除く約100文字）
+    let t=head;
+    if(fortune) t+=fortune+'\n';
+    t+=diag.substring(0,80)+'…\n'+url;
+    return t;
+  }
+  if(mode==='line'){
+    // LINE: 比較的長文OK（500文字目安）
+    let t=head+bio+'\n';
+    if(fortune) t+=fortune+'\n';
+    t+='\n'+diag.substring(0,300);
+    if(dailyDiag) t+='\n\n'+dailyDiag.substring(0,150);
+    t+='…\n\n▶ '+url;
+    return t;
+  }
+  // full: 全文
+  let t=head+bio+'\n';
+  if(fortune) t+=fortune+'\n';
+  t+='\n'+diag;
+  if(dailyDiag) t+='\n\n'+dailyDiag;
+  t+='\n\n▶ '+url;
+  return t;
+}
+
+function shareResult(mode){
+  if(!lastDiagData) return;
+  const text=buildShareText(mode);
+  document.getElementById('shareMenu').classList.remove('open');
+
+  if(mode==='x'){
+    window.open('https://x.com/intent/tweet?text='+encodeURIComponent(text),'_blank');
+    return;
+  }
+  if(mode==='line'){
+    const lineUrl='https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(location.href)+'&text='+encodeURIComponent(text);
+    window.open(lineUrl,'_blank');
+    return;
+  }
+  // full → clipboard
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast('クリップボードにコピーしました');
+  }).catch(()=>{
+    prompt('以下をコピーしてください:',text);
+  });
+}
+
+function showToast(msg){
+  const t=document.getElementById('shareToast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
 </script>
 </body>
 </html>

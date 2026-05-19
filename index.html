@@ -649,25 +649,18 @@ function animateNumber(id,t){const el=document.getElementById(id);let c=0;const 
 
 // ========== タブ切り替え ==========
 function switchTab(tab){
-  // タブバーの画面内位置を記憶
-  const tabBarEl=document.getElementById('tabBar');
-  const rect=tabBarEl.getBoundingClientRect();
-  const offsetBefore=rect.top;
-
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.getElementById('paneDaily').style.display=tab==='daily'?'block':'none';
   document.getElementById('paneWeek').style.display=tab==='week'?'block':'none';
   document.getElementById('paneMonth').style.display=tab==='month'?'block':'none';
   document.getElementById('paneBio').style.display=tab==='bio'?'block':'none';
 
-  // 切替後にタブバーの位置を元に戻す
+  // タブバーが画面上部に来るようにスクロール
   requestAnimationFrame(()=>{
-    const rectAfter=tabBarEl.getBoundingClientRect();
-    const drift=rectAfter.top-offsetBefore;
-    if(Math.abs(drift)>5) window.scrollBy(0,drift);
+    document.getElementById('tabBar').scrollIntoView({behavior:'smooth',block:'start'});
   });
 
-  if(tab==='bio'&&lastBioGraph) setTimeout(()=>drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b),100);
+  if(tab==='bio'&&lastBioGraph) setTimeout(()=>drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b),150);
 }
 
 // ========== バイオリズムグラフ描画 ==========

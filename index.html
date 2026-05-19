@@ -182,10 +182,11 @@ input::placeholder{color:var(--text3)}
 .term-name .term-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .term-desc{font-size:14px;color:var(--text2);line-height:1.7;padding-left:16px}
 /* タブUI */
-.tab-bar{display:flex;gap:4px;margin:16px 0 0;background:var(--surface2);border-radius:10px;padding:3px}
-.tab-btn{flex:1;padding:10px 0;border:none;border-radius:8px;background:transparent;color:var(--text2);font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .2s}
-.tab-btn.active{background:var(--accent);color:#fff}
-.tab-pane{margin-top:12px}
+.tab-bar{display:flex;gap:4px;margin:20px 0 0;background:var(--surface2);border-radius:12px;padding:4px;border:1px solid rgba(167,139,250,.15)}
+.tab-btn{flex:1;padding:12px 0;border:none;border-radius:9px;background:transparent;color:var(--text2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:.5px}
+.tab-btn:hover{color:var(--text);background:rgba(167,139,250,.08)}
+.tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;box-shadow:0 2px 12px rgba(192,132,252,.3)}
+.tab-pane{margin-top:12px;min-height:300px}
 /* 共有ボタン */
 .share-bar{text-align:center;margin-top:24px}
 .share-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;border:1px solid rgba(167,139,250,.25);border-radius:24px;background:transparent;color:var(--accent2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .2s}
@@ -510,10 +511,6 @@ async function runDiagnosis(){
     const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'サーバーエラー ('+res.status+')')}
     const data=await res.json();
-    console.log('API response keys:', Object.keys(data));
-    console.log('weeklyData:', data.weeklyData ? data.weeklyData.length + ' items' : 'missing');
-    console.log('monthlyData:', data.monthlyData ? data.monthlyData.length + ' items' : 'missing');
-    console.log('bioGraph:', data.bioGraph ? 'labels=' + data.bioGraph.labels.length : 'missing');
     hideLoading();
     if(isSolo) displaySolo(data,nameA); else displayPair(data,nameA,payload.nameB);
   }catch(e){hideLoading();showError('診断に失敗しました: '+e.message)}finally{btn.disabled=false;btn.classList.remove('loading')}
@@ -652,11 +649,24 @@ function animateNumber(id,t){const el=document.getElementById(id);let c=0;const 
 
 // ========== タブ切り替え ==========
 function switchTab(tab){
+  // タブバーの画面内位置を記憶
+  const tabBarEl=document.getElementById('tabBar');
+  const rect=tabBarEl.getBoundingClientRect();
+  const offsetBefore=rect.top;
+
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
   document.getElementById('paneDaily').style.display=tab==='daily'?'block':'none';
   document.getElementById('paneWeek').style.display=tab==='week'?'block':'none';
   document.getElementById('paneMonth').style.display=tab==='month'?'block':'none';
   document.getElementById('paneBio').style.display=tab==='bio'?'block':'none';
+
+  // 切替後にタブバーの位置を元に戻す
+  requestAnimationFrame(()=>{
+    const rectAfter=tabBarEl.getBoundingClientRect();
+    const drift=rectAfter.top-offsetBefore;
+    if(Math.abs(drift)>5) window.scrollBy(0,drift);
+  });
+
   if(tab==='bio'&&lastBioGraph) setTimeout(()=>drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b),100);
 }
 

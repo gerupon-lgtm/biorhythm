@@ -185,7 +185,13 @@ input::placeholder{color:var(--text3)}
 .tab-bar{display:flex;gap:4px;margin:16px 0 0;background:var(--surface2);border-radius:10px;padding:3px}
 .tab-btn{flex:1;padding:10px 0;border:none;border-radius:8px;background:transparent;color:var(--text2);font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .2s}
 .tab-btn.active{background:var(--accent);color:#fff}
-.tab-content{margin-top:12px}
+.tab-pane{margin-top:12px}
+/* 共有ボタン */
+.share-bar{text-align:center;margin-top:24px}
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;border:1px solid rgba(167,139,250,.25);border-radius:24px;background:transparent;color:var(--accent2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .2s}
+.share-btn:hover{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.45)}
+.share-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 24px;border-radius:24px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.share-toast.show{opacity:1}
 /* バイオリズムグラフ */
 #bioCanvas{width:100%;height:auto;border-radius:10px;background:var(--surface);border:1px solid rgba(255,255,255,.06)}
 .bio-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:13px;justify-content:center}
@@ -292,33 +298,43 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
         <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
       </div>
     </div>
-    <div class="section-label">命式</div>
-    <div id="meishikiArea"></div>
-    <div class="section-label" id="fortuneLabel" style="display:none">この日の日運</div>
-    <div id="fortuneArea"></div>
-    <div class="section-label" id="compatLabel" style="display:none">相性分析</div>
-    <div id="compatArea"></div>
-    <div class="section-label" id="baseDiagLabel" style="display:none">基本相性</div>
-    <div class="diagnosis-text" id="baseDiagText" style="display:none"></div>
-    <div class="section-label" id="dailyDiagLabel">AI総合診断</div>
-    <div class="diagnosis-text" id="diagnosisText"></div>
-    <!-- タブUI -->
-    <div class="section-label" id="rangeLabel" style="display:none">もっと詳しく</div>
-    <div class="tab-bar" id="tabBar" style="display:none">
-      <button class="tab-btn active" data-tab="bio" onclick="switchTab('bio')">バイオリズム</button>
+    <!-- タブ（スコア直下） -->
+    <div class="tab-bar" id="tabBar">
+      <button class="tab-btn active" data-tab="daily" onclick="switchTab('daily')">この日</button>
       <button class="tab-btn" data-tab="week" onclick="switchTab('week')">この週</button>
       <button class="tab-btn" data-tab="month" onclick="switchTab('month')">この月</button>
+      <button class="tab-btn" data-tab="bio" onclick="switchTab('bio')">バイオリズム</button>
     </div>
-    <div class="tab-content" id="tabBio" style="display:none">
+    <!-- この日 -->
+    <div class="tab-pane" id="paneDaily">
+      <div class="section-label">命式</div>
+      <div id="meishikiArea"></div>
+      <div class="section-label" id="fortuneLabel" style="display:none">この日の運気</div>
+      <div id="fortuneArea"></div>
+      <div class="section-label" id="compatLabel" style="display:none">相性分析</div>
+      <div id="compatArea"></div>
+      <div class="section-label" id="baseDiagLabel" style="display:none">基本相性</div>
+      <div class="diagnosis-text" id="baseDiagText" style="display:none"></div>
+      <div class="section-label" id="dailyDiagLabel">AI診断</div>
+      <div class="diagnosis-text" id="diagnosisText"></div>
+    </div>
+    <!-- この週 -->
+    <div class="tab-pane" id="paneWeek" style="display:none"></div>
+    <!-- この月 -->
+    <div class="tab-pane" id="paneMonth" style="display:none"></div>
+    <!-- バイオリズム -->
+    <div class="tab-pane" id="paneBio" style="display:none">
       <canvas id="bioCanvas" width="640" height="260"></canvas>
       <div class="bio-legend" id="bioLegend"></div>
     </div>
-    <div class="tab-content" id="tabWeek" style="display:none"></div>
-    <div class="tab-content" id="tabMonth" style="display:none"></div>
+    <!-- 共有ボタン -->
+    <div class="share-bar" id="shareBar">
+      <button class="share-btn" onclick="shareResult()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>結果を共有</button>
+    </div>
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 2.2.0
+    ver 2.3.0
   </footer>
 </div>
 
@@ -374,9 +390,10 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     </div>
   </div>
 </div>
+<div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='2.2.0';
+const APP_VERSION='2.3.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -499,6 +516,8 @@ async function runDiagnosis(){
 }
 
 function displaySolo(d,name){
+  d._nameA=name;
+  lastDiagData=d;
   document.getElementById('resultTitle').innerHTML=esc(name)+'のコンディション'+(d.targetDate?'<br>（'+esc(d.targetDate)+'）':'');
   document.getElementById('scorePct').textContent='点';
   setScore(d.overallScore);setBars(d);
@@ -509,13 +528,15 @@ function displaySolo(d,name){
   document.getElementById('compatArea').innerHTML='';
   document.getElementById('baseDiagLabel').style.display='none';
   document.getElementById('baseDiagText').style.display='none';
-  document.getElementById('dailyDiagLabel').textContent='AI総合診断';
+  document.getElementById('dailyDiagLabel').textContent='AI診断';
   document.getElementById('diagnosisText').textContent=d.diagnosis||'';
   showRangeTabs(d,name,null);
   showResult();
 }
 
 function displayPair(d,nA,nB){
+  d._nameA=nA;d._nameB=nB;
+  lastDiagData=d;
   document.getElementById('resultTitle').innerHTML=esc(nA)+' × '+esc(nB)+' の運命相性'+(d.targetDate?'<br>（'+esc(d.targetDate)+'）':'');
   document.getElementById('scorePct').textContent='%';
   setScore(d.overallScore);setBars(d);
@@ -524,17 +545,16 @@ function displayPair(d,nA,nB){
   document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:nA,fortune:d.fortuneA},{name:nB,fortune:d.fortuneB}],false);
   document.getElementById('compatLabel').style.display='';
   document.getElementById('compatArea').innerHTML=renderCompat(d);
-  // 基本相性 + 指定日相性の2セクション表示
   if(d.baseDiagnosis){
     document.getElementById('baseDiagLabel').style.display='';
     document.getElementById('baseDiagText').style.display='';
     document.getElementById('baseDiagText').textContent=d.baseDiagnosis;
-    document.getElementById('dailyDiagLabel').textContent='指定日の相性'+(d.targetDate?' （'+d.targetDate+'）':'');
+    document.getElementById('dailyDiagLabel').textContent='この日の相性'+(d.targetDate?' （'+d.targetDate+'）':'');
     document.getElementById('diagnosisText').textContent=d.dailyDiagnosis||'';
   } else {
     document.getElementById('baseDiagLabel').style.display='none';
     document.getElementById('baseDiagText').style.display='none';
-    document.getElementById('dailyDiagLabel').textContent='AI総合診断';
+    document.getElementById('dailyDiagLabel').textContent='AI診断';
     document.getElementById('diagnosisText').textContent=d.diagnosis||'';
   }
   showRangeTabs(d,nA,nB);
@@ -629,9 +649,11 @@ function animateNumber(id,t){const el=document.getElementById(id);let c=0;const 
 // ========== タブ切り替え ==========
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-  document.getElementById('tabBio').style.display=tab==='bio'?'':'none';
-  document.getElementById('tabWeek').style.display=tab==='week'?'':'none';
-  document.getElementById('tabMonth').style.display=tab==='month'?'':'none';
+  document.getElementById('paneDaily').style.display=tab==='daily'?'':'none';
+  document.getElementById('paneWeek').style.display=tab==='week'?'':'none';
+  document.getElementById('paneMonth').style.display=tab==='month'?'':'none';
+  document.getElementById('paneBio').style.display=tab==='bio'?'':'none';
+  if(tab==='bio'&&lastBioGraph) setTimeout(()=>drawBioGraph(lastBioGraph,lastBioNames.a,lastBioNames.b),50);
 }
 
 // ========== バイオリズムグラフ描画 ==========
@@ -750,27 +772,56 @@ function renderRangeTable(data,targetDate,isPair){
 
 // ========== 結果表示にタブ追加 ==========
 function showRangeTabs(d,nameA,nameB){
-  document.getElementById('rangeLabel').style.display='';
-  document.getElementById('tabBar').style.display='';
   const isPair=d.mode==='pair';
 
-  // バイオリズムグラフ
   if(d.bioGraph){
-    document.getElementById('tabBio').style.display='';
-    setTimeout(()=>drawBioGraph(d.bioGraph,nameA,nameB),100);
+    lastBioGraph=d.bioGraph;
+    lastBioNames={a:nameA,b:nameB};
   }
 
-  // 週間テーブル
   if(d.weeklyData){
-    document.getElementById('tabWeek').innerHTML=renderRangeTable(d.weeklyData,d.targetDate,isPair);
+    document.getElementById('paneWeek').innerHTML=renderRangeTable(d.weeklyData,d.targetDate,isPair);
   }
-
-  // 月間テーブル
   if(d.monthlyData){
-    document.getElementById('tabMonth').innerHTML=renderRangeTable(d.monthlyData,d.targetDate,isPair);
+    document.getElementById('paneMonth').innerHTML=renderRangeTable(d.monthlyData,d.targetDate,isPair);
   }
 
-  switchTab('bio');
+  switchTab('daily');
+}
+
+// ========== 結果共有 ==========
+let lastDiagData=null;
+
+function shareResult(){
+  if(!lastDiagData) return;
+  const d=lastDiagData;
+  let text='';
+  if(d.mode==='solo'){
+    text='【運命診断】'+d._nameA+'のコンディション（'+d.targetDate+'）\n';
+    text+='総合: '+d.overallScore+'点\n';
+    text+='身体: '+d.physical+'% / 感情: '+d.emotional+'% / 知性: '+d.intellectual+'%\n';
+  } else {
+    text='【運命相性診断】'+d._nameA+' × '+d._nameB+'（'+d.targetDate+'）\n';
+    text+='総合相性: '+d.overallScore+'%\n';
+    text+='身体: '+d.physical+'% / 感情: '+d.emotional+'% / 知性: '+d.intellectual+'%\n';
+  }
+  if(d.diagnosis){
+    const short=d.baseDiagnosis||d.diagnosis;
+    text+='\n'+short.substring(0,120)+'…\n';
+  }
+  text+='\n▶ '+location.href;
+
+  if(navigator.share){
+    navigator.share({title:'運命診断',text:text}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>{
+      const toast=document.getElementById('shareToast');
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'),2000);
+    }).catch(()=>{
+      prompt('以下をコピーしてください:',text);
+    });
+  }
 }
 </script>
 </body>

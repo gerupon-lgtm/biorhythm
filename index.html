@@ -756,12 +756,17 @@ function drawBioGraph(data,nameA,nameB){
   ctx.beginPath();ctx.moveTo(midX,pad.top);ctx.lineTo(midX,h-pad.bottom);ctx.stroke();
   ctx.setLineDash([]);
 
-  // 日付ラベル
-  ctx.fillStyle='rgba(200,200,220,.6)';ctx.font='12px Outfit';ctx.textAlign='center';
-  const labelStep=Math.max(1,Math.floor(n/7));
-  for(let i=0;i<n;i+=labelStep){
+  // 日付ラベル（日の数字のみ、月変わりだけM/を付加、幅に応じて間引き）
+  ctx.fillStyle='rgba(220,220,240,.8)';ctx.font='bold 12px Outfit';ctx.textAlign='center';
+  const minGap=28; // ラベル間の最小px
+  const labelEvery=Math.max(1,Math.ceil(minGap/step));
+  let prevMonth='';
+  for(let i=0;i<n;i+=labelEvery){
     const x=pad.left+i*step;
-    const lbl=fmtDateShort(data.labels[i]);
+    const parts=data.labels[i].split('-');
+    const mm=parts[1],dd=parseInt(parts[2]);
+    let lbl=String(dd);
+    if(mm!==prevMonth){lbl=parseInt(mm)+'/'+dd;prevMonth=mm;}
     ctx.fillText(lbl,x,h-pad.bottom+16);
   }
 

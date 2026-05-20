@@ -860,17 +860,20 @@ function renderRangeTable(data,targetDate,isPair,label){
 function buildRangeComment(label,avg,max,min,maxDate,minDate){
   const maxMD=fmtDateShort(maxDate);
   const minMD=fmtDateShort(minDate);
+  const spread=max-min;
   if(label==='week'){
-    if(avg>=65) return '☀️ 全体的に好調な1週間です。'+maxMD+'が特にキラキラ✨ 勢いに乗っていきましょう！';
+    if(avg>=60) return '☀️ 全体的に好調な1週間です。'+maxMD+'が特にキラキラ✨ 勢いに乗っていきましょう！';
     if(avg>=50) return '⛅ まずまずの1週間。'+maxMD+'に運気のピークが来るので、大事な予定はこの日がおすすめ。';
-    if(avg>=35) return '🌥️ 少しおとなしめの1週間。'+minMD+'は無理せずのんびりと。'+maxMD+'を楽しみに乗り切りましょう！';
+    if(avg>=40) return '🌥️ 少しおとなしめの1週間。'+minMD+'は無理せずのんびりと。'+maxMD+'を楽しみに乗り切りましょう！';
     return '☁️ じっくり力を蓄える1週間。'+maxMD+'だけは風向きが変わるので、ここぞの場面に活用を。';
   }
   if(label==='month'){
-    if(avg>=65) return '🌈 運気が高い月です！特に'+maxMD+'あたりは絶好調。積極的にチャレンジしてみて。';
-    if(avg>=50) return '🌤️ 安定した1ヶ月。波はありますが'+maxMD+'が最高潮。'+minMD+'前後は少し慎重に。';
-    if(avg>=35) return '🌦️ 浮き沈みのある月。'+maxMD+'に良い波が来ます。'+minMD+'は休息に充てて。';
-    return '🌧️ 準備と内省に向く月。'+maxMD+'に少し光が差すので、そこに合わせて動くのが吉。';
+    // 実データ: spread中央値48, max中央値76, min中央値29
+    if(max>=80) return '🌈 とても運気の高い日がある月！'+maxMD+'あたりは絶好調（'+max+'点）。大きなチャレンジに向いています。';
+    if(spread>=50) return '🎢 波のある月間。'+maxMD+'（'+max+'点）にチャンスが来る一方、'+minMD+'（'+min+'点）は少しお休みモード。メリハリをつけて過ごすのが◎';
+    if(max>=70&&min>=30) return '🌤️ 良い流れの月。'+maxMD+'（'+max+'点）を中心に好調な日が多め。'+minMD+'（'+min+'点）前後だけ少しペースダウンで。';
+    if(min<=25) return '🌥️ 少し慎重にいきたい月。'+minMD+'（'+min+'点）前後は無理せずのんびりと。'+maxMD+'（'+max+'点）に大事な予定を集めましょう。';
+    return '⛅ 穏やかな1ヶ月。大きな波はありませんが'+maxMD+'（'+max+'点）が最高潮。'+minMD+'（'+min+'点）前後は少しのんびりと過ごして。';
   }
   return '';
 }

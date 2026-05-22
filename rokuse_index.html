@@ -873,7 +873,7 @@ function drawRadar(scores) {
     ctx.fillStyle=colors[i]; ctx.font='bold 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(labels[i],lx,ly-8);
     ctx.fillStyle='#f0f0f8'; ctx.font='bold 15px Outfit,sans-serif';
-    ctx.fillText(Number.isInteger(v) ? v+'.00' : v.toFixed(2),lx,ly+9);
+    ctx.fillText(parseFloat(v.toFixed(2)),lx,ly+9);
   });
 }
 
@@ -1049,7 +1049,7 @@ function generateShareImage() {
         ctx.fillStyle=rColors[i]; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText(rLabels[i], lx, ly-10);
         ctx.fillStyle='#f0f0f8'; ctx.font='bold 15px sans-serif';
-        const scoreStr = Number.isInteger(v) ? v+'.00' : v.toFixed(2);
+        const scoreStr = String(parseFloat(v.toFixed(2)));
         ctx.fillText(scoreStr, lx, ly+10);
       });
     }

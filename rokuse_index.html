@@ -550,12 +550,9 @@ function displaySolo(d, name) {
   document.getElementById('rokuseLabel').style.display = '';
   document.getElementById('rokuseArea').innerHTML = renderRokuseBadge(d.rokuseA, name);
   document.getElementById('cycleLabel').style.display = '';
-  document.getElementById('cycleArea').innerHTML = renderCycleCards(d.nenunA, d.tsukinA, d.hiUnA);
-
-  if (d.nenunA?.isDaiKasai || d.tsukinA?.isDaiKasai || d.hiUnA?.isDaiKasai) {
-    const banner = buildDaiKasaiBanner(d.nenunA, d.tsukinA, d.hiUnA);
-    document.getElementById('cycleArea').insertAdjacentHTML('afterend', banner);
-  }
+  const banner = (d.nenunA?.isDaiKasai || d.tsukinA?.isDaiKasai || d.hiUnA?.isDaiKasai)
+    ? buildDaiKasaiBanner(d.nenunA, d.tsukinA, d.hiUnA) : '';
+  document.getElementById('cycleArea').innerHTML = renderCycleCards(d.nenunA, d.tsukinA, d.hiUnA) + banner;
 
   document.getElementById('compatLabel').style.display = 'none';
   document.getElementById('compatArea').innerHTML = '';
@@ -644,10 +641,18 @@ function renderCycleCards(nenun, tsukinun, hiun) {
 
 // ========== 大殺界バナー ==========
 function buildDaiKasaiBanner(nenun, tsukinun, hiun) {
-  let msgs = [];
-  if (nenun?.isDaiKasai) msgs.push(`<strong>${nenun.year}年は大殺界（${esc(nenun.cycle)}）</strong>です。今年は新規事業・転職・結婚など重大な決断を避け、現状を守ることに専念しましょう。`);
-  if (tsukinun?.isDaiKasai) msgs.push(`${tsukinun.month}月も大殺界期間。焦らず内省の時間を大切に。`);
-  if (hiun?.isDaiKasai) msgs.push(`この日も大殺界の日運。無理な行動より、休息と内省が◎`);
+  const msgs = [];
+  if (nenun?.isDaiKasai) {
+    msgs.push(`<strong>${nenun.year}年は大殺界（${esc(nenun.cycle)}）</strong>です。今年は新規事業・転職・結婚など重大な決断を避け、現状を守ることに専念しましょう。`);
+  }
+  // 年運と月運が両方大殺界の場合、月運メッセージは「も」ではなく情報を補足する形に
+  if (tsukinun?.isDaiKasai) {
+    const prefix = nenun?.isDaiKasai ? `${tsukinun.month}月も引き続き大殺界（${esc(tsukinun.cycle)}）。` : `${tsukinun.month}月は大殺界（${esc(tsukinun.cycle)}）。`;
+    msgs.push(prefix + '焦らず内省の時間を大切に。');
+  }
+  if (hiun?.isDaiKasai) {
+    msgs.push(`この日の日運も大殺界（${esc(hiun.cycle)}）。無理な行動より、休息と内省が◎`);
+  }
   if (!msgs.length) return '';
   return `<div class="daikasai-banner">⚠️ ${msgs.join('<br>')}</div>`;
 }

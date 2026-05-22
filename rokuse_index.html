@@ -873,7 +873,7 @@ function drawRadar(scores) {
     ctx.fillStyle=colors[i]; ctx.font='bold 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(labels[i],lx,ly-8);
     ctx.fillStyle='#f0f0f8'; ctx.font='bold 15px Outfit,sans-serif';
-    ctx.fillText(parseFloat(v.toFixed(2)),lx,ly+9);
+    ctx.fillText(parseFloat(Math.round(v*100)/100.toFixed(2)),lx,ly+9);
   });
 }
 

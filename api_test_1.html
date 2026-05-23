@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API疎通確認</title>
+<style>
+body{font-family:sans-serif;background:#111;color:#eee;padding:20px;max-width:600px;margin:0 auto}
+button{background:#4a4a80;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:15px;margin:6px 4px}
+pre{background:#1a1a2a;padding:14px;border-radius:8px;font-size:13px;white-space:pre-wrap;word-break:break-all;margin-top:10px;min-height:40px;border:1px solid #333}
+.ok{color:#4ade80}.ng{color:#f87171}.info{color:#fbbf24}
+</style>
+</head>
+<body>
+<h2>Vercel API 疎通確認</h2>
+<p id="url_display" style="font-size:12px;color:#888"></p>
+
+<button onclick="testGet()">① GET テスト</button>
+<button onclick="testPost()">② POST テスト（最小ペイロード）</button>
+<button onclick="testCors()">③ CORS プリフライト確認</button>
+<button onclick="testShichu()">④ 既存API(四柱推命)確認</button>
+<button onclick="testRoot()">⑤ Vercelルート確認</button>
+<button onclick="testXhr()">⑥ XHRテスト</button>
+<button onclick="testNoCors()">⑦ no-cors到達確認</button>
+<button onclick="clearLog()">ログをクリア</button>
+
+<pre id="log">ボタンを押すと結果が表示されます</pre>
+
+<script>
+const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
+// 四柱推命版（既存）のURL - こちらが動くか確認用
+const API_URL_SHICHU = 'https://test-flax-omega-29.vercel.app/api/diagnose';
+// Vercelプロジェクトルート
+const VERCEL_ROOT = 'https://test-flax-omega-29.vercel.app/';
+document.getElementById('url_display').textContent = 'URL: ' + API_URL;
+
+function log(msg, cls) {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = cls || '';
+  line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+function clearLog() {
+  document.getElementById('log').innerHTML = '';
+}
+
+async function testShichu() {
+  log('四柱推命API(既存)へGET送信...', 'info');
+  try {
+    const res = await fetch(API_URL_SHICHU, { method: 'GET' });
+    const text = await res.text().catch(() => '');
+    log(`四柱推命: ${res.status} → ${text.substring(0,100)}`, res.status < 500 ? 'ok' : 'ng');
+    log('四柱推命 ACAO: ' + (res.headers.get('access-control-allow-origin') || 'なし'), 'info');
+  } catch(e) {
+    log('四柱推命エラー: ' + e.message, 'ng');
+  }
+}
+
+async function testRoot() {
+  log('Vercelルート確認...', 'info');
+  try {
+    const res = await fetch(VERCEL_ROOT, { method: 'GET' });
+    log(`ルート: ${res.status}`, res.status < 500 ? 'ok' : 'ng');
+  } catch(e) {
+    log('ルートエラー: ' + e.message, 'ng');
+  }
+}
+
+async function testGet() {
+  log('GETリクエスト送信中...', 'info');
+  try {
+    const t0 = Date.now();
+    const res = await fetch(API_URL, { method: 'GET' });
+    const ms = Date.now() - t0;
+    const text = await res.text().catch(() => '(body読み取り失敗)');
+    log(`ステータス: ${res.status} (${ms}ms)`, res.status < 500 ? 'ok' : 'ng');
+    log(`レスポンス: ${text.substring(0, 200)}`, '');
+    log('Content-Type: ' + (res.headers.get('content-type') || 'なし'), 'info');
+    log('Access-Control-Allow-Origin: ' + (res.headers.get('access-control-allow-origin') || 'なし'), 'info');
+  } catch(e) {
+    log('エラー: ' + e.message, 'ng');
+    log('種別: ' + e.constructor.name, 'ng');
+    if (e.message === 'Failed to fetch') {
+      log('→ 考えられる原因:', 'info');
+      log('  A) CORSポリシーでブロックされている', 'info');
+      log('  B) エンドポイントURLが存在しない (404)', 'info');
+      log('  C) Vercelデプロイが完了していない', 'info');
+      log('  D) ネットワーク接続の問題', 'info');
+    }
+  }
+}
+
+async function testPost() {
+  log('POSTリクエスト送信中...', 'info');
+  const payload = {
+    nameA: 'テスト',
+    birthA: '1990-01-01',
+    targetDate: '2026-05-23',
+    mode: 'solo',
+    timezone: 'Asia/Tokyo'
+  };
+  log('ペイロード: ' + JSON.stringify(payload), '');
+  try {
+    const t0 = Date.now();
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const ms = Date.now() - t0;
+    const text = await res.text().catch(() => '(body読み取り失敗)');
+    log(`ステータス: ${res.status} (${ms}ms)`, res.status < 400 ? 'ok' : 'ng');
+    log(`レスポンス(先頭300字): ${text.substring(0, 300)}`, '');
+  } catch(e) {
+    log('エラー: ' + e.message, 'ng');
+    log('種別: ' + e.constructor.name, 'ng');
+  }
+}
+
+async function testCors() {
+  log('OPTIONSプリフライト確認...', 'info');
+  try {
+    const res = await fetch(API_URL, {
+      method: 'OPTIONS',
+      headers: {
+        'Origin': window.location.origin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'Content-Type'
+      }
+    });
+    log(`ステータス: ${res.status}`, res.status < 400 ? 'ok' : 'ng');
+    log('ACAO: ' + (res.headers.get('access-control-allow-origin') || 'なし（CORSブロック）'), 'info');
+    log('ACAM: ' + (res.headers.get('access-control-allow-methods') || 'なし'), 'info');
+    log('ACAH: ' + (res.headers.get('access-control-allow-headers') || 'なし'), 'info');
+  } catch(e) {
+    log('エラー: ' + e.message, 'ng');
+  }
+}
+
+// XHRでの代替テスト（fetchとは別のパスでCORSを確認）
+function testXhr() {
+  log('XHRテスト（fetchの代替）...', 'info');
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', API_URL, true);
+  xhr.onload = () => {
+    log(`XHR ステータス: ${xhr.status}`, xhr.status < 500 ? 'ok' : 'ng');
+    log(`XHR レスポンス: ${xhr.responseText.substring(0,100)}`, '');
+  };
+  xhr.onerror = () => {
+    log('XHR エラー: ネットワークエラー（CORSブロックの可能性大）', 'ng');
+    log('→ Vercelの vercel.json にCORSヘッダー設定が必要かもしれません', 'info');
+  };
+  xhr.send();
+}
+
+// no-corsモードでの確認（レスポンスは読めないが到達確認のみ）
+async function testNoCors() {
+  log('no-corsモードでの到達確認...', 'info');
+  try {
+    const res = await fetch(API_URL, { method: 'GET', mode: 'no-cors' });
+    log(`到達確認: type=${res.type} (opaqueなら到達している)`, res.type === 'opaque' ? 'ok' : 'info');
+    if (res.type === 'opaque') {
+      log('→ サーバーには届いているがCORSヘッダーが返っていない', 'info');
+      log('→ vercel.json でCORSを設定するか、APIコードのCORSヘッダーを確認', 'info');
+    }
+  } catch(e) {
+    log('no-corsエラー: ' + e.message, 'ng');
+  }
+}
+
+// ページ読み込み時に環境情報を表示して自動テスト
+window.addEventListener('load', () => {
+  log('=== 環境情報 ===', 'info');
+  log('現在のURL: ' + window.location.href, '');
+  log('Origin: ' + window.location.origin, '');
+  log('対象API: ' + API_URL, '');
+  log('', '');
+  log('手動確認コマンド(ターミナルで実行):', 'info');
+  log('curl -v ' + API_URL, '');
+  log('', '');
+  log('GETテスト自動実行...', 'info');
+  testGet();
+});
+</script>
+</body>
+</html>

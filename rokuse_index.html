@@ -921,7 +921,36 @@ function generateShareImage() {
 
     // --- 高さを2パスで決定（先に仮キャンバスでy座標を追跡） ---
     function drawAll(ctx, W, forMeasure) {
-      let contentBottomY = 0;
+
+      // ヘルパー: サイクルカードを1行分描画してカード下端yを返す
+      function drawCycleRow(cards, topY) {
+        const cw = (W - 40) / 3 - 8, ch = 96;
+        if (!forMeasure) {
+          cards.forEach((item, i) => {
+            const cx2 = 20 + i * ((W-40)/3 + 4);
+            ctx.fillStyle = item.isDai ? 'rgba(160,30,30,.65)' : '#1a1a30';
+            ctx.strokeStyle = item.isDai ? 'rgba(248,113,113,.7)' : 'rgba(255,255,255,.1)';
+            ctx.lineWidth = item.isDai ? 1.5 : 1;
+            roundRect(ctx, cx2, topY, cw, ch, 8); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#9090b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.fillText(item.period, cx2+cw/2, topY+18);
+            ctx.fillStyle = item.isDai ? '#ff9090' : '#f0f0ff'; ctx.font = 'bold 18px sans-serif';
+            ctx.fillText((item.isDai?'⚠ ':'')+item.cycle, cx2+cw/2, topY+44);
+            ctx.fillStyle = item.isDai ? '#ffcccc' : '#c0c0dc'; ctx.font = '11px sans-serif';
+            const words = item.desc, maxW2 = cw - 12;
+            let line = '', lineY = topY + 62;
+            for (const ch2 of words) {
+              const test = line + ch2;
+              if (ctx.measureText(test).width > maxW2 && line) {
+                ctx.fillText(line, cx2+cw/2, lineY); line = ch2; lineY += 16;
+                if (lineY > topY + ch - 4) break;
+              } else { line = test; }
+            }
+            if (line) ctx.fillText(line, cx2+cw/2, lineY);
+          });
+        }
+        return topY + ch;
+      }
 
       // 背景（計測時はスキップ）
       if (!forMeasure) {
@@ -974,7 +1003,10 @@ function generateShareImage() {
         ctx.fillStyle = '#b0b0c8'; ctx.font = 'bold 14px sans-serif';
         ctx.fillText(isSolo ? '点' : '%', ringCx, ringCy + 22);
         const barX = 220, barW = 420, barH = 18;
-        [['身体', d.physical, '#a78bfa'], ['感情', d.emotional, '#f472b6'], ['知性', d.intellectual, '#fbbf24']].forEach(([lb, val, col], i) => {
+        const barLabels = isSolo ? ['身体','感情','知性'] : ['身体波長','感情波長','知性波長'];
+        [barLabels[0], barLabels[1], barLabels[2]].forEach((lb, i) => {
+          const val = [d.physical, d.emotional, d.intellectual][i];
+          const col = ['#a78bfa','#f472b6','#fbbf24'][i];
           const y = scoreTopY + 8 + i * 38;
           ctx.fillStyle = '#d0d0e0'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
           ctx.fillText(lb, barX - 10, y + barH/2);
@@ -986,47 +1018,46 @@ function generateShareImage() {
         });
       }
 
-      // サイクルカード 3枚
-      const cycleTopY = scoreTopY + 130;
-      const cw = (W - 40) / 3 - 8, ch = 96;
-      const cycleData = isSolo
-        ? [
-            { period: (d.nenunA?.year||'')+'年運', cycle: d.nenunA?.cycle||'', desc: d.nenunA?.desc||'', isDai: d.nenunA?.isDaiKasai },
-            { period: (d.tsukinA?.month||'')+'月運', cycle: d.tsukinA?.cycle||'', desc: d.tsukinA?.desc||'', isDai: d.tsukinA?.isDaiKasai },
-            { period: 'この日の日運', cycle: d.hiUnA?.cycle||'', desc: d.hiUnA?.desc||'', isDai: d.hiUnA?.isDaiKasai },
-          ]
-        : [
-            { period: (d._nameA||'')+'  年運', cycle: d.nenunA?.cycle||'', desc: d.nenunA?.desc||'', isDai: d.nenunA?.isDaiKasai },
-            { period: (d._nameA||'')+'  日運', cycle: d.hiUnA?.cycle||'', desc: d.hiUnA?.desc||'', isDai: d.hiUnA?.isDaiKasai },
-            { period: (d._nameB||'')+'  日運', cycle: d.hiUnB?.cycle||'', desc: d.hiUnB?.desc||'', isDai: d.hiUnB?.isDaiKasai },
-          ];
-      if (!forMeasure) {
-        cycleData.forEach((item, i) => {
-          const cx2 = 20 + i * ((W-40)/3 + 4);
-          ctx.fillStyle = item.isDai ? 'rgba(160,30,30,.65)' : '#1a1a30';
-          ctx.strokeStyle = item.isDai ? 'rgba(248,113,113,.7)' : 'rgba(255,255,255,.1)';
-          ctx.lineWidth = item.isDai ? 1.5 : 1;
-          roundRect(ctx, cx2, cycleTopY, cw, ch, 8); ctx.fill(); ctx.stroke();
-          ctx.fillStyle = '#9090b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-          ctx.fillText(item.period, cx2+cw/2, cycleTopY+18);
-          ctx.fillStyle = item.isDai ? '#ff9090' : '#f0f0ff'; ctx.font = 'bold 18px sans-serif';
-          ctx.fillText((item.isDai?'⚠ ':'')+item.cycle, cx2+cw/2, cycleTopY+44);
-          ctx.fillStyle = item.isDai ? '#ffcccc' : '#c0c0dc'; ctx.font = '11px sans-serif';
-          const words = item.desc; const maxW2 = cw - 12;
-          let line = '', lineY = cycleTopY + 62;
-          for (const ch2 of words) {
-            const test = line + ch2;
-            if (ctx.measureText(test).width > maxW2 && line) {
-              ctx.fillText(line, cx2+cw/2, lineY); line = ch2; lineY += 16;
-              if (lineY > cycleTopY + ch - 4) break;
-            } else { line = test; }
-          }
-          if (line) ctx.fillText(line, cx2+cw/2, lineY);
-        });
+      // ---- ソロ: サイクルカード3枚 ----
+      // ---- ペア: Aさん3枚 + Bさん3枚 ----
+      let curY = scoreTopY + 130;
+
+      if (isSolo) {
+        const cards = [
+          { period: (d.nenunA?.year||'')+'年運', cycle: d.nenunA?.cycle||'', desc: d.nenunA?.desc||'', isDai: d.nenunA?.isDaiKasai },
+          { period: (d.tsukinA?.month||'')+'月運', cycle: d.tsukinA?.cycle||'', desc: d.tsukinA?.desc||'', isDai: d.tsukinA?.isDaiKasai },
+          { period: 'この日の日運', cycle: d.hiUnA?.cycle||'', desc: d.hiUnA?.desc||'', isDai: d.hiUnA?.isDaiKasai },
+        ];
+        curY = drawCycleRow(cards, curY) + 12;
+      } else {
+        // Aさんラベル
+        if (!forMeasure) {
+          ctx.fillStyle = d.rokuseA?.color || '#a78bfa'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText(d._nameA + 'さん', 22, curY + 13);
+        }
+        curY += 20;
+        const cardsA = [
+          { period: (d.nenunA?.year||'')+'年運', cycle: d.nenunA?.cycle||'', desc: d.nenunA?.desc||'', isDai: d.nenunA?.isDaiKasai },
+          { period: (d.tsukinA?.month||'')+'月運', cycle: d.tsukinA?.cycle||'', desc: d.tsukinA?.desc||'', isDai: d.tsukinA?.isDaiKasai },
+          { period: 'この日の日運', cycle: d.hiUnA?.cycle||'', desc: d.hiUnA?.desc||'', isDai: d.hiUnA?.isDaiKasai },
+        ];
+        curY = drawCycleRow(cardsA, curY) + 12;
+
+        // Bさんラベル
+        if (!forMeasure) {
+          ctx.fillStyle = d.rokuseB?.color || '#60a5fa'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText(d._nameB + 'さん', 22, curY + 13);
+        }
+        curY += 20;
+        const cardsB = [
+          { period: (d.nenunB?.year||'')+'年運', cycle: d.nenunB?.cycle||'', desc: d.nenunB?.desc||'', isDai: d.nenunB?.isDaiKasai },
+          { period: (d.tsukinB?.month||'')+'月運', cycle: d.tsukinB?.cycle||'', desc: d.tsukinB?.desc||'', isDai: d.tsukinB?.isDaiKasai },
+          { period: 'この日の日運', cycle: d.hiUnB?.cycle||'', desc: d.hiUnB?.desc||'', isDai: d.hiUnB?.isDaiKasai },
+        ];
+        curY = drawCycleRow(cardsB, curY) + 12;
       }
 
       // 大殺界バナー
-      let curY = cycleTopY + ch + 12;
       if (bannerLines.length > 0) {
         const totalBH = 16 + bannerLines.length * 38;
         if (!forMeasure) {
@@ -1042,8 +1073,12 @@ function generateShareImage() {
       }
 
       // レーダーチャート（ソロのみ）
+      // rR=120, ラベル上端 = rCy - rR - 24px
+      // バナー後curYから十分な余白(rR+24+16=160px)を確保してから中心を設定
       if (isSolo && fs) {
-        const rCx = W/2, rCy = curY + 145, rR = 120;
+        const rR = 120;
+        const rCx = W/2;
+        const rCy = curY + rR + 40; // バナー下端から rR+40px 下が中心 → 上端に40px余白
         if (!forMeasure) {
           const rLabels = ['金運', '恋愛運', '仕事運', '健康運', '対人運'];
           const rVals = [fs.money, fs.love, fs.work, fs.health, fs.social];
@@ -1079,8 +1114,7 @@ function generateShareImage() {
         curY = rCy + rR + 30; // レーダー下端
       }
 
-      contentBottomY = curY;
-      return contentBottomY;
+      return curY;
     }
 
     // パス1: 仮キャンバスで高さ計測

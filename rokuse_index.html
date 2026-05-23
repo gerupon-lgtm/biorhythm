@@ -1164,7 +1164,7 @@ function buildShareText(mode) {
     head += `相性: ${d.compat||''} 総合: ${d.overallScore}%\n`;
   }
   let fortune = '';
-  if (fs && isSolo) fortune = `💰${fs.money} 💕${fs.love} 💼${fs.work} 🏃${fs.health} 🤝${fs.social}\n`;
+  if (fs && isSolo) fortune = `💰String(Math.round(${fs.money} *100)/100) 💕${fs.love} 💼${fs.work} 🏃${fs.health} 🤝${fs.social}\n`;
   const diag = d.baseDiagnosis||d.diagnosis||'';
   const url = location.href;
   if (mode==='x') return head + (fortune?fortune:'') + diag.substring(0,80)+'…\n'+url;

@@ -309,6 +309,10 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
       <span class="btn-text">✦ 六星を診断する</span>
     </button>
   </div>
+  <div style="text-align:center;margin-top:8px">
+    <button onclick="pingApi()" style="background:none;border:1px solid rgba(255,255,255,.15);color:var(--text3);font-size:12px;padding:5px 14px;border-radius:20px;cursor:pointer">API疎通確認</button>
+    <span id="pingResult" style="font-size:12px;color:var(--text3);margin-left:10px"></span>
+  </div>
   <div class="error-msg" id="errorMsg"></div>
 
   <!-- 結果 -->
@@ -524,6 +528,29 @@ function hideLoading() {
   setTimeout(() => { document.getElementById('loadingOverlay').classList.remove('active'); bar.style.width='0%'; }, 400);
 }
 
+// ========== API疎通確認 ==========
+async function pingApi() {
+  const el = document.getElementById('pingResult');
+  el.textContent = '確認中...';
+  el.style.color = 'var(--text3)';
+  try {
+    // まずGETで応答確認
+    const t0 = Date.now();
+    const res = await fetch(API_URL, { method: 'GET' });
+    const ms = Date.now() - t0;
+    const text = await res.text();
+    el.textContent = `GET ${res.status} (${ms}ms): ${text.substring(0,60)}`;
+    el.style.color = res.status < 500 ? '#4ade80' : '#f87171';
+  } catch(e) {
+    el.textContent = `接続失敗: ${e.message}`;
+    el.style.color = '#f87171';
+    // CORSの可能性をチェック
+    if (e.message.includes('fetch') || e.message === 'Failed to fetch') {
+      el.textContent += ' → CORSまたはネットワーク問題の可能性';
+    }
+  }
+}
+
 // ========== メイン診断 ==========
 async function runDiagnosis() {
   const nameA    = document.getElementById('nameA').value.trim() || 'あなた';
@@ -550,7 +577,16 @@ async function runDiagnosis() {
     const data = await res.json();
     hideLoading();
     if (isSolo) displaySolo(data, nameA); else displayPair(data, nameA, payload.nameB);
-  } catch(e) { hideLoading(); showError('診断に失敗しました: ' + e.message); }
+  } catch(e) {
+    hideLoading();
+    let msg = e.message || String(e);
+    if (msg === 'Failed to fetch' || msg.includes('Failed to fetch')) {
+      msg = 'APIサーバーに接続できませんでした。
+① rokuse_diagnose.js が api/ フォルダにデプロイされているか確認してください。
+② Vercelのデプロイログにエラーがないか確認してください。';
+    }
+    showError(msg);
+  }
   finally { btn.disabled = false; btn.classList.remove('loading'); }
 }
 

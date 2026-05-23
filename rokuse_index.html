@@ -598,17 +598,19 @@ function displayPair(d, nA, nB) {
 
   document.getElementById('compatLabel').style.display = '';
   document.getElementById('compatArea').innerHTML = renderCompatArea(d);
-  if (d.baseDiagnosis) {
+  // baseDiagnosis・dailyDiagnosis 両方に中身がある場合のみ2分割表示
+  if (d.baseDiagnosis && d.dailyDiagnosis && d.dailyDiagnosis.length >= 50) {
     document.getElementById('baseDiagLabel').style.display = '';
     document.getElementById('baseDiagText').style.display = '';
     document.getElementById('baseDiagText').textContent = d.baseDiagnosis;
     document.getElementById('dailyDiagLabel').textContent = 'この日の二人の運気';
-    document.getElementById('diagnosisText').textContent = d.dailyDiagnosis || '';
+    document.getElementById('diagnosisText').textContent = d.dailyDiagnosis;
   } else {
+    // 分割できていない場合は全文を1つの診断として表示
     document.getElementById('baseDiagLabel').style.display = 'none';
     document.getElementById('baseDiagText').style.display = 'none';
     document.getElementById('dailyDiagLabel').textContent = 'AI診断';
-    document.getElementById('diagnosisText').textContent = d.diagnosis || '';
+    document.getElementById('diagnosisText').textContent = d.baseDiagnosis || d.diagnosis || '';
   }
   document.getElementById('fortuneRadarWrap').style.display = 'none';
   showResult();

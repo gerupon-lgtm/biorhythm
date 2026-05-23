@@ -615,7 +615,7 @@ function renderRokuseBadge(r, name) {
     <div>
       <div style="font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;color:${s}">${esc(r.fullName || r.name)}</div>
       <div style="font-size:13px;color:var(--text2);margin-top:3px">${esc(name)}</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:4px">${esc(r.desc || '')}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px">${esc(r.desc || '')}</div>
     </div>
   </div>`;
 }
@@ -873,7 +873,7 @@ function drawRadar(scores) {
     ctx.fillStyle=colors[i]; ctx.font='bold 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(labels[i],lx,ly-8);
     ctx.fillStyle='#f0f0f8'; ctx.font='bold 15px Outfit,sans-serif';
-    ctx.fillText(parseFloat(Math.round(v*100)/100.toFixed(2)),lx,ly+9);
+    ctx.fillText(Math.round(v*100)/100,lx,ly+9);
   });
 }
 
@@ -1049,7 +1049,7 @@ function generateShareImage() {
         ctx.fillStyle=rColors[i]; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText(rLabels[i], lx, ly-10);
         ctx.fillStyle='#f0f0f8'; ctx.font='bold 15px sans-serif';
-        const scoreStr = String(parseFloat(v.toFixed(2)));
+        const scoreStr = String(Math.round(v*100)/100);
         ctx.fillText(scoreStr, lx, ly+10);
       });
     }

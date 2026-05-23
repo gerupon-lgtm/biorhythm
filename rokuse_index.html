@@ -321,9 +321,10 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
         <div class="score-value"><span class="num" id="scoreNum">0</span><span class="pct" id="scorePct">点</span></div>
       </div>
       <div class="score-breakdown">
-        <div class="bar-row bar-bio"><span class="bar-label">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
-        <div class="bar-row bar-emo"><span class="bar-label">感情</span><div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div><span class="bar-val" id="valEmotional">0%</span></div>
-        <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-align:right" id="scoreCaption">バイオリズム × 六星サイクル総合</div>
+        <div class="bar-row bar-bio"><span class="bar-label" id="barLabel1">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
+        <div class="bar-row bar-emo"><span class="bar-label" id="barLabel2">感情</span><div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div><span class="bar-val" id="valEmotional">0%</span></div>
+        <div class="bar-row bar-int"><span class="bar-label" id="barLabel3">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
       </div>
     </div>
 
@@ -546,6 +547,10 @@ function displaySolo(d, name) {
   lastDiagData = d;
   document.getElementById('resultTitle').innerHTML = `${esc(name)}の六星運勢<br>（${esc(fmtDateFull(d.targetDate))}）`;
   document.getElementById('scorePct').textContent = '点';
+  document.getElementById('scoreCaption').textContent = 'バイオリズム × 六星サイクル総合';
+  document.getElementById('barLabel1').textContent = '身体';
+  document.getElementById('barLabel2').textContent = '感情';
+  document.getElementById('barLabel3').textContent = '知性';
   setScore(d.overallScore); setBars(d);
 
   document.getElementById('rokuseLabel').style.display = '';
@@ -578,6 +583,10 @@ function displayPair(d, nA, nB) {
   lastDiagData = d;
   document.getElementById('resultTitle').innerHTML = `${esc(nA)} × ${esc(nB)} の六星相性<br>（${esc(fmtDateFull(d.targetDate))}）`;
   document.getElementById('scorePct').textContent = '%';
+  document.getElementById('scoreCaption').textContent = 'バイオリズム × 六星相性 × 年運・日運';
+  document.getElementById('barLabel1').textContent = '身体波長';
+  document.getElementById('barLabel2').textContent = '感情波長';
+  document.getElementById('barLabel3').textContent = '知性波長';
   setScore(d.overallScore); setBars(d);
 
   document.getElementById('rokuseLabel').style.display = '';

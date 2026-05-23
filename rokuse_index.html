@@ -988,8 +988,15 @@ function generateShareImage() {
       }
 
       // スコアリング（円グラフ + バー）
+      // ringR=50, リング直径=100, 上下マージン10px → スコアブロック高さ=120
+      const ringR = 50;
+      const scoreBlockH = ringR * 2 + 20; // 120px
       const scoreTopY = starY + 10;
-      const ringCx = 120, ringCy = scoreTopY + 55, ringR = 50;
+      // 円グラフ: 左側に固定（中心x=120, 中心y=スコアブロック中央）
+      const ringCx = 120, ringCy = scoreTopY + scoreBlockH / 2;
+      // バー: 3本を scoreBlockH 内に均等配置
+      const barX = 210, barW = 430, barH = 18;
+      const barSpacing = (scoreBlockH - barH * 3) / 4; // 上下余白 + バー間隔
       if (!forMeasure) {
         ctx.beginPath(); ctx.arc(ringCx, ringCy, ringR, 0, Math.PI*2);
         ctx.strokeStyle = '#252540'; ctx.lineWidth = 11; ctx.stroke();
@@ -1002,25 +1009,25 @@ function generateShareImage() {
         ctx.fillText(d.overallScore, ringCx, ringCy - 4);
         ctx.fillStyle = '#b0b0c8'; ctx.font = 'bold 14px sans-serif';
         ctx.fillText(isSolo ? '点' : '%', ringCx, ringCy + 22);
-        const barX = 220, barW = 420, barH = 18;
         const barLabels = isSolo ? ['身体','感情','知性'] : ['身体波長','感情波長','知性波長'];
         [barLabels[0], barLabels[1], barLabels[2]].forEach((lb, i) => {
           const val = [d.physical, d.emotional, d.intellectual][i];
           const col = ['#a78bfa','#f472b6','#fbbf24'][i];
-          const y = scoreTopY + 8 + i * 38;
-          ctx.fillStyle = '#d0d0e0'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-          ctx.fillText(lb, barX - 10, y + barH/2);
+          // 各バーのy: スコアブロック内に均等配置
+          const y = scoreTopY + barSpacing + i * (barH + barSpacing);
+          ctx.fillStyle = '#d0d0e0'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(lb, barX - 8, y + barH/2);
           ctx.fillStyle = '#252540'; roundRect(ctx, barX, y, barW, barH, 5); ctx.fill();
           const vw = barW * (val/100);
           if (vw > 0) { ctx.fillStyle = col; roundRect(ctx, barX, y, vw, barH, 5); ctx.fill(); }
-          ctx.fillStyle = '#f0f0f8'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left';
+          ctx.fillStyle = '#f0f0f8'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
           ctx.fillText(val + '%', barX + barW + 8, y + barH/2);
         });
       }
 
       // ---- ソロ: サイクルカード3枚 ----
       // ---- ペア: Aさん3枚 + Bさん3枚 ----
-      let curY = scoreTopY + 130;
+      let curY = scoreTopY + scoreBlockH + 16;
 
       if (isSolo) {
         const cards = [

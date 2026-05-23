@@ -133,9 +133,9 @@ input::placeholder{color:var(--text3)}
 /* サイクルカード */
 .cycle-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
 .cycle-card{background:var(--surface2);border-radius:10px;padding:12px;text-align:center}
-.cycle-card .cc-period{font-size:12px;color:#b0b0cc;margin-bottom:4px}
+.cycle-card .cc-period{font-size:13px;color:#b0b0cc;margin-bottom:4px}
 .cycle-card .cc-cycle{font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;margin-bottom:4px;color:#f0f0ff}
-.cycle-card .cc-desc{font-size:12px;color:#c8c8e0;line-height:1.5}
+.cycle-card .cc-desc{font-size:13px;color:#c8c8e0;line-height:1.5}
 .cycle-card.daikasai{border:1.5px solid rgba(248,113,113,.55);background:rgba(180,40,40,.35)}
 .cycle-card.daikasai .cc-cycle{color:#ff9090}
 .cycle-card.daikasai .cc-desc{color:#ffcccc}
@@ -621,7 +621,7 @@ function renderRokuseBadge(r, name) {
     <div>
       <div style="font-family:'Shippori Mincho',serif;font-size:18px;font-weight:700;color:${s}">${esc(r.fullName || r.name)}${reigouTag}</div>
       <div style="font-size:13px;color:var(--text2);margin-top:3px">${esc(name)}</div>
-      <div style="font-size:12px;color:var(--text3);margin-top:4px">${esc(r.desc || '')}</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">${esc(r.desc || '')}</div>
       ${pairInfo}
     </div>
   </div>`;

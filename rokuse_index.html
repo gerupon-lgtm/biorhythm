@@ -103,16 +103,19 @@ input::placeholder{color:var(--text3)}
 .result-title{text-align:center;font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700;margin-bottom:24px;line-height:1.5}
 
 /* スコアリング */
-.score-section{display:flex;align-items:center;gap:24px;margin-bottom:28px}
-.score-ring{width:120px;height:120px;flex-shrink:0;position:relative}
-.score-ring svg{transform:rotate(-90deg)}
-.score-ring circle{fill:none;stroke-width:7;stroke-linecap:round}
-.score-ring .track{stroke:var(--surface2)}
-.score-ring .fill{stroke:url(#scoreGrad);transition:stroke-dashoffset 1.2s ease}
-.score-value{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Outfit',sans-serif}
-.score-value .num{font-size:36px;font-weight:700;line-height:1}
-.score-value .pct{font-size:14px;color:var(--text2)}
-.score-breakdown{flex:1;display:flex;flex-direction:column;gap:10px}
+.score-section{display:flex;flex-direction:column;gap:0;margin-bottom:28px}
+.score-ring{display:none}.score-value{display:none}
+.score-gauge-block{background:var(--surface2);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+.score-gauge-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.score-gauge-num{font-family:'Outfit',sans-serif;font-size:42px;font-weight:700;line-height:1;width:72px;flex-shrink:0;text-align:right;padding-top:2px}
+.score-gauge-num.rokuse{background:linear-gradient(135deg,var(--gold),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.score-gauge-num.bio{background:linear-gradient(135deg,#60a5fa,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.score-gauge-bar-wrap{flex:1}
+.score-gauge-bar-track{height:12px;background:var(--bg);border-radius:6px;overflow:hidden;margin-bottom:8px}
+.score-gauge-bar-fill{height:100%;border-radius:6px;transition:width 1.2s ease;width:0}
+.score-gauge-bar-fill.rokuse{background:linear-gradient(90deg,var(--gold),var(--accent))}
+.score-gauge-bar-fill.bio{background:linear-gradient(90deg,#60a5fa,#4ade80)}
+.score-breakdown{display:flex;flex-direction:column;gap:8px}
 .bar-row{display:flex;align-items:center;gap:10px}
 .bar-row .bar-label{width:52px;font-size:13px;color:var(--text2);text-align:right;flex-shrink:0}
 .bar-row .bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
@@ -312,19 +315,29 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   <div id="result">
     <h2 class="result-title" id="resultTitle"></h2>
     <div class="score-section">
-      <div class="score-ring">
-        <svg width="120" height="120" viewBox="0 0 120 120">
-          <defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f6d860"/><stop offset="100%" stop-color="#c084fc"/></linearGradient></defs>
-          <circle class="track" cx="60" cy="60" r="50"/>
-          <circle class="fill" id="scoreCircle" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
-        </svg>
-        <div class="score-value"><span class="num" id="scoreNum">0</span><span class="pct" id="scorePct">点</span></div>
+      <div class="score-gauge-block">
+        <div class="score-gauge-title"><span>✦</span><span id="rokuseGaugeTitle">六星サイクルスコア</span></div>
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <div class="score-gauge-num rokuse" id="rokuseScoreNum">0</div>
+          <div class="score-gauge-bar-wrap">
+            <div class="score-gauge-bar-track"><div class="score-gauge-bar-fill rokuse" id="rokuseScoreBar"></div></div>
+            <div id="rokuseScoreDetail" style="font-size:12px;color:var(--text3);min-height:16px"></div>
+          </div>
+        </div>
       </div>
-      <div class="score-breakdown">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-align:right" id="scoreCaption">バイオリズム × 六星サイクル総合</div>
-        <div class="bar-row bar-bio"><span class="bar-label" id="barLabel1">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
-        <div class="bar-row bar-emo"><span class="bar-label" id="barLabel2">感情</span><div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div><span class="bar-val" id="valEmotional">0%</span></div>
-        <div class="bar-row bar-int"><span class="bar-label" id="barLabel3">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
+      <div class="score-gauge-block">
+        <div class="score-gauge-title"><span>〜</span><span id="bioGaugeTitle">バイオリズムスコア</span></div>
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <div class="score-gauge-num bio" id="bioScoreNum">0</div>
+          <div class="score-gauge-bar-wrap">
+            <div class="score-gauge-bar-track"><div class="score-gauge-bar-fill bio" id="bioScoreBar"></div></div>
+            <div class="score-breakdown" style="margin-top:8px">
+              <div class="bar-row bar-bio"><span class="bar-label" id="barLabel1">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
+              <div class="bar-row bar-emo"><span class="bar-label" id="barLabel2">感情</span><div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div><span class="bar-val" id="valEmotional">0%</span></div>
+              <div class="bar-row bar-int"><span class="bar-label" id="barLabel3">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -546,12 +559,14 @@ function displaySolo(d, name) {
   d._nameA = name;
   lastDiagData = d;
   document.getElementById('resultTitle').innerHTML = `${esc(name)}の六星運勢<br>（${esc(fmtDateFull(d.targetDate))}）`;
-  document.getElementById('scorePct').textContent = '点';
-  document.getElementById('scoreCaption').textContent = 'バイオリズム × 六星サイクル総合';
+  document.getElementById('rokuseGaugeTitle').textContent = '六星サイクルスコア（年運・月運・日運）';
+  document.getElementById('bioGaugeTitle').textContent = 'バイオリズムスコア';
   document.getElementById('barLabel1').textContent = '身体';
   document.getElementById('barLabel2').textContent = '感情';
   document.getElementById('barLabel3').textContent = '知性';
-  setScore(d.overallScore); setBars(d);
+  const rsd = d.nenunA && d.tsukinA && d.hiUnA ? `年運${d.nenunA.score}点 / 月運${d.tsukinA.score}点 / 日運${d.hiUnA.score}点` : '';
+  document.getElementById('rokuseScoreDetail').textContent = rsd;
+  setScores(d); setBars(d);
 
   document.getElementById('rokuseLabel').style.display = '';
   document.getElementById('rokuseArea').innerHTML = renderRokuseBadge(d.rokuseA, name);
@@ -582,12 +597,13 @@ function displayPair(d, nA, nB) {
   d._nameA = nA; d._nameB = nB;
   lastDiagData = d;
   document.getElementById('resultTitle').innerHTML = `${esc(nA)} × ${esc(nB)} の六星相性<br>（${esc(fmtDateFull(d.targetDate))}）`;
-  document.getElementById('scorePct').textContent = '%';
-  document.getElementById('scoreCaption').textContent = 'バイオリズム × 六星相性 × 年運・日運';
+  document.getElementById('rokuseGaugeTitle').textContent = '六星相性スコア（六星相性・年運・日運）';
+  document.getElementById('bioGaugeTitle').textContent = 'バイオリズム相性スコア';
   document.getElementById('barLabel1').textContent = '身体波長';
   document.getElementById('barLabel2').textContent = '感情波長';
   document.getElementById('barLabel3').textContent = '知性波長';
-  setScore(d.overallScore); setBars(d);
+  document.getElementById('rokuseScoreDetail').textContent = d.compat ? `相性: ${d.compat}` : '';
+  setScores(d); setBars(d);
 
   document.getElementById('rokuseLabel').style.display = '';
   document.getElementById('rokuseArea').innerHTML = renderRokuseBadge(d.rokuseA, nA) + renderRokuseBadge(d.rokuseB, nB);
@@ -688,10 +704,14 @@ function renderCompatArea(d) {
 }
 
 // ========== スコア・バー ==========
-function setScore(sc) {
-  const circ = 2 * Math.PI * 50;
-  document.getElementById('scoreCircle').style.strokeDashoffset = circ * (1 - sc / 100);
-  animateNumber('scoreNum', sc);
+function setScores(d) {
+  const rs = d.rokuseScore ?? 0, bs = d.bioScore ?? 0;
+  animateNumber('rokuseScoreNum', rs);
+  animateNumber('bioScoreNum', bs);
+  setTimeout(() => {
+    document.getElementById('rokuseScoreBar').style.width = rs + '%';
+    document.getElementById('bioScoreBar').style.width = bs + '%';
+  }, 100);
 }
 function setBars(d) {
   setBar('barPhysical', 'valPhysical', d.physical ?? 50);
@@ -987,47 +1007,68 @@ function generateShareImage() {
         starY += 24;
       }
 
-      // スコアリング（円グラフ + バー）
-      // ringR=50, リング直径=100, 上下マージン10px → スコアブロック高さ=120
-      const ringR = 50;
-      const scoreBlockH = ringR * 2 + 20; // 120px
+      // ======== スコア: 2ゲージ（六星スコア + バイオスコア） ========
       const scoreTopY = starY + 10;
-      // 円グラフ: 左側に固定（中心x=120, 中心y=スコアブロック中央）
-      const ringCx = 120, ringCy = scoreTopY + scoreBlockH / 2;
-      // バー: 3本を scoreBlockH 内に均等配置
-      const barX = 210, barW = 430, barH = 18;
-      const barSpacing = (scoreBlockH - barH * 3) / 4; // 上下余白 + バー間隔
-      if (!forMeasure) {
-        ctx.beginPath(); ctx.arc(ringCx, ringCy, ringR, 0, Math.PI*2);
-        ctx.strokeStyle = '#252540'; ctx.lineWidth = 11; ctx.stroke();
-        const sv = d.overallScore/100, sA = -Math.PI/2, eA = sA + Math.PI*2*sv;
-        const grad = ctx.createLinearGradient(ringCx-ringR, ringCy, ringCx+ringR, ringCy);
-        grad.addColorStop(0, '#f6d860'); grad.addColorStop(1, '#c084fc');
-        ctx.beginPath(); ctx.arc(ringCx, ringCy, ringR, sA, eA);
-        ctx.strokeStyle = grad; ctx.lineWidth = 11; ctx.lineCap = 'round'; ctx.stroke(); ctx.lineCap = 'butt';
-        ctx.fillStyle = '#f0f0f8'; ctx.font = 'bold 36px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(d.overallScore, ringCx, ringCy - 4);
-        ctx.fillStyle = '#b0b0c8'; ctx.font = 'bold 14px sans-serif';
-        ctx.fillText(isSolo ? '点' : '%', ringCx, ringCy + 22);
-        const barLabels = isSolo ? ['身体','感情','知性'] : ['身体波長','感情波長','知性波長'];
-        [barLabels[0], barLabels[1], barLabels[2]].forEach((lb, i) => {
-          const val = [d.physical, d.emotional, d.intellectual][i];
-          const col = ['#a78bfa','#f472b6','#fbbf24'][i];
-          // 各バーのy: スコアブロック内に均等配置
-          const y = scoreTopY + barSpacing + i * (barH + barSpacing);
-          ctx.fillStyle = '#d0d0e0'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-          ctx.fillText(lb, barX - 8, y + barH/2);
-          ctx.fillStyle = '#252540'; roundRect(ctx, barX, y, barW, barH, 5); ctx.fill();
-          const vw = barW * (val/100);
-          if (vw > 0) { ctx.fillStyle = col; roundRect(ctx, barX, y, vw, barH, 5); ctx.fill(); }
-          ctx.fillStyle = '#f0f0f8'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
-          ctx.fillText(val + '%', barX + barW + 8, y + barH/2);
-        });
+      const gaugePad = 14, gaugeH = 86; // 1ゲージブロックの高さ
+      const gaugeGap = 10;
+      const barLabels = isSolo ? ['身体','感情','知性'] : ['身体波長','感情波長','知性波長'];
+
+      function drawGauge(topY, score, color1, color2, titleTxt, detailTxt, subBars) {
+        if (forMeasure) return;
+        // 背景
+        ctx.fillStyle = '#1a1a30'; roundRect(ctx, 20, topY, W-40, gaugeH, 8); ctx.fill();
+        // タイトル
+        ctx.fillStyle = '#a0a0b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText(titleTxt, 36, topY + 18);
+        if (detailTxt) {
+          ctx.fillStyle = '#6060a0'; ctx.font = '11px sans-serif';
+          ctx.fillText(detailTxt, 36, topY + 32);
+        }
+        // スコア数値
+        const grad = ctx.createLinearGradient(36, 0, 200, 0);
+        grad.addColorStop(0, color1); grad.addColorStop(1, color2);
+        ctx.fillStyle = grad; ctx.font = 'bold 38px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(score, 36, topY + 60);
+        // メインバー
+        const bx = 130, bw = W - 40 - 130 - (subBars ? 180 : 20), bh = 10, by = topY + 54;
+        ctx.fillStyle = '#252540'; roundRect(ctx, bx, by, bw, bh, 5); ctx.fill();
+        const vw = bw * (score/100);
+        if (vw > 0) {
+          const bg = ctx.createLinearGradient(bx, 0, bx+bw, 0);
+          bg.addColorStop(0, color1); bg.addColorStop(1, color2);
+          ctx.fillStyle = bg; roundRect(ctx, bx, by, vw, bh, 5); ctx.fill();
+        }
+        // サブバー（身体・感情・知性）
+        if (subBars) {
+          const sbx = W - 40 - 175, sbw = 160, sbh = 7, sbColors = ['#a78bfa','#f472b6','#fbbf24'];
+          subBars.forEach((v, i) => {
+            const sy = topY + 36 + i * 16;
+            ctx.fillStyle = '#6060a0'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+            ctx.fillText(barLabels[i], sbx - 4, sy + sbh/2);
+            ctx.fillStyle = '#252540'; roundRect(ctx, sbx, sy, sbw, sbh, 3); ctx.fill();
+            const svw = sbw * (v/100);
+            if (svw > 0) { ctx.fillStyle = sbColors[i]; roundRect(ctx, sbx, sy, svw, sbh, 3); ctx.fill(); }
+            ctx.fillStyle = '#c0c0dc'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+            ctx.fillText(v+'%', sbx + sbw + 4, sy + sbh/2);
+          });
+        }
       }
+
+      // 六星スコアゲージ
+      const rokuseDetail = isSolo
+        ? `年運${d.nenunA?.score??0}点 / 月運${d.tsukinA?.score??0}点 / 日運${d.hiUnA?.score??0}点`
+        : (d.compat ? `相性: ${d.compat}` : '');
+      const rokuseTitle = isSolo ? '六星サイクルスコア' : '六星相性スコア';
+      drawGauge(scoreTopY, d.rokuseScore??0, '#f6d860', '#c084fc', rokuseTitle, rokuseDetail, null);
+
+      // バイオリズムスコアゲージ
+      const bioTitle = isSolo ? 'バイオリズムスコア' : 'バイオリズム相性スコア';
+      drawGauge(scoreTopY + gaugeH + gaugeGap, d.bioScore??0, '#60a5fa', '#4ade80', bioTitle, null,
+        [d.physical??0, d.emotional??0, d.intellectual??0]);
 
       // ---- ソロ: サイクルカード3枚 ----
       // ---- ペア: Aさん3枚 + Bさん3枚 ----
-      let curY = scoreTopY + scoreBlockH + 16;
+      let curY = scoreTopY + (gaugeH + gaugeGap) * 2 + 16;
 
       if (isSolo) {
         const cards = [
@@ -1157,14 +1198,17 @@ function buildShareText(mode) {
   let head = '';
   if (isSolo) {
     head = `🔮 ${d._nameA}の六星運勢（${fmtDateFull(d.targetDate)}）\n六星: ${d.rokuseA?.fullName||''}\n`;
-    head += `年運: ${d.nenunA?.cycle||''} / 日運: ${d.hiUnA?.cycle||''}\n総合: ${d.overallScore}点\n`;
+    head += `年運: ${d.nenunA?.cycle||''} / 日運: ${d.hiUnA?.cycle||''}\n`;
+    head += `六星スコア: ${d.rokuseScore??0}点 / バイオスコア: ${d.bioScore??0}点\n`;
   } else {
     head = `🔮 ${d._nameA} × ${d._nameB} 六星相性（${fmtDateFull(d.targetDate)}）\n`;
     head += `${d._nameA}: ${d.rokuseA?.fullName||''} / ${d._nameB}: ${d.rokuseB?.fullName||''}\n`;
-    head += `相性: ${d.compat||''} 総合: ${d.overallScore}%\n`;
+    head += `相性: ${d.compat||''}\n`;
+    head += `六星スコア: ${d.rokuseScore??0}点 / バイオスコア: ${d.bioScore??0}点\n`;
   }
   let fortune = '';
-  if (fs && isSolo) fortune = `💰${fs.money} 💕${fs.love} 💼${fs.work} 🏃${fs.health} 🤝${fs.social}\n`;
+  const fmt = v => String(Math.round(v*100)/100);
+  if (fs && isSolo) fortune = `💰${fmt(fs.money)} 💕${fmt(fs.love)} 💼${fmt(fs.work)} 🏃${fmt(fs.health)} 🤝${fmt(fs.social)}\n`;
   const diag = d.baseDiagnosis||d.diagnosis||'';
   const url = location.href;
   if (mode==='x') return head + (fortune?fortune:'') + diag.substring(0,80)+'…\n'+url;

@@ -222,10 +222,31 @@ input::placeholder{color:var(--text3)}
 .share-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,50,.95);color:var(--text);font-size:14px;padding:10px 24px;border-radius:50px;border:1px solid rgba(255,255,255,.1);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:300}
 .share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* LINEブラウザ警告バナー */
+.line-browser-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#00b900,#00d000);color:#fff;padding:14px 16px 14px 16px;box-shadow:0 2px 12px rgba(0,185,0,.4);animation:slideDown .3s ease}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.line-banner-inner{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.line-banner-icon{font-size:22px;flex-shrink:0}
+.line-banner-text{flex:1;font-size:13px;line-height:1.5;font-family:'Zen Maru Gothic',sans-serif}
+.line-banner-text strong{font-size:14px;display:block;margin-bottom:2px}
+.line-banner-btn{background:#fff;color:#00b900;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:inherit}
+
 footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:12px;color:var(--text3);line-height:2}
 </style>
 </head>
 <body>
+<!-- LINEブラウザ警告バナー -->
+<div class="line-browser-banner" id="lineBanner">
+  <div class="line-banner-inner">
+    <div class="line-banner-icon">⚠️</div>
+    <div class="line-banner-text">
+      <strong>LINEブラウザでは正常に動作しない場合があります</strong>
+      右下の「…」→「ブラウザで開く」をタップしてください
+    </div>
+    <button class="line-banner-btn" onclick="document.getElementById('lineBanner').style.display='none'">閉じる</button>
+  </div>
+</div>
+
 <canvas class="stars-canvas" id="starsCanvas"></canvas>
 <div class="bg-layer"></div>
 
@@ -443,6 +464,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el && !el.value) el.value = `${y}-${m}-${d}`;
   } catch(e) { console.error('init error:', e); }
   try { drawStars(); } catch(e) { console.error('drawStars error:', e); }
+
+  // LINEブラウザ検出
+  try {
+    const ua = navigator.userAgent || '';
+    const isLine = ua.includes('Line/') || ua.includes('FBAN') ||
+                   ua.includes('FB_IAB') || ua.includes('Instagram') ||
+                   (ua.includes('Android') && ua.includes('wv'));
+    if (isLine) {
+      document.getElementById('lineBanner').style.display = 'block';
+      // スクロール位置を確保するためbodyにpadding追加
+      document.body.style.paddingTop = '80px';
+    }
+  } catch(e) {}
 });
 
 // ★ 星空描画

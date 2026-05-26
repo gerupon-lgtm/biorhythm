@@ -221,10 +221,23 @@ input::placeholder{color:var(--text3)}
 .range-table .score-mid{color:var(--earth)}
 .range-table .score-lo{color:var(--fire)}
 .range-table .today-row td{border-top:2px solid var(--accent);border-bottom:2px solid var(--accent)}
+/* アプリ内ブラウザ警告 */
+.inapp-banner{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(248,113,113,.95);color:#fff;padding:0;backdrop-filter:blur(8px)}
+.inapp-inner{max-width:660px;margin:0 auto;padding:14px 20px;text-align:center;font-size:14px;line-height:1.6}
+.inapp-inner p{margin:0 0 4px}
+.inapp-close{margin-top:8px;padding:6px 20px;border:1px solid rgba(255,255,255,.4);border-radius:16px;background:transparent;color:#fff;font-size:13px;font-family:inherit;cursor:pointer}
 footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-height:1.8}
 </style>
 </head>
 <body>
+<!-- アプリ内ブラウザ警告 -->
+<div class="inapp-banner" id="inappBanner" style="display:none">
+  <div class="inapp-inner">
+    <p>⚠️ アプリ内ブラウザでは正常に動作しない場合があります。</p>
+    <p><strong>「…」</strong> メニュー（右上または右下）から <strong>「ブラウザで開く」</strong> を選択してください。</p>
+    <button class="inapp-close" onclick="document.getElementById('inappBanner').style.display='none'">✕ 閉じる</button>
+  </div>
+</div>
 <div class="bg-layer"></div>
 
 <!-- 猫アニメーション待機画面 -->
@@ -275,7 +288,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
       <div class="field-group" style="max-width:110px"><label for="genderA">性別</label><select id="genderA"><option value="" selected>未選択</option><option value="male">男性</option><option value="female">女性</option></select></div>
     </div>
     <div class="field-row">
-      <div class="field-group"><label for="birthA">生年月日</label><input type="date" id="birthA" max="2026-12-31"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div class="field-group"><label for="birthA">生年月日</label><input type="text" id="birthA" inputmode="numeric" pattern="\d{4}-\d{2}-\d{2}" placeholder="例: 2000-01-15" maxlength="10"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
       <div class="field-group" style="max-width:140px"><label for="timeA">出生時間</label><input type="time" id="timeA"><svg class="picker-icon" style="bottom:31px" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p class="optional-hint">不明なら空欄でOK</p></div>
     </div>
   </div>
@@ -286,7 +299,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
       <div class="field-group" style="max-width:110px"><label for="genderB">性別</label><select id="genderB"><option value="" selected>未選択</option><option value="male">男性</option><option value="female">女性</option></select></div>
     </div>
     <div class="field-row">
-      <div class="field-group"><label for="birthB">生年月日</label><input type="date" id="birthB" max="2026-12-31"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div class="field-group"><label for="birthB">生年月日</label><input type="text" id="birthB" inputmode="numeric" pattern="\d{4}-\d{2}-\d{2}" placeholder="例: 2000-01-15" maxlength="10"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
       <div class="field-group" style="max-width:140px"><label for="timeB">出生時間</label><input type="time" id="timeB"><svg class="picker-icon" style="bottom:31px" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p class="optional-hint">不明なら空欄でOK</p></div>
     </div>
     <p class="card-note">生年月日未指定で一人目の個人診断になります</p>
@@ -357,7 +370,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.0.0
+    ver 3.2.0
   </footer>
 </div>
 
@@ -416,7 +429,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.0.0';
+const APP_VERSION='3.2.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -426,6 +439,31 @@ document.addEventListener('DOMContentLoaded',function(){
   const d=String(now.getDate()).padStart(2,'0');
   const el=document.getElementById('birthA');
   if(el&&!el.value) el.value=y+'-'+m+'-'+d;
+
+  // アプリ内ブラウザ検出
+  const ua=navigator.userAgent||'';
+  const isInApp=/FBAN|FBAV|Line\/|LIFF|Instagram|Twitter/i.test(ua);
+  if(isInApp){
+    document.getElementById('inappBanner').style.display='block';
+  }
+
+  // 生年月日フィールド: フォーカスで全選択 + ハイフン自動挿入
+  ['birthA','birthB'].forEach(id=>{
+    const inp=document.getElementById(id);
+    if(!inp) return;
+    // タップ/クリックで全選択
+    inp.addEventListener('focus',function(){
+      setTimeout(()=>this.select(),50);
+    });
+    // 数字入力時にハイフン自動挿入 (YYYY-MM-DD)
+    inp.addEventListener('input',function(e){
+      let v=this.value.replace(/[^0-9]/g,'');
+      if(v.length>8) v=v.slice(0,8);
+      if(v.length>=5) v=v.slice(0,4)+'-'+v.slice(4);
+      if(v.length>=8) v=v.slice(0,7)+'-'+v.slice(7);
+      this.value=v;
+    });
+  });
 });
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -518,15 +556,17 @@ const ELEM_JP={wood:'木',fire:'火',earth:'土',metal:'金',water:'水'};
 
 async function runDiagnosis(){
   const nameA=document.getElementById('nameA').value.trim()||'あなた';
-  const birthA=document.getElementById('birthA').value;
+  const birthA=document.getElementById('birthA').value.trim();
   const genderA=document.getElementById('genderA').value||null;
   const timeA=document.getElementById('timeA').value||null;
   const nameB=document.getElementById('nameB').value.trim();
-  const birthB=document.getElementById('birthB').value;
+  const birthB=document.getElementById('birthB').value.trim();
   const genderB=document.getElementById('genderB').value||null;
   const timeB=document.getElementById('timeB').value||null;
   const targetDate=document.getElementById('targetDate').value||null;
   if(!birthA){showError('一人目の生年月日を入力してください');return}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(birthA)){showError('一人目の生年月日はYYYY-MM-DD形式で入力してください（例: 2000-01-15）');return}
+  if(birthB&&!/^\d{4}-\d{2}-\d{2}$/.test(birthB)){showError('二人目の生年月日はYYYY-MM-DD形式で入力してください（例: 2000-01-15）');return}
   const isSolo=!birthB;
 
   // ユーザーのタイムゾーンを送信

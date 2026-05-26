@@ -460,7 +460,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.1
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.2
   </footer>
 </div>
 
@@ -499,7 +499,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.3.1';
+const APP_VERSION = '1.3.2';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -803,6 +803,12 @@ function displaySolo(d, name) {
   document.getElementById('barLabel3').textContent = '知性';
   const rsd = d.nenunA && d.tsukinA && d.hiUnA ? `年運${d.nenunA.score}点 / 月運${d.tsukinA.score}点 / 日運${d.hiUnA.score}点` : '';
   document.getElementById('rokuseScoreDetail').textContent = rsd;
+  if (d.targetDate) {
+    const td = document.getElementById('targetDate');
+    const tdText = document.getElementById('targetDate_text');
+    if (td && !td.value) { td.value = d.targetDate; }
+    if (tdText && !tdText.value) { tdText.value = isoToDisplay(d.targetDate); }
+  }
   setScores(d); setBars(d);
 
   document.getElementById('rokuseLabel').style.display = '';
@@ -840,6 +846,12 @@ function displayPair(d, nA, nB) {
   document.getElementById('barLabel2').textContent = '感情波長';
   document.getElementById('barLabel3').textContent = '知性波長';
   document.getElementById('rokuseScoreDetail').textContent = d.compat ? `相性: ${d.compat}` : '';
+  if (d.targetDate) {
+    const td = document.getElementById('targetDate');
+    const tdText = document.getElementById('targetDate_text');
+    if (td && !td.value) { td.value = d.targetDate; }
+    if (tdText && !tdText.value) { tdText.value = isoToDisplay(d.targetDate); }
+  }
   setScores(d); setBars(d);
 
   document.getElementById('rokuseLabel').style.display = '';
@@ -1417,7 +1429,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.1', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.2', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

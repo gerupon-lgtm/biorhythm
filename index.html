@@ -41,13 +41,11 @@ h1 em{font-style:normal;color:var(--accent)}
 .field-group{margin-bottom:16px}
 .field-group:last-child{margin-bottom:0}
 label{display:block;font-size:16px;font-weight:500;color:var(--text2);margin-bottom:6px;letter-spacing:.5px}
-input[type="text"],input[type="date"],input[type="time"],select{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid rgba(255,255,255,.07);border-radius:10px;color:var(--text);font-size:16px;font-family:inherit;outline:none;transition:border-color .3s,box-shadow .3s}
-input[type="date"],input[type="time"]{position:relative;padding-right:42px;cursor:text}
-input[type="date"]::-webkit-calendar-picker-indicator{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:28px;height:28px;opacity:0;cursor:pointer;z-index:2}
+input[type="text"],select{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid rgba(255,255,255,.07);border-radius:10px;color:var(--text);font-size:16px;font-family:inherit;outline:none;transition:border-color .3s,box-shadow .3s}
 .field-group{position:relative}
 .picker-icon{position:absolute;right:20px;bottom:13px;width:20px;height:20px;pointer-events:none;z-index:1}
 select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a4' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer}
-input[type="date"]:hover,input[type="time"]:hover{border-color:rgba(167,139,250,.3)}
+input[type="text"]:hover{border-color:rgba(167,139,250,.3)}
 input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(192,132,252,.12)}
 input::placeholder{color:var(--text3)}
 .optional-hint{font-size:13px;color:var(--text3);margin-top:4px}
@@ -160,7 +158,7 @@ input::placeholder{color:var(--text3)}
 .fortune-score-bar .fsb-val{font-size:14px;font-weight:600;width:30px;text-align:right;font-family:'Outfit',sans-serif}
 .date-picker-row{display:flex;align-items:center;gap:12px;margin:0 0 8px;padding:12px 20px;background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius)}
 .date-picker-row label{font-size:16px;font-weight:500;color:var(--text2);white-space:nowrap;margin:0;flex-shrink:0}
-.date-picker-row input[type="date"]{width:100%;padding:8px 38px 8px 12px;font-size:16px;margin:0}
+.date-picker-row input[type="text"]{width:100%;padding:8px 38px 8px 12px;font-size:16px;margin:0}
 .date-picker-row .field-group{margin-bottom:0}
 .date-picker-row .picker-icon{right:12px}
 .date-picker-row .optional-hint{font-size:13px;color:var(--text3);margin:0}
@@ -306,7 +304,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <div class="date-picker-row">
     <label for="targetDate">判定日</label>
-    <div class="field-group" style="flex:0 0 170px"><input type="date" id="targetDate"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+    <div class="field-group" style="flex:0 0 170px"><input type="text" id="targetDate" inputmode="numeric" pattern="\d{4}\/\d{2}\/\d{2}" placeholder="例: 2026/05/22" maxlength="10"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
     <span class="optional-hint">未指定なら今日を判定</span>
   </div>
   <div class="btn-wrap"><button class="btn" id="diagnoseBtn" onclick="runDiagnosis()"><span class="spinner"></span><span class="btn-text">診断する</span></button></div>
@@ -370,7 +368,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.3.0
+    ver 3.4.0
   </footer>
 </div>
 
@@ -429,7 +427,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.3.0';
+const APP_VERSION='3.4.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -447,8 +445,8 @@ document.addEventListener('DOMContentLoaded',function(){
     document.getElementById('inappBanner').style.display='block';
   }
 
-  // 生年月日フィールド: フォーカスで全選択 + スラッシュ自動挿入
-  ['birthA','birthB'].forEach(id=>{
+  // 生年月日・判定日フィールド: フォーカスで全選択 + スラッシュ自動挿入
+  ['birthA','birthB','targetDate'].forEach(id=>{
     const inp=document.getElementById(id);
     if(!inp) return;
     inp.addEventListener('focus',function(){
@@ -578,7 +576,9 @@ async function runDiagnosis(){
   const birthBraw=document.getElementById('birthB').value.trim();
   const genderB=document.getElementById('genderB').value||null;
   const timeBraw=document.getElementById('timeB').value.trim();
-  const targetDate=document.getElementById('targetDate').value||null;
+  const targetDateRaw=document.getElementById('targetDate').value.trim();
+  if(targetDateRaw&&!/^\d{4}\/\d{2}\/\d{2}$/.test(targetDateRaw)){showError('判定日はYYYY/MM/DD形式で入力してください（例: 2026/05/22）');return}
+  const targetDate=targetDateRaw?targetDateRaw.replace(/\//g,'-'):null;
   if(!birthAraw){showError('一人目の生年月日を入力してください');return}
   if(!/^\d{4}\/\d{2}\/\d{2}$/.test(birthAraw)){showError('一人目の生年月日はYYYY/MM/DD形式で入力してください（例: 2000/01/15）');return}
   if(birthBraw&&!/^\d{4}\/\d{2}\/\d{2}$/.test(birthBraw)){showError('二人目の生年月日はYYYY/MM/DD形式で入力してください（例: 2000/01/15）');return}

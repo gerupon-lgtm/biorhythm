@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ギャラガ風ブラウザシューティング</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050510;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #game-container {
+            position: relative;
+            width: 480px;
+            height: 640px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            background: #000;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10;
+        }
+        .hidden { display: none !important; }
+        h1 {
+            font-size: 32px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .blink {
+            animation: blinker 1s linear infinite;
+            color: #ff00ff;
+            font-weight: bold;
+            margin: 15px 0;
+            font-size: 20px;
+        }
+        @keyframes blinker { 50% { opacity: 0; } }
+        
+        button {
+            background: #111;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-family: inherit;
+            cursor: pointer;
+            margin: 5px;
+            box-shadow: 0 0 5px #00ffff;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #00ffff;
+            color: #000;
+            box-shadow: 0 0 15px #00ffff;
+        }
+        
+        .level-select {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .level-btn {
+            font-size: 14px;
+            padding: 6px 14px;
+            border-color: #555;
+            color: #555;
+            box-shadow: none;
+        }
+        .level-btn.active {
+            border-color: #ff00ff;
+            color: #ff00ff;
+            box-shadow: 0 0 10px #ff00ff;
+            background: rgba(255, 0, 255, 0.1);
+        }
+
+        .info-text {
+            font-size: 13px;
+            color: #aaa;
+            text-align: center;
+            line-height: 1.4;
+            margin: 10px 0;
+        }
+        
+        table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 4px 8px;
+            text-align: left;
+        }
+        th { color: #ff00ff; }
+        td { color: #fff; }
+
+        #name-input-container {
+            margin: 15px 0;
+            text-align: center;
+        }
+        #player-name {
+            background: #222;
+            border: 2px solid #ff00ff;
+            color: #fff;
+            padding: 8px;
+            font-size: 16px;
+            text-align: center;
+            text-transform: uppercase;
+            width: 150px;
+        }
+
+        /* Touch Pause Button */
+        #touch-pause-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 44px;
+            height: 44px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            border-radius: 5px;
+            color: #00ffff;
+            font-size: 16px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 6;
+        }
+
+        @media (max-width: 500px) or (max-height: 660px) {
+            #game-container { width: 100vw; height: 100vh; box-shadow: none; }
+            #touch-pause-btn { display: flex; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="480" height="640"></canvas>
+
+    <button id="touch-pause-btn">⏸</button>
+
+    <div id="title-screen" class="overlay">
+        <h1>GALAXY SHOT</h1>
+        
+        <div style="font-size: 12px; color: #00ffff;">SELECT LEVEL</div>
+        <div class="level-select">
+            <button id="lvl-easy" class="level-btn">EASY</button>
+            <button id="lvl-normal" class="level-btn active">NORMAL</button>
+            <button id="lvl-hard" class="level-btn">HARD</button>
+        </div>
+
+        <button id="start-game-btn" style="margin-top: 5px;">CLICK TO START</button>
+        
+        <div class="info-text">
+            [PC CONTROLS]<br>
+            ← / A : LEFT | → / D : RIGHT | SPACE : FIRE<br>
+            [SMARTPHONE]<br>
+            DRAG : MOVE & AUTOMATIC SHOT
+        </div>
+        <table id="leaderboard-title">
+            <thead><tr><th>RANK</th><th>NAME</th><th>SCORE</th></tr></thead>
+            <tbody id="leaderboard-body-title"></tbody>
+        </table>
+    </div>
+
+    <div id="pause-screen" class="overlay hidden">
+        <h1>PAUSED</h1>
+        <button id="resume-btn">RESUME</button>
+        <button id="reset-btn">RESET GAME</button>
+        <button id="to-title-btn">QUIT TO TITLE</button>
+    </div>
+
+    <div id="gameover-screen" class="overlay hidden">
+        <h1 style="color: #ff0055; text-shadow: 0 0 10px #ff0055;">GAME OVER</h1>
+        <div id="final-score-text" style="font-size: 20px; margin: 10px 0;">SCORE: 0</div>
+        
+        <div id="name-input-container" class="hidden">
+            <div style="color: #ffff00; margin-bottom: 5px;" class="blink">NEW RECORD!</div>
+            <input type="text" id="player-name" maxlength="8" value="PLAYER1"><br><br>
+            <button id="submit-score-btn">SAVE SCORE</button>
+        </div>
+
+        <button id="retry-btn">RETRY</button>
+        <button id="go-title-btn">TITLE</button>
+    </div>
+</div>
+
+<script>
+// --- 1. サウンド管理 (Web Audio API) ---
+class SoundManager {
+    constructor() { 
+        this.ctx = null; 
+        this.bgmInterval = null;
+        this.bgmStep = 0;
+        this.isBgmPlaying = false;
+    }
+    init() { if (!this.ctx) { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } }
+    
+    playTone(freq, type, duration, volume = 0.1, slideTo = 0, delay = 0) {
+        if (!this.ctx) return;
+        try {
+            let time = this.ctx.currentTime + delay;
+            let osc = this.ctx.createOscillator();
+            let gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, time);
+            if (slideTo > 0) { osc.frequency.exponentialRampToValueAtTime(slideTo, time + duration); }
+            gain.gain.setValueAtTime(volume, time);
+            gain.gain.exponentialRampToValueAtTime(0.00001, time + duration);
+            osc.connect(gain); gain.connect(this.ctx.destination);
+            osc.start(time); osc.stop(time + duration);
+        } catch(e) {}
+    }
+    
+    playNoise(duration, volume = 0.1) {
+        if (!this.ctx) return;
+        try {
+            let bufferSize = this.ctx.sampleRate * duration;
+            let buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            let data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+            let noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            let gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, duration);
+            noise.connect(gain); gain.connect(this.ctx.destination);
+            noise.start();
+        } catch(e) {}
+    }
+    
+    playShot() { this.playTone(600, 'square', 0.15, 0.06, 150); }
+    playExplode() { this.playNoise(0.3, 0.18); }
+    playBossExplode() {
+        this.playNoise(0.8, 0.25);
+        this.playTone(120, 'sawtooth', 0.6, 0.25, 40);
+    }
+    playPlayerDamage() { this.playTone(300, 'sawtooth', 0.5, 0.18, 50); }
+    playItemGet() {
+        this.playTone(880, 'sine', 0.1, 0.08);
+        setTimeout(() => this.playTone(1320, 'sine', 0.1, 0.08), 70);
+        setTimeout(() => this.playTone(1760, 'sine', 0.15, 0.08), 140);
+    }
+    
+    playItemSpawn() {
+        this.playTone(1000, 'sine', 0.05, 0.05);
+        setTimeout(() => this.playTone(1500, 'sine', 0.05, 0.05), 50);
+    }
+
+    play1UP() {
+        const notes = [1318.5, 1568.0, 2093.0];
+        notes.forEach((n, i) => { this.playTone(n, 'square', 0.12, 0.08, 0, i * 0.08); });
+    }
+
+    playBossWarning() {
+        for(let i = 0; i < 3; i++) {
+            this.playTone(220, 'sawtooth', 0.2, 0.15, 440, i * 0.4);
+        }
+    }
+
+    playStartJingle() {
+        const notes = [261.6, 329.6, 392.0, 523.3];
+        notes.forEach((t, i) => { this.playTone(t, 'square', 0.15, 0.08, 0, i * 0.12); });
+    }
+    playClearJingle() {
+        const notes = [440, 494, 523, 587, 659, 0, 659, 698, 784];
+        notes.forEach((t, i) => { if(t > 0) this.playTone(t, 'square', 0.12, 0.08, 0, i * 0.1); });
+    }
+    playGameOverJingle() {
+        const notes = [392, 349, 311, 261];
+        notes.forEach((t, i) => { this.playTone(t, 'sawtooth', 0.25, 0.1, 0, i * 0.2); });
+    }
+
+    startBGM() {
+        if (this.isBgmPlaying) return;
+        this.isBgmPlaying = true;
+        const pattern = [110, 110, 130, 146, 110, 110, 165, 146, 117, 117, 138, 155, 117, 117, 174, 155];
+        this.bgmInterval = setInterval(() => {
+            let freq = pattern[this.bgmStep % pattern.length];
+            if (window.gameInstance && window.gameInstance.boss) freq *= 1.2;
+            this.playTone(freq, 'triangle', 0.12, 0.06);
+            this.bgmStep++;
+        }, 160);
+    }
+
+    stopBGM() {
+        clearInterval(this.bgmInterval);
+        this.bgmInterval = null;
+        this.isBgmPlaying = false;
+    }
+}
+const sound = new SoundManager();
+
+// --- 2. スコア & エクステンド管理 ---
+class ScoreManager {
+    constructor() {
+        this.score = 0;
+        this.extendTracker = 0;
+        this.highScore = parseInt(localStorage.getItem('galaxy_hi_score')) || 10000;
+        this.ranking = JSON.parse(localStorage.getItem('galaxy_ranking')) || [
+            {name: 'ACE', score: 10000, date: ''},
+            {name: 'PILOT', score: 5000, date: ''},
+            {name: 'ROOKIE', score: 1000, date: ''}
+        ];
+    }
+    
+    addScore(amount) {
+        this.score += amount;
+        this.extendTracker += amount;
+        
+        if (this.extendTracker >= 10000) {
+            if (window.gameInstance) {
+                window.gameInstance.life++;
+                sound.play1UP();
+            }
+            this.extendTracker %= 10000;
+        }
+
+        if (this.score > this.highScore) {
+            this.highScore = this.score;
+            localStorage.setItem('galaxy_hi_score', this.highScore);
+        }
+    }
+    
+    reset() {
+        this.score = 0;
+        this.extendTracker = 0;
+    }
+
+    checkRankingEligibility() { return this.ranking.length < 5 || this.score > this.ranking[this.ranking.length - 1].score; }
+    saveRanking(name) {
+        const entry = { name: name.toUpperCase().substring(0, 8) || 'ANON', score: this.score, date: new Date().toLocaleDateString() };
+        this.ranking.push(entry);
+        this.ranking.sort((a, b) => b.score - a.score);
+        this.ranking = this.ranking.slice(0, 5);
+        localStorage.setItem('galaxy_ranking', JSON.stringify(this.ranking));
+    }
+}
+const scores = new ScoreManager();
+
+// --- 3. ゲームエンティティ定義 ---
+class Player {
+    constructor(canvasWidth, canvasHeight) {
+        this.canvasWidth = canvasWidth; this.canvasHeight = canvasHeight;
+        this.width = 24; this.height = 24;
+        this.x = canvasWidth / 2 - this.width / 2; this.y = canvasHeight - 80;
+        this.baseSpeed = 5; this.speed = this.baseSpeed;
+        this.powerLevel = 1; this.invulnerableTimer = 0;
+        this.visible = true;
+    }
+    reset() {
+        this.x = this.canvasWidth / 2 - this.width / 2;
+        this.powerLevel = 1; this.speed = this.baseSpeed; this.invulnerableTimer = 120;
+        this.visible = true;
+    }
+    // 【改善点】スワイプによる相対移動量(touchDx)を受け取るように拡張
+    update(keys, touchDx) {
+        if (!this.visible) return;
+        
+        let dx = 0;
+        if (keys['ArrowLeft'] || keys['KeyA']) dx = -this.speed;
+        if (keys['ArrowRight'] || keys['KeyD']) dx = this.speed;
+        
+        // タッチ移動量があれば加算
+        if (touchDx !== 0) dx = touchDx;
+
+        this.x += dx;
+        if (this.x < 0) this.x = 0;
+        if (this.x > this.canvasWidth - this.width) this.x = this.canvasWidth - this.width;
+        if (this.invulnerableTimer > 0) this.invulnerableTimer--;
+    }
+    draw(ctx) {
+        if (!this.visible) return;
+        if (!(this.invulnerableTimer > 0 && Math.floor(this.invulnerableTimer / 4) % 2 === 0)) {
+            ctx.save();
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(this.x + 10, this.y, 4, 6);
+            ctx.fillStyle = '#3a86ff'; ctx.fillRect(this.x + 6, this.y + 6, 12, 14);
+            ctx.fillStyle = '#ff0055'; ctx.fillRect(this.x, this.y + 12, 6, 8); ctx.fillRect(this.x + 18, this.y + 12, 6, 8);
+            if (Math.random() > 0.5) { ctx.fillStyle = '#ffaa00'; ctx.fillRect(this.x + 10, this.y + 20, 4, 4); }
+            ctx.restore();
+        }
+        if (this.invulnerableTimer > 0) {
+            ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 2; ctx.beginPath();
+            ctx.arc(this.x + this.width / 2, this.y + this.height / 2, 20, 0, Math.PI * 2); ctx.stroke();
+        }
+    }
+}
+
+class Bullet {
+    constructor(x, y, vx, vy, isLaser = false, isEnemy = false) {
+        this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+        this.width = 4; this.height = isLaser ? 16 : 8;
+        this.isLaser = isLaser; this.isEnemy = isEnemy; this.active = true;
+    }
+    update() {
+        this.x += this.vx; this.y += this.vy;
+        if (this.y < -20 || this.y > 660 || this.x < -20 || this.x > 500) this.active = false;
+    }
+    draw(ctx) { 
+        ctx.save();
+        if (this.isEnemy) {
+            ctx.fillStyle = '#ff3300';
+            ctx.shadowColor = '#ff3300';
+            ctx.shadowBlur = 4;
+        } else {
+            ctx.fillStyle = this.isLaser ? '#cc00ff' : '#00ffff';
+            ctx.shadowColor = this.isLaser ? '#cc00ff' : '#00ffff';
+            ctx.shadowBlur = 4;
+        }
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.restore();
+    }
+}
+
+class Enemy {
+    constructor(x, y, type, stage, levelFactor) {
+        this.x = x; this.y = y; this.startX = x; this.startY = y; this.type = type;
+        this.width = 20; this.height = 20; this.active = true;
+        this.scoreValue = type === 2 ? 150 : (type === 3 ? 200 : 100);
+        this.swingOffset = Math.random() * Math.PI * 2;
+        this.state = 'grid'; this.timer = 0;
+        this.speedFactor = (1 + (stage * 0.12)) * levelFactor;
+    }
+    update() {
+        this.timer++;
+        if (this.state === 'grid') {
+            this.x = this.startX + Math.sin(this.timer * 0.03 + this.swingOffset) * 20;
+            if (Math.random() < 0.0005) { this.state = 'swoop'; }
+        } else if (this.state === 'swoop') {
+            this.y += 3.5 * this.speedFactor;
+            this.x += Math.sin(this.timer * 0.05) * 2 * this.speedFactor;
+            
+            if (this.y >= 640) {
+                this.y = -40;
+                this.state = 'returning';
+            }
+        } else if (this.state === 'returning') {
+            let targetX = this.startX + Math.sin(this.timer * 0.03 + this.swingOffset) * 20;
+            let dx = targetX - this.x;
+            let dy = this.startY - this.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            
+            let returnSpeed = 5.5 * this.speedFactor;
+            if (distance > returnSpeed) {
+                this.x += (dx / distance) * returnSpeed;
+                this.y += (dy / distance) * returnSpeed;
+            } else {
+                this.x = targetX;
+                this.y = this.startY;
+                this.state = 'grid';
+            }
+        }
+    }
+    draw(ctx) {
+        ctx.save();
+        if (this.type === 1) {
+            ctx.fillStyle = '#ff00ff'; ctx.fillRect(this.x + 4, this.y, 12, 12);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(this.x, this.y + 4, 4, 4); ctx.fillRect(this.x + 16, this.y + 4, 4, 4);
+        } else if (this.type === 2) {
+            ctx.fillStyle = '#00ff66'; ctx.fillRect(this.x + 2, this.y + 2, 16, 10);
+            ctx.fillStyle = '#ffff00'; ctx.fillRect(this.x + 4, this.y + 12, 2, 6); ctx.fillRect(this.x + 14, this.y + 12, 2, 6);
+        } else {
+            ctx.fillStyle = '#ffea00'; ctx.fillRect(this.x, this.y, 20, 8);
+            ctx.fillStyle = '#ff5500'; ctx.fillRect(this.x + 6, this.y + 8, 8, 8);
+        }
+        ctx.restore();
+    }
+}
+
+class BossEnemy {
+    constructor(stage, levelFactor) {
+        this.width = 64; this.height = 48;
+        this.x = 240 - 32; this.y = -60; this.targetY = 80;
+        this.active = true; this.isBoss = true;
+        this.maxHp = 5 + (stage * 3); this.hp = this.maxHp;
+        this.scoreValue = 2000; this.timer = 0; 
+        this.vx = 2 * levelFactor; this.hurtTimer = 0;
+    }
+    update() {
+        this.timer++;
+        if (this.hurtTimer > 0) this.hurtTimer--;
+        if (this.y < this.targetY) { this.y += 2; return; }
+        this.x += this.vx;
+        if (this.x < 20 || this.x > 480 - this.width - 20) { this.vx *= -1; }
+        this.y = this.targetY + Math.sin(this.timer * 0.04) * 15;
+    }
+    draw(ctx) {
+        ctx.save();
+        if (this.hurtTimer > 0 && Math.floor(this.hurtTimer / 2) % 2 === 0) {
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        } else {
+            const cx = this.x;
+            const cy = this.y;
+
+            ctx.fillStyle = '#9900ff';
+            ctx.fillRect(cx + 12, cy + 4, 40, 16);  
+            ctx.fillRect(cx + 4, cy + 16, 56, 16);  
+
+            ctx.fillStyle = '#00ffff';
+            ctx.fillRect(cx, cy, 6, 24);            
+            ctx.fillRect(cx + 58, cy, 6, 24);       
+            ctx.fillRect(cx + 4, cy + 32, 10, 16);  
+            ctx.fillRect(cx + 50, cy + 32, 10, 16); 
+
+            ctx.fillStyle = '#ff0055';
+            ctx.fillRect(cx + 24, cy + 12, 16, 12); 
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(cx + 28, cy + 16, 8, 4);   
+
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(cx + 14, cy, 4, 4);        
+            ctx.fillRect(cx + 46, cy, 4, 4);        
+        }
+        
+        ctx.fillStyle = '#222'; ctx.fillRect(this.x, this.y - 15, this.width, 5);
+        ctx.fillStyle = '#ff0055'; ctx.fillRect(this.x, this.y - 15, this.width * (this.hp / this.maxHp), 5);
+        ctx.restore();
+    }
+}
+
+class Item {
+    constructor(x, y) {
+        this.x = x; this.y = y; this.width = 16; this.height = 16; this.active = true;
+        const r = Math.random(); this.type = r < 0.5 ? 'P' : (r < 0.8 ? 'S' : 'B');
+    }
+    update() { this.y += 2; if (this.y > 640) this.active = false; }
+    draw(ctx, globalTimer) {
+        ctx.save();
+        ctx.fillStyle = (Math.floor(globalTimer / 10) % 2 === 0) ? '#ffffff' : (this.type === 'P' ? '#ff00ff' : (this.type === 'S' ? '#00ffff' : '#ffff00'));
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillStyle = '#000'; ctx.font = 'bold 12px monospace'; ctx.fillText(this.type, this.x + 4, this.y + 13);
+        ctx.restore();
+    }
+}
+
+class Particle {
+    constructor(x, y, color = null, vx = null, vy = null) {
+        this.x = x; this.y = y;
+        this.vx = vx !== null ? vx : (Math.random() - 0.5) * 6;
+        this.vy = vy !== null ? vy : (Math.random() - 0.5) * 6;
+        this.life = 30 + Math.random() * 20; this.maxLife = this.life;
+        this.color = color || (Math.random() > 0.5 ? '#ff5500' : '#ffcc00');
+    }
+    update() { this.x += this.vx; this.y += this.vy; this.life--; }
+    draw(ctx) { ctx.fillStyle = this.color; const size = (this.life / this.maxLife) * 4; ctx.fillRect(this.x, this.y, size, size); }
+}
+
+// --- 4. メインシステム制御 ---
+class Game {
+    constructor() {
+        window.gameInstance = this;
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.state = 'TITLE';
+        this.level = 'NORMAL';
+        
+        this.player = new Player(480, 640);
+        this.life = 3; this.stage = 1;
+        this.bullets = []; this.enemyBullets = []; this.enemies = []; this.boss = null; this.items = []; this.particles = []; this.stars = [];
+        
+        this.keys = {}; this.globalTimer = 0; this.screenShake = 0;
+        this.playerRespawnTimer = 0;
+        this.stageClearTimer = 0;
+        
+        // 【改善点】タッチ操作用の内部変数
+        this.isTouching = false;
+        this.lastTouchX = 0;
+        this.touchDx = 0; // 現在のフレームでの左右スワイプ移動量
+        this.autoShotTimer = 0; // オート連射用タイマー
+        
+        this.initStars();
+        this.bindEvents();
+        this.updateLeaderboards();
+        this.loop();
+    }
+
+    getLevelFactor() {
+        if (this.level === 'EASY') return 0.75;
+        if (this.level === 'HARD') return 1.35;
+        return 1.0;
+    }
+
+    initStars() {
+        for (let i = 0; i < 60; i++) {
+            this.stars.push({ x: Math.random() * 480, y: Math.random() * 640, speed: 1 + Math.random() * 2, size: Math.random() * 2 });
+        }
+    }
+
+    spawnEnemies() {
+        this.enemies = []; this.boss = null;
+        const cols = 6, rows = 3;
+        const factor = this.getLevelFactor();
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                this.enemies.push(new Enemy(80 + c * 50, 60 + r * 35, r + 1, this.stage, factor));
+            }
+        }
+    }
+
+    spawnBoss() {
+        this.enemies = [];
+        this.boss = new BossEnemy(this.stage, this.getLevelFactor());
+        sound.playBossWarning();
+    }
+
+    resetGame() {
+        scores.reset(); this.life = 3; this.stage = 1;
+        this.bullets = []; this.enemyBullets = []; this.items = []; this.particles = [];
+        this.playerRespawnTimer = 0; this.stageClearTimer = 0;
+        this.player.reset(); this.spawnEnemies();
+        this.isTouching = false; this.touchDx = 0;
+    }
+
+    nextStage() {
+        this.stage++; this.bullets = []; this.enemyBullets = [];
+        if (this.stage % 3 === 0) { this.spawnBoss(); } else { this.spawnEnemies(); }
+        this.player.invulnerableTimer = 90;
+        sound.startBGM();
+    }
+
+    bindEvents() {
+        // キーボード操作設定
+        document.addEventListener('keydown', (e) => {
+            if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD'].includes(e.code)) {
+                e.preventDefault();
+            }
+            this.keys[e.code] = true;
+            this.keys[e.key] = true;
+
+            if (e.key === 'Escape' || e.key === 'Esc') this.togglePause();
+            if ((e.code === 'KeyR' || e.key === 'r' || e.key === 'R') && this.state === 'PLAYING') this.triggerReset();
+            if (e.code === 'Space' && this.state === 'PLAYING') this.firePlayerBullet();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            this.keys[e.code] = false;
+            this.keys[e.key] = false;
+        });
+
+        // 【改善点】直感的なスワイプ移動 ＆ タッチ自動連射イベントの実装
+        const getCanvasTouchX = (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            // 実際のCanvas表示サイズから内部の論理解像度(480)にスケール変換
+            return (touch.clientX - rect.left) * (480 / rect.width);
+        };
+
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (this.state !== 'PLAYING') return;
+            sound.init();
+            this.isTouching = true;
+            this.lastTouchX = getCanvasTouchX(e);
+            this.touchDx = 0;
+            
+            // タップの瞬間にも即座に1発発射してキレを良くする
+            this.firePlayerBullet();
+            this.autoShotTimer = 0;
+        });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!this.isTouching || this.state !== 'PLAYING') return;
+            const currentX = getCanvasTouchX(e);
+            
+            // 前回タッチ位置からの移動量（感度を調整可能、1.3倍に設定してより軽快に）
+            this.touchDx = (currentX - this.lastTouchX) * 1.3;
+            this.lastTouchX = currentX;
+        });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.isTouching = false;
+            this.touchDx = 0;
+        });
+
+        this.canvas.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            this.isTouching = false;
+            this.touchDx = 0;
+        });
+
+        // UI用ボタンのイベント
+        const setLevel = (lvl) => {
+            this.level = lvl;
+            ['easy', 'normal', 'hard'].forEach(id => {
+                document.getElementById(`lvl-${id}`).classList.remove('active');
+            });
+            document.getElementById(`lvl-${lvl.toLowerCase()}`).classList.add('active');
+            sound.init(); sound.playTone(440, 'sine', 0.08, 0.1);
+        };
+        document.getElementById('lvl-easy').addEventListener('click', () => setLevel('EASY'));
+        document.getElementById('lvl-normal').addEventListener('click', () => setLevel('NORMAL'));
+        document.getElementById('lvl-hard').addEventListener('click', () => setLevel('HARD'));
+
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            sound.init();
+            if (this.state === 'TITLE') {
+                sound.playStartJingle();
+                this.startGame();
+            }
+        });
+
+        document.getElementById('touch-pause-btn').addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            this.togglePause(); 
+        });
+
+        document.getElementById('resume-btn').addEventListener('click', () => this.togglePause());
+        document.getElementById('reset-btn').addEventListener('click', () => this.triggerReset());
+        document.getElementById('to-title-btn').addEventListener('click', () => this.backToTitle());
+        document.getElementById('retry-btn').addEventListener('click', () => this.startGame());
+        document.getElementById('go-title-btn').addEventListener('click', () => this.backToTitle());
+        document.getElementById('submit-score-btn').addEventListener('click', () => {
+            const name = document.getElementById('player-name').value;
+            scores.saveRanking(name);
+            document.getElementById('name-input-container').classList.add('hidden');
+            this.updateLeaderboards();
+        });
+    }
+
+    togglePause() {
+        if (this.state === 'PLAYING') {
+            this.state = 'PAUSED'; 
+            sound.stopBGM();
+            document.getElementById('pause-screen').classList.remove('hidden');
+        } else if (this.state === 'PAUSED') {
+            this.state = 'PLAYING'; 
+            sound.startBGM();
+            document.getElementById('pause-screen').classList.add('hidden');
+            this.isTouching = false; this.touchDx = 0;
+        }
+    }
+
+    triggerReset() {
+        if (confirm("ゲームをリセットして最初から開始しますか？")) {
+            document.getElementById('pause-screen').classList.add('hidden');
+            this.startGame();
+        }
+    }
+
+    backToTitle() {
+        this.state = 'TITLE';
+        sound.stopBGM();
+        document.getElementById('pause-screen').classList.add('hidden');
+        document.getElementById('gameover-screen').classList.add('hidden');
+        document.getElementById('title-screen').classList.remove('hidden');
+        this.updateLeaderboards();
+    }
+
+    startGame() {
+        this.state = 'PLAYING';
+        document.getElementById('title-screen').classList.add('hidden');
+        document.getElementById('gameover-screen').classList.add('hidden');
+        this.resetGame();
+        setTimeout(() => { if(this.state === 'PLAYING') sound.startBGM(); }, 600);
+    }
+
+    gameOver() {
+        this.state = 'GAMEOVER';
+        sound.stopBGM();
+        sound.playGameOverJingle();
+        document.getElementById('final-score-text').innerText = `FINAL SCORE: ${scores.score}`;
+        document.getElementById('gameover-screen').classList.remove('hidden');
+        if (scores.checkRankingEligibility()) { document.getElementById('name-input-container').classList.remove('hidden'); }
+        else { document.getElementById('name-input-container').classList.add('hidden'); }
+    }
+
+    updateLeaderboards() {
+        const createRows = (list) => list.map((entry, idx) => `<tr><td>${idx+1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`).join('');
+        document.getElementById('leaderboard-body-title').innerHTML = createRows(scores.ranking);
+    }
+
+    firePlayerBullet() {
+        if (!this.player.visible || this.stageClearTimer > 0) return;
+        
+        const p = this.player;
+
+        let shotsInThisLevel = 1;
+        if (p.powerLevel === 2) shotsInThisLevel = 2;
+        if (p.powerLevel === 3) shotsInThisLevel = 3;
+        if (p.powerLevel === 4) shotsInThisLevel = 1; 
+        if (p.powerLevel === 5) shotsInThisLevel = 5; 
+
+        const maxConcurrentBullets = shotsInThisLevel * 5;
+        if (this.bullets.length >= maxConcurrentBullets) return;
+
+        sound.playShot();
+
+        if (p.powerLevel === 1) { 
+            this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y, 0, -10, false, false)); 
+        }
+        else if (p.powerLevel === 2) { 
+            this.bullets.push(new Bullet(p.x + 2, p.y, 0, -10, false, false)); 
+            this.bullets.push(new Bullet(p.x + p.width - 6, p.y, 0, -10, false, false)); 
+        }
+        else if (p.powerLevel === 3) { 
+            this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y, 0, -10, false, false)); 
+            this.bullets.push(new Bullet(p.x, p.y + 6, -2, -10, false, false)); 
+            this.bullets.push(new Bullet(p.x + p.width - 4, p.y + 6, 2, -10, false, false)); 
+        }
+        else if (p.powerLevel === 4) { 
+            this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y - 10, 0, -14, true, false)); 
+        }
+        else {
+            this.bullets.push(new Bullet(p.x + 4, p.y, 0, -11, false, false)); 
+            this.bullets.push(new Bullet(p.x + p.width - 8, p.y, 0, -11, false, false)); 
+            this.bullets.push(new Bullet(p.x + 2, p.y + 4, -2, -10, false, false)); 
+            this.bullets.push(new Bullet(p.x + p.width - 6, p.y + 4, 2, -10, false, false)); 
+            this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y - 4, 0, -12, false, false));
+        }
+    }
+
+    enemyFire() {
+        if (this.stageClearTimer > 0) return;
+        
+        let fireChance = 0.015 + (this.stage * 0.004);
+        if (this.level === 'EASY') fireChance *= 0.6;
+        if (this.level === 'HARD') fireChance *= 1.5;
+
+        if (this.boss) {
+            if (Math.random() < (this.level === 'HARD' ? 0.06 : (this.level === 'EASY' ? 0.025 : 0.04))) {
+                const angle = Math.sin(this.globalTimer * 0.05) * 0.5;
+                this.enemyBullets.push(new Bullet(this.boss.x + this.boss.width/2, this.boss.y + this.boss.height, Math.sin(angle)*3, 5, false, true));
+                this.enemyBullets.push(new Bullet(this.boss.x + this.boss.width/2, this.boss.y + this.boss.height, Math.sin(angle - 0.3)*3, 5, false, true));
+                this.enemyBullets.push(new Bullet(this.boss.x + this.boss.width/2, this.boss.y + this.boss.height, Math.sin(angle + 0.3)*3, 5, false, true));
+            }
+        } else {
+            if (this.enemies.length > 0 && Math.random() < fireChance) {
+                const randomEnemy = this.enemies[Math.floor(Math.random() * this.enemies.length)];
+                if (randomEnemy.y > 0 && randomEnemy.state !== 'returning') { 
+                    this.enemyBullets.push(new Bullet(randomEnemy.x + randomEnemy.width / 2, randomEnemy.y + randomEnemy.height, 0, 4 + this.stage * 0.2, false, true)); 
+                }
+            }
+        }
+    }
+
+    createExplosion(x, y, count = 12) { sound.playExplode(); for (let i = 0; i < count; i++) { this.particles.push(new Particle(x, y)); } }
+
+    createBossExplosion(bx, by) {
+        sound.playBossExplode();
+        this.screenShake = 35;
+        const colors = ['#9900ff', '#ff0055', '#00ffff', '#ffff00', '#ffffff'];
+        for (let ring = 0; ring < 4; ring++) {
+            const particleCount = 20 + (ring * 10);
+            const baseSpeed = 2 + ring * 1.5;
+            const ringColor = colors[ring % colors.length];
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 / particleCount) * i + (Math.random() * 0.2);
+                const vx = Math.cos(angle) * (baseSpeed + Math.random() * 1);
+                const vy = Math.sin(angle) * (baseSpeed + Math.random() * 1);
+                this.particles.push(new Particle(bx, by, ringColor, vx, vy));
+            }
+        }
+        for(let i=0; i<30; i++) { this.particles.push(new Particle(bx + (Math.random()-0.5)*40, by + (Math.random()-0.5)*30)); }
+    }
+
+    checkCollisions() {
+        if (!this.player.visible) return;
+
+        for (let b of this.bullets) {
+            if (!b.active) continue;
+            if (this.boss && this.boss.active && this.boss.y > 0) {
+                if (this.collides(b, this.boss)) {
+                    b.active = false; this.boss.hp--; this.boss.hurtTimer = 5;
+                    if (this.boss.hp <= 0) {
+                        this.boss.active = false; 
+                        this.createBossExplosion(this.boss.x + this.boss.width/2, this.boss.y + this.boss.height/2);
+                        scores.addScore(this.boss.scoreValue); this.boss = null;
+                        this.triggerStageClear();
+                    }
+                    break;
+                }
+            }
+            for (let e of this.enemies) {
+                if (!e.active) continue;
+                if (this.collides(b, e)) {
+                    b.active = false; e.active = false; this.createExplosion(e.x + e.width / 2, e.y + e.height / 2);
+                    scores.addScore(e.scoreValue);
+                    if (Math.random() < 0.15) { 
+                        this.items.push(new Item(e.x, e.y)); 
+                        sound.playItemSpawn();
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (this.player.invulnerableTimer === 0 && this.stageClearTimer === 0) {
+            for (let eb of this.enemyBullets) { if (eb.active && this.collides(eb, this.player)) { eb.active = false; this.handlePlayerHit(); break; } }
+            for (let e of this.enemies) { 
+                if (e.active && e.y >= 0 && this.collides(e, this.player)) { 
+                    e.active = false; 
+                    this.createExplosion(e.x + e.width/2, e.y + e.height/2); 
+                    this.handlePlayerHit(); 
+                    break; 
+                } 
+            }
+            if (this.boss && this.boss.active && this.collides(this.boss, this.player)) { this.handlePlayerHit(); }
+        }
+
+        for (let item of this.items) {
+            if (item.active && this.collides(item, this.player)) {
+                item.active = false; sound.playItemGet(); scores.addScore(500);
+                if (item.type === 'P') { if (this.player.powerLevel < 5) this.player.powerLevel++; }
+                else if (item.type === 'S') { this.player.speed += 1; }
+                else if (item.type === 'B') { this.player.invulnerableTimer = 300; }
+            }
+        }
+
+        this.bullets = this.bullets.filter(b => b.active); this.enemyBullets = this.enemyBullets.filter(b => b.active);
+        this.enemies = this.enemies.filter(e => e.active); this.items = this.items.filter(i => i.active);
+
+        if (this.enemies.length === 0 && !this.boss && this.stageClearTimer === 0) { 
+            this.triggerStageClear(); 
+        }
+    }
+
+    triggerStageClear() {
+        this.stageClearTimer = 90;
+        sound.stopBGM();
+        sound.playClearJingle();
+    }
+
+    handlePlayerHit() {
+        sound.playPlayerDamage(); 
+        this.createExplosion(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, 25);
+        this.life--; 
+        if (this.player.powerLevel > 1) this.player.powerLevel--;
+        
+        this.player.visible = false;
+        if (this.life <= 0) { this.gameOver(); } else { this.playerRespawnTimer = 30; }
+    }
+
+    collides(rect1, rect2) { return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y; }
+
+    update() {
+        this.globalTimer++; if (this.screenShake > 0) this.screenShake--;
+        for (let star of this.stars) { star.y += star.speed; if (star.y > 640) { star.y = 0; star.x = Math.random() * 480; } }
+        if (this.state !== 'PLAYING') return;
+
+        if (this.stageClearTimer > 0) {
+            this.stageClearTimer--;
+            if (this.stageClearTimer === 0) { this.nextStage(); }
+        }
+
+        if (!this.player.visible && this.playerRespawnTimer > 0) {
+            this.playerRespawnTimer--;
+            if (this.playerRespawnTimer === 0) { this.player.reset(); }
+        }
+
+        // 【改善点】タッチ中のオートショット（連射間隔はマイルドな8フレームに設定）
+        if (this.isTouching && this.player.visible && this.stageClearTimer === 0) {
+            this.autoShotTimer++;
+            if (this.autoShotTimer >= 8) {
+                this.firePlayerBullet();
+                this.autoShotTimer = 0;
+            }
+        }
+
+        // プレイヤーの位置更新（スワイプ量を渡し、渡した後は速やかにクリア）
+        this.player.update(this.keys, this.touchDx);
+        this.touchDx = 0; 
+
+        this.bullets.forEach(b => b.update()); this.enemyBullets.forEach(eb => eb.update());
+        if (this.boss) this.boss.update();
+        
+        this.enemies.forEach(e => e.update()); 
+        this.items.forEach(i => i.update());
+        this.particles.forEach(p => p.update()); this.particles = this.particles.filter(p => p.life > 0);
+
+        this.enemyFire(); this.checkCollisions();
+    }
+
+    draw() {
+        this.ctx.save();
+        if (this.screenShake > 0) { this.ctx.translate((Math.random() - 0.5) * this.screenShake, (Math.random() - 0.5) * this.screenShake); }
+        this.ctx.fillStyle = '#000000'; this.ctx.fillRect(0, 0, 480, 640);
+        this.ctx.fillStyle = '#ffffff'; for (let star of this.stars) { this.ctx.fillRect(star.x, star.y, star.size, star.size); }
+
+        this.particles.forEach(p => p.draw(this.ctx)); this.items.forEach(i => i.draw(this.ctx, this.globalTimer));
+        this.bullets.forEach(b => b.draw(this.ctx)); this.enemyBullets.forEach(eb => eb.draw(this.ctx));
+        
+        if (this.boss) this.boss.draw(this.ctx); 
+        this.enemies.forEach(e => { if (e.y >= -10) e.draw(this.ctx); });
+        
+        if (this.state === 'PLAYING' || this.state === 'PAUSED') { this.player.draw(this.ctx); }
+        this.ctx.restore();
+        this.drawHUD();
+        
+        if (this.stageClearTimer > 0) {
+            this.ctx.save();
+            this.ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            this.ctx.fillRect(0, 260, 480, 80);
+            this.ctx.fillStyle = '#ffff00';
+            this.ctx.font = 'bold 24px "Courier New", monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.shadowColor = '#ff5500';
+            this.ctx.shadowBlur = 10;
+            this.ctx.fillText(`STAGE ${this.stage} CLEAR!`, 240, 305);
+            this.ctx.fillStyle = '#00ffff';
+            this.ctx.font = '14px "Courier New", monospace';
+            this.ctx.fillText(`PREPARING FOR NEXT AREA...`, 240, 325);
+            this.ctx.restore();
+        }
+    }
+
+    drawHUD() {
+        this.ctx.fillStyle = '#ff00ff'; this.ctx.font = 'bold 14px "Courier New", monospace'; this.ctx.fillText("SCORE", 15, 20);
+        this.ctx.fillStyle = '#ffffff'; this.ctx.fillText(String(scores.score).padStart(6, '0'), 15, 38);
+        this.ctx.fillStyle = '#00ffff'; this.ctx.fillText("HI-SCORE", 190, 20);
+        this.ctx.fillStyle = '#ffffff'; this.ctx.fillText(String(scores.highScore).padStart(6, '0'), 190, 38);
+        this.ctx.fillStyle = '#ffea00'; this.ctx.fillText("STAGE", 400, 20);
+        this.ctx.fillStyle = '#ffffff'; this.ctx.fillText(String(this.stage), 420, 38);
+        this.ctx.fillStyle = '#ff0055'; this.ctx.fillText("LIFE: " + "🛸".repeat(Math.max(0, this.life)), 15, 620);
+        this.ctx.fillStyle = '#00ff66'; this.ctx.fillText(`POWER: Lv${this.player.powerLevel}`, 340, 620);
+        this.ctx.fillStyle = '#aaaaaa'; this.ctx.font = '10px monospace'; this.ctx.fillText(`LV: ${this.level}`, 250, 618);
+    }
+
+    loop() { this.update(); this.draw(); requestAnimationFrame(() => this.loop()); }
+}
+
+window.onload = () => { new Game(); };
+</script>
+</body>
+</html>

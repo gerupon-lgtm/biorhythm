@@ -44,6 +44,8 @@ label{display:block;font-size:16px;font-weight:500;color:var(--text2);margin-bot
 input[type="text"],select{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid rgba(255,255,255,.07);border-radius:10px;color:var(--text);font-size:16px;font-family:inherit;outline:none;transition:border-color .3s,box-shadow .3s}
 .field-group{position:relative}
 .picker-icon{position:absolute;right:20px;bottom:13px;width:20px;height:20px;pointer-events:none;z-index:1}
+.picker-icon.picker-tap{pointer-events:auto;cursor:pointer;padding:8px;margin:-8px;width:36px;height:36px}
+.hidden-picker{position:absolute;width:0;height:0;opacity:0;overflow:hidden;pointer-events:none}
 select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a4' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer}
 input[type="text"]:hover{border-color:rgba(167,139,250,.3)}
 input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(192,132,252,.12)}
@@ -286,8 +288,8 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
       <div class="field-group" style="max-width:110px"><label for="genderA">性別</label><select id="genderA"><option value="" selected>未選択</option><option value="male">男性</option><option value="female">女性</option></select></div>
     </div>
     <div class="field-row">
-      <div class="field-group"><label for="birthA">生年月日</label><input type="text" id="birthA" inputmode="numeric" pattern="\d{4}/\d{2}/\d{2}" placeholder="例: 2000/01/15" maxlength="10"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-      <div class="field-group" style="max-width:140px"><label for="timeA">出生時間</label><input type="text" id="timeA" inputmode="numeric" placeholder="例: 14:30" maxlength="5"><svg class="picker-icon" style="bottom:31px" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p class="optional-hint">不明なら空欄でOK</p></div>
+      <div class="field-group"><label for="birthA">生年月日</label><input type="text" id="birthA" inputmode="numeric" pattern="\d{4}/\d{2}/\d{2}" placeholder="例: 2000/01/15" maxlength="10"><input type="date" class="hidden-picker" id="birthAPicker" tabindex="-1"><svg class="picker-icon picker-tap" onclick="openPicker('birthAPicker','birthA','date')" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div class="field-group" style="max-width:140px"><label for="timeA">出生時間</label><input type="text" id="timeA" inputmode="numeric" placeholder="例: 14:30" maxlength="5"><input type="time" class="hidden-picker" id="timeAPicker" tabindex="-1"><svg class="picker-icon picker-tap" style="bottom:31px" onclick="openPicker('timeAPicker','timeA','time')" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p class="optional-hint">不明なら空欄でOK</p></div>
     </div>
   </div>
   <div class="card">
@@ -297,14 +299,14 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
       <div class="field-group" style="max-width:110px"><label for="genderB">性別</label><select id="genderB"><option value="" selected>未選択</option><option value="male">男性</option><option value="female">女性</option></select></div>
     </div>
     <div class="field-row">
-      <div class="field-group"><label for="birthB">生年月日</label><input type="text" id="birthB" inputmode="numeric" pattern="\d{4}/\d{2}/\d{2}" placeholder="例: 2000/01/15" maxlength="10"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-      <div class="field-group" style="max-width:140px"><label for="timeB">出生時間</label><input type="text" id="timeB" inputmode="numeric" placeholder="例: 14:30" maxlength="5"><svg class="picker-icon" style="bottom:31px" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p class="optional-hint">不明なら空欄でOK</p></div>
+      <div class="field-group"><label for="birthB">生年月日</label><input type="text" id="birthB" inputmode="numeric" pattern="\d{4}/\d{2}/\d{2}" placeholder="例: 2000/01/15" maxlength="10"><input type="date" class="hidden-picker" id="birthBPicker" tabindex="-1"><svg class="picker-icon picker-tap" onclick="openPicker('birthBPicker','birthB','date')" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div class="field-group" style="max-width:140px"><label for="timeB">出生時間</label><input type="text" id="timeB" inputmode="numeric" placeholder="例: 14:30" maxlength="5"><input type="time" class="hidden-picker" id="timeBPicker" tabindex="-1"><svg class="picker-icon picker-tap" style="bottom:31px" onclick="openPicker('timeBPicker','timeB','time')" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p class="optional-hint">不明なら空欄でOK</p></div>
     </div>
     <p class="card-note">生年月日未指定で一人目の個人診断になります</p>
   </div>
   <div class="date-picker-row">
     <label for="targetDate">判定日</label>
-    <div class="field-group" style="flex:0 0 170px"><input type="text" id="targetDate" inputmode="numeric" pattern="\d{4}\/\d{2}\/\d{2}" placeholder="例: 2026/05/22" maxlength="10"><svg class="picker-icon" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+    <div class="field-group" style="flex:0 0 170px"><input type="text" id="targetDate" inputmode="numeric" pattern="\d{4}/\d{2}/\d{2}" placeholder="例: 2026/05/22" maxlength="10"><input type="date" class="hidden-picker" id="targetDatePicker" tabindex="-1"><svg class="picker-icon picker-tap" onclick="openPicker('targetDatePicker','targetDate','date')" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
     <span class="optional-hint">未指定なら今日を判定</span>
   </div>
   <div class="btn-wrap"><button class="btn" id="diagnoseBtn" onclick="runDiagnosis()"><span class="spinner"></span><span class="btn-text">診断する</span></button></div>
@@ -368,7 +370,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.4.0
+    ver 3.5.0
   </footer>
 </div>
 
@@ -427,7 +429,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.4.0';
+const APP_VERSION='3.5.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -478,6 +480,38 @@ document.addEventListener('DOMContentLoaded',function(){
     });
   });
 });
+
+// ピッカー起動（隠しdate/time inputを使用）
+function openPicker(pickerId, textId, type){
+  const picker=document.getElementById(pickerId);
+  const textInput=document.getElementById(textId);
+  if(!picker||!textInput) return;
+
+  // 現在の値をpickerに反映
+  if(type==='date'&&textInput.value){
+    const v=textInput.value.replace(/\//g,'-');
+    if(/^\d{4}-\d{2}-\d{2}$/.test(v)) picker.value=v;
+  } else if(type==='time'&&textInput.value){
+    if(/^\d{1,2}:\d{2}$/.test(textInput.value)) picker.value=textInput.value;
+  }
+
+  // picker選択時にテキストinputへ反映
+  picker.onchange=function(){
+    if(type==='date'&&this.value){
+      textInput.value=this.value.replace(/-/g,'/');
+    } else if(type==='time'&&this.value){
+      textInput.value=this.value;
+    }
+  };
+
+  // showPickerが使えるブラウザはそれを使う、なければfocus+clickで代替
+  try {
+    picker.showPicker();
+  } catch(e){
+    picker.focus();
+    picker.click();
+  }
+}
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 // 日付フォーマット: YYYY-MM-DD → M月d日 or yyyy年M月d日

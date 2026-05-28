@@ -460,7 +460,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.2
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.3
   </footer>
 </div>
 
@@ -499,7 +499,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.3.3';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -1075,7 +1075,9 @@ function renderRangeTable(data, targetDate, isPair, label) {
     let icon = '';
     if (r.date===maxDate) icon='✨';
     else if (r.date===minDate) icon='🌧';
-    const daiMark = r.isDaiKasai ? `<span class="daikasai-mark"> ⚠️大殺界</span>` : '';
+    const daiMark = r.isDaiKasai   ? `<span class="daikasai-mark"> ⚠️大殺界</span>`
+                          : r.isChuKasai   ? `<span style="color:#fbbf24;font-size:12px"> 中殺界</span>`
+                          : r.isSmallKasai ? `<span style="color:#60a5fa;font-size:12px"> 小殺界</span>` : '';
     h += `<tr${isTarget?' class="today-row"':''}>`;
     h += `<td style="text-align:center;width:28px">${icon}</td>`;
     h += `<td>${fmtDateShort(r.date)} (${dow})</td>`;
@@ -1429,7 +1431,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.2', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.3', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

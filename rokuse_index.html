@@ -166,6 +166,12 @@ input::placeholder{color:var(--text3)}
 .cycle-card.daikasai{border:1.5px solid rgba(248,113,113,.55);background:rgba(180,40,40,.35)}
 .cycle-card.daikasai .cc-cycle{color:#ff9090}
 .cycle-card.daikasai .cc-desc{color:#ffcccc}
+.cycle-card.chukasai{border:1.5px solid rgba(251,191,36,.45);background:rgba(100,60,0,.3)}
+.cycle-card.chukasai .cc-cycle{color:#fbbf24}
+.cycle-card.chukasai .cc-desc{color:#fde68a}
+.cycle-card.smallkasai{border:1.5px solid rgba(96,165,250,.4);background:rgba(0,30,80,.3)}
+.cycle-card.smallkasai .cc-cycle{color:#60a5fa}
+.cycle-card.smallkasai .cc-desc{color:#bfdbfe}
 
 .section-label{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:600;color:var(--text2);margin:28px 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
 .section-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
@@ -460,7 +466,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.4
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.6
   </footer>
 </div>
 
@@ -499,7 +505,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.3.4';
+const APP_VERSION = '1.3.6';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -933,20 +939,37 @@ function renderCycleCards(nenun, tsukinun, hiun) {
 
 // ========== 大殺界バナー ==========
 function buildDaiKasaiBanner(nenun, tsukinun, hiun) {
-  const msgs = [];
+  let html = '';
+
+  // 大殺界バナー（赤）
+  const daiMsgs = [];
   if (nenun?.isDaiKasai) {
-    msgs.push(`<strong>${nenun.year}年は大殺界（${esc(nenun.cycle)}）</strong>です。今年は新規事業・転職・結婚など重大な決断を避け、現状を守ることに専念しましょう。`);
+    daiMsgs.push(`<strong>${nenun.year}年は大殺界（${esc(nenun.cycle)}）</strong>です。今年は新規事業・転職・結婚など重大な決断を避け、現状を守ることに専念しましょう。`);
   }
-  // 年運と月運が両方大殺界の場合、月運メッセージは「も」ではなく情報を補足する形に
   if (tsukinun?.isDaiKasai) {
     const prefix = nenun?.isDaiKasai ? `${tsukinun.month}月も引き続き大殺界（${esc(tsukinun.cycle)}）。` : `${tsukinun.month}月は大殺界（${esc(tsukinun.cycle)}）。`;
-    msgs.push(prefix + '焦らず内省の時間を大切に。');
+    daiMsgs.push(prefix + '焦らず内省の時間を大切に。');
   }
   if (hiun?.isDaiKasai) {
-    msgs.push(`この日の日運も大殺界（${esc(hiun.cycle)}）。無理な行動より、休息と内省が◎`);
+    daiMsgs.push(`この日の日運も大殺界（${esc(hiun.cycle)}）。無理な行動より、休息と内省が◎`);
   }
-  if (!msgs.length) return '';
-  return `<div class="daikasai-banner">⚠️ ${msgs.join('<br>')}</div>`;
+  if (daiMsgs.length) html += `<div class="daikasai-banner">⚠️ ${daiMsgs.join('<br>')}</div>`;
+
+  // 中殺界バナー（黄）
+  const chuMsgs = [];
+  if (nenun?.isChuKasai)   chuMsgs.push(`${nenun.year}年は中殺界（${esc(nenun.cycle)}）。精神面が不安定になりやすい時期。感情的な判断は避け、現状維持を心がけて。`);
+  if (tsukinun?.isChuKasai) chuMsgs.push(`${tsukinun.month}月は中殺界（${esc(tsukinun.cycle)}）。気持ちの波に注意。`);
+  if (hiun?.isChuKasai)    chuMsgs.push(`この日の日運は中殺界（${esc(hiun.cycle)}）。感情的な行動は控えめに。`);
+  if (chuMsgs.length) html += `<div style="background:rgba(120,80,0,.4);border:1.5px solid rgba(251,191,36,.6);border-radius:10px;padding:12px 16px;margin:8px 0;font-size:14px;line-height:1.8;color:#fde68a">⚡ ${chuMsgs.join('<br>')}</div>`;
+
+  // 小殺界バナー（青）
+  const smallMsgs = [];
+  if (nenun?.isSmallKasai)   smallMsgs.push(`${nenun.year}年は小殺界（${esc(nenun.cycle)}）。健康面に気をつけて、無理は禁物。`);
+  if (tsukinun?.isSmallKasai) smallMsgs.push(`${tsukinun.month}月は小殺界（${esc(tsukinun.cycle)}）。体調管理を優先して。`);
+  if (hiun?.isSmallKasai)    smallMsgs.push(`この日の日運は小殺界（${esc(hiun.cycle)}）。身体の無理は避けて。`);
+  if (smallMsgs.length) html += `<div style="background:rgba(0,40,100,.3);border:1.5px solid rgba(96,165,250,.5);border-radius:10px;padding:12px 16px;margin:8px 0;font-size:14px;line-height:1.8;color:#bfdbfe">💧 ${smallMsgs.join('<br>')}</div>`;
+
+  return html;
 }
 
 // ========== 相性表示 ==========
@@ -1439,7 +1462,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.4', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.6', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

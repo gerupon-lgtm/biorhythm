@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>🕹️ レトロ・ドット絵シューティング・マスター 🕹️</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            user-select: none;
+            /* 矢印キー操作のアクセシビリティ向上 */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        #gameContainer {
+            position: relative;
+            width: 480px;
+            border: 4px solid #00ff00;
+            box-shadow: 0 0 25px #00ff00;
+            background-color: #000011;
+        }
+        canvas {
+            display: block;
+        }
+        #ui-overlay {
+            width: 100%;
+            padding: 10px 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            border-top: 1px solid #00ff00;
+            display: flex;
+            justify-content: space-around;
+            font-size: 1.2em;
+        }
+        #control-guide {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: rgba(0, 30, 0, 0.7);
+            width: 90%;
+            max-width: 400px;
+            text-align: left;
+            border: 1px dashed #00ff00;
+        }
+    </style>
+</head>
+<body oncontextmenu="event.preventDefault()">
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="480" height="700"></canvas>
+        <div id="canvas-hint"></div> 
+    </div>
+
+    <div id="ui-overlay">
+        <div id="score-display">SCORE: 0</div>
+        <div id="hp-display">HP: 3</div>
+        <div id="pause-button" style="cursor: pointer;">[P] ポーズ</div>
+    </div>
+
+    <div id="control-guide">
+        <strong>▶️ 操作ガイド ◀️</strong><br>
+        <strong>[キーボード]</strong>: 
+        移動: ← / → (A/D) | 弾発射: Space | 一時停止: P<br>
+        <strong>[スマートフォン]</strong>:
+        移動: 画面をドラッグ<br>
+        発射: 画面をタップ（指を離すまで自動発射）<br>
+        <strong>[Enter]</strong>: ゲーム開始 / リスタート
+    </div>
+
+    <!-- Web Audio Contextは今回は非表示にして、コード内部で管理します。 -->
+    
+    <script>
+        // ====================================================
+        // 🔈 1. Web Audio Context (サウンドエンジン)
+        // ====================================================
+        let audioContext;
+        let bgmOscillator;
+        let isAudioRunning = false;
+
+        function setupAudioContext() {
+            if (!window.AudioContext) {
+                console.error("お使いのブラウザはWeb Audio APIをサポートしていません。サウンドが動作しません。");
+                return null;
+            }
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            return audioContext;
+        }
+
+        /** 環境音を合成して再生 (BGM代替) */
+        function playBGM() {
+            if (!audioContext || isAudioRunning) return;
+            
+            bgmOscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            bgmOscillator.type = 'sine'; 
+            bgmOscillator.frequency.setValueAtTime(70, audioContext.currentTime);
+            
+            bgmOscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 1);
+            
+            bgmOscillator.start();
+            isAudioRunning = true;
+        }
+        
+        /** レーザー発射音 (SE代替) */
+        function playLaserSound() {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.05); 
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        }
+
+        /** 爆発・被弾音 (SE代替) */
+        function playHitSound() {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.type = 'sawtooth'; 
+            oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+
+        // ====================================================
+        // 🎨 2. ゲームステート変数と描画
+        // ====================================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score-display');
+        const hpDisplay = document.getElementById('hp-display');
+        
+        let gameState = 'TITLE'; 
+        let score = 0;
+        let playerHP = 3;
+        let isDrawing = false; 
+        let touchStartX = 0;
+
+        const PLAYER_SPEED = 15;
+        const BULLET_SPEED = 15;
+        const ENEMY_SPEED = 8;
+        const ENEMY_SPAWN_RATE = 60;
+        const MAX_BULLETS = 6;
+        
+        let bullets = [];
+        let enemies = [];
+        let keys = {};
+        let frameCount = 0;
+
+
+        // --- プレイヤーオブジェクト (ドット絵対応) ---
+        let player = {
+            x: canvas.width / 2 - 30,
+            y: canvas.height - 80,
+            width: 60,
+            height: 60,
+            color: '#00ff00',
+            isDrawing: false,
+            
+            // プレイヤーを描画 (ドット絵のブロック構造をシミュレート)
+            draw: function() {
+                // 胴体
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // ドット絵のディテール追加
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(this.x + 5, this.y + 10, 8, 8); 
+                ctx.fillRect(this.x + this.width - 13, this.y + 10, 8, 8);
+                ctx.fillStyle = '#00aa00';
+                ctx.fillRect(this.x + 15, this.y + 20, 30, 10);
+            }
+        };
+        
+        // --- 敵のクラス定義 (ドット絵対応) ---
+        class Enemy {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.width = 50;
+                this.height = 50;
+                this.type = type; 
+                this.hp = type === 'Hunter' ? 3 : 1;
+                this.maxHp = this.hp;
+                this.color = this.getColor(type);
+                this.moveTimer = Math.random() * 100;
+            }
+            
+            getColor(type) {
+                if (type === 'Basic') return '#ffff00';
+                if (type === 'Hunter') return '#ff6600';
+                if (type === 'Shooter') return '#ff0000';
+                return '#00ccff';
+            }
+
+            draw() {
+                // 敵本体の描画
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // HPバー (緑〜赤)
+                const hpRatio = this.hp / this.maxHp;
+                ctx.fillStyle = `rgba(255, ${Math.floor(255 * hpRatio)}, 0, 1)`;
+                ctx.fillRect(this.x, this.y - 15, this.width * hpRatio, 5);
+                
+                // ドット絵の目
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.x + 5, this.y + 5, 5, 5);
+                ctx.fillRect(this.x + this.width - 10, this.y + 5, 5, 5);
+            }
+
+            update() {
+                this.moveTimer++;
+                
+                if (this.type === 'Basic') {
+                    this.y += ENEMY_SPEED * 0.7;
+                } else if (this.type === 'Hunter') {
+                    // プレイヤーを追尾するロジック
+                    const dx = player.x + player.width / 2 - (this.x + this.width / 2);
+                    const dy = player.y + player.height / 2 - (this.y + this.height / 2);
+                    this.x += dx * 0.005;
+                    this.y += dy * 0.005 + ENEMY_SPEED * 0.5;
+                } else if (this.type === 'Shooter') {
+                    // 蛇行と下降
+                    this.y += ENEMY_SPEED * 0.6;
+                    this.x += Math.sin(this.moveTimer / 25) * 1.8;
+                }
+            }
+        }
+
+        // ====================================================
+        // 🚀 3. 入力処理 (Keyboard & Touch)
+        // ====================================================
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ' && gameState === 'PLAYING') {
+                e.preventDefault(); // スペースキーによるスクロール防止
+                fireBullet();
+            }
+            if (e.key === 'p' || e.key === 'P') {
+                e.preventDefault();
+                if (gameState === 'PLAYING') togglePause();
+            }
+            // Enterキーの初期起動・リスタート制御は、キーリスナー外の制御フローで行うため、ここでは処理を抑制
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // タッチイベント処理 (モバイル対応)
+        const container = document.getElementById('gameContainer');
+        
+        container.addEventListener('touchstart', (e) => {
+            e.preventDefault(); 
+            if (gameState !== 'PLAYING') return;
+            
+            player.isDrawing = true;
+            touchStartX = e.touches[0].clientX;
+            
+            // 初回タップは弾発射のトリガーとする
+            fireBullet(); 
+        }, { passive: false });
+
+        container.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (gameState !== 'PLAYING') return;
+            
+            const currentX = e.touches[0].clientX;
+            const deltaX = currentX - touchStartX;
+            
+            player.x += deltaX * 0.5;
+        }, { passive: false });
+
+        container.addEventListener('touchend', (e) => {
+            if (gameState !== 'PLAYING') return;
+            
+            // タップを離した時にも弾発射をシミュレート
+            fireBullet();
+            player.isDrawing = false;
+        });
+
+        // ====================================================
+        // 💣 4. ゲームロジック関数
+        // ====================================================
+
+        function fireBullet() {
+            if (bullets.length >= MAX_BULLETS) return;
+            
+            bullets.push({
+                x: player.x + player.width / 2 - 2,
+                y: player.y - 10,
+                width: 4,
+                height: 12,
+                type: 'Player'
+            });
+            playLaserSound();
+        }
+
+        function updatePlayer() {
+            let moveX = 0;
+            if (keys['arrowleft'] || keys['a']) moveX -= PLAYER_SPEED;
+            if (keys['arrowright'] || keys['d']) moveX += PLAYER_SPEED;
+            
+            // キーボード操作を優先しつつ、移動を適用
+            player.x += moveX;
+
+            // 境界チェック
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+        }
+
+        function updateBullets() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let b = bullets[i];
+                b.y -= BULLET_SPEED;
+
+                if (b.y < 0) {
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+
+        function spawnEnemy() {
+            if (frameCount % ENEMY_SPAWN_RATE === 0) {
+                const typeRoll = Math.floor(Math.random() * 3);
+                let type;
+                if (typeRoll === 0) type = 'Basic';
+                else if (typeRoll === 1) type = 'Hunter';
+                else type = 'Shooter';
+
+                let newEnemy = new Enemy(
+                    Math.random() * (canvas.width - 60) + 30,
+                    -50,
+                    type
+                );
+                enemies.push(newEnemy);
+            }
+        }
+
+        function updateEnemies() {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+                e.update();
+                
+                if (e.y > canvas.height + e.height) {
+                    enemies.splice(i, 1);
+                }
+            }
+        }
+        
+        function checkBulletEnemyCollision() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                let bullet = bullets[i];
+                let hit = false;
+
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    let enemy = enemies[j];
+
+                    if (checkCollision(bullet, enemy)) {
+                        hit = true;
+                        
+                        enemy.hp--;
+                        score += 10;
+
+                        if (enemy.hp <= 0) {
+                            enemies.splice(j, 1);
+                            bullets.splice(i, 1);
+                            playHitSound();
+                            break; 
+                        }
+                    }
+                }
+            }
+        }
+
+        function checkPlayerEnemyCollision() {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let enemy = enemies[i];
+                if (checkCollision(player, enemy)) {
+                    playerHP--;
+                    score = Math.max(0, score - 5); 
+                    enemies.splice(i, 1); 
+
+                    if (playerHP <= 0) {
+                        gameOver();
+                        break;
+                    }
+                    playHitSound();
+                }
+            }
+        }
+
+        // ==================== ゲームフロー制御 ===================
+        
+        function updateUI() {
+            scoreDisplay.textContent = `SCORE: ${score}`;
+            hpDisplay.textContent = `HP: ${Math.max(0, playerHP)} / 3`;
+        }
+
+        function togglePause() {
+            if (gameState === 'PLAYING') {
+                gameState = 'PAUSED';
+                // BGMは音を継続させるが、ゲームロジックは停止
+                alert("--- ゲーム一時停止中 --- \nポーズ解除するにはEnterキーを押してください。");
+            } else if (gameState === 'PAUSED') {
+                gameState = 'PLAYING';
+                alert("--- ゲーム再開 ---");
+                // ここで再度プレイを再開するために、次のフレームの処理を呼び出す必要がありますが、
+                // ゲームループが既に動いているため、ここでは単なるステート変更として扱います。
+            }
+        }
+
+        function initGame() {
+            // 初期化とリセット処理
+            score = 0;
+            playerHP = 3;
+            bullets = [];
+            enemies = [];
+            
+            // プレイヤー位置リセット
+            player.x = canvas.width / 2 - 30;
+            player.y = canvas.height - 80;
+            
+            gameState = 'PLAYING';
+            
+            // サウンドの再生開始
+            if (audioContext) {
+                 audioContext.resume(); 
+                 playBGM();
+            }
+
+            // ゲームループは自動的に続くため、ここでは状態変更のみ。
+        }
+        
+        function gameOver() {
+            gameState = 'GAMEOVER';
+            // BGM停止の処理（アニメーションやUIでより丁寧に表現できますが、ここでは簡略化）
+            
+            setTimeout(() => {
+                alert(`\n=== 💥 ゲームオーバー！ 💥 ===\n最終スコア: ${score}\n\n[Enter]キーを押して再挑戦してください。`);
+            }, 100);
+        }
+        
+        // 描画をまとめた関数
+        function drawScene(isGameplay) {
+             // 宇宙背景の描画（星やグリッドは毎フレーム描画しなくても良いが、雰囲気のため描画）
+            ctx.fillStyle = '#000011';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 敵の描画
+            enemies.forEach(e => e.draw());
+            
+            // 弾の描画
+            ctx.fillStyle = '#ffff00'; 
+            bullets.forEach(b => {
+                ctx.fillRect(b.x, b.y, b.width, b.height);
+            });
+
+            // プレイヤーの描画
+            player.draw();
+        }
+
+        function drawTitleScreen() {
+             // 擬似ピクセルグリッド背景
+             ctx.fillStyle = '#000011';
+             ctx.fillRect(0, 0, canvas.width, canvas.height);
+             ctx.strokeStyle = '#001100';
+             for (let i = 0; i < canvas.width; i += 16) {
+                 for (let j = 0; j < canvas.height; j += 16) {
+                    ctx.strokeRect(i, j, 1, 1); 
+                 }
+             }
+
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '36px "Courier New"';
+            ctx.textAlign = 'center';
+            ctx.fillText("ZELBIUS ARCADE", canvas.width / 2, 100);
+            
+            ctx.font = '20px "Courier New"';
+            ctx.fillText("【超ドット絵・縦スクロール・シューター】", canvas.width / 2, 160);
+            
+            ctx.font = '24px "Courier New"';
+            ctx.fillText("--- 難易度を選択してください ---", canvas.width / 2, 220);
+            
+            ctx.fillStyle = '#ff6600';
+            ctx.fillText("[1] 標準 (Standard)", canvas.width / 2 - 100, 280);
+            ctx.fillStyle = '#00ff00';
+            ctx.fillText("[2] ハード (Hard)", canvas.width / 2 - 100, 320);
+            ctx.fillStyle = '#ff0000';
+            ctx.fillText("[3] 究極 (Extreme)", canvas.width / 2 - 100, 360);
+
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '20px "Courier New"';
+            ctx.fillText("(Enterキーで開始)", canvas.width / 2, 500);
+        }
+
+        // ==================== メインゲームループと初期化 ====================
+        
+        function gameLoop() {
+            if (!gameState) return;
+
+            // 1. ステートに応じた描画処理
+            if (gameState === 'TITLE') {
+                drawTitleScreen();
+            } else if (gameState === 'PAUSED') {
+                drawScene(false);
+            } else if (gameState === 'GAMEOVER') {
+                drawScene(false);
+            } else if (gameState === 'PLAYING') {
+                // 更新処理
+                updatePlayer();
+                updateBullets();
+                spawnEnemy();
+                updateEnemies();
+
+                // 衝突判定
+                checkBulletEnemyCollision();
+                checkPlayerEnemyCollision();
+                
+                // 描画
+                drawScene(true);
+            }
+
+            // 2. UI更新
+            updateUI();
+
+            // 3. 次のフレーム
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 初回起動時、すべての定義が完了した後にゲームループを開始する
+        window.onload = function() {
+            // Web Audio Contextを初期化
+            setupAudioContext();
+            // ゲームループを起動
+            gameLoop();
+        };
+    </script>
+</body>
+</html>

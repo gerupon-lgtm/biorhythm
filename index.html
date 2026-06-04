@@ -370,7 +370,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.6.0
+    ver 3.7.0
   </footer>
 </div>
 
@@ -429,7 +429,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.6.0';
+const APP_VERSION='3.7.0';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -1230,6 +1230,18 @@ function toggleShareMenu(){
   document.getElementById('shareMenu').classList.toggle('open');
 }
 
+// X文字数カウント（URLは23文字、絵文字は2文字としてカウント）
+function countXLen(text){
+  let count=0;
+  const noUrls=text.replace(/https?:\/\/\S+/g,'');
+  const urls=text.match(/https?:\/\/\S+/g)||[];
+  for(const ch of noUrls){
+    count+=ch.codePointAt(0)>0xFFFF?2:1;
+  }
+  count+=urls.length*23;
+  return count;
+}
+
 function buildShareText(mode){
   const d=lastDiagData;
   if(!d) return '';
@@ -1257,17 +1269,26 @@ function buildShareText(mode){
   const url=location.href;
 
   if(mode==='x'){
+    // X: 280文字制限（URLは23文字換算、絵文字は2文字換算）
     let t=head;
     if(fortune) t+=fortune+'\n';
-    t+=diag.substring(0,80)+'…\n'+url;
+    // 残り文字数を動的に計算
+    const usedChars=countXLen(t)+24; // URL23文字+改行1
+    const remain=Math.max(0,275-usedChars);
+    if(remain>10&&diag){
+      const cut=diag.substring(0,Math.min(remain,60));
+      t+=cut+'…\n';
+    }
+    t+=url;
     return t;
   }
   if(mode==='line'){
+    // LINE: URLスキームの長さ制限を考慮し、テキスト全体を200文字以内に
     let t=head+bio+'\n';
     if(fortune) t+=fortune+'\n';
-    t+='\n'+diag.substring(0,300);
-    if(dailyDiag) t+='\n\n'+dailyDiag.substring(0,150);
-    t+='…\n\n▶ '+url;
+    const diagMax=Math.max(0,180-t.length);
+    if(diagMax>10) t+='\n'+diag.substring(0,diagMax)+'…';
+    t+='\n\n▶ '+url;
     return t;
   }
   // full

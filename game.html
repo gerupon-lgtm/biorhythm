@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ギャラガ風ブラウザシューティング</title>
+    <title>GALAXY SHOT - EVOLUTION</title>
     <style>
         * {
             box-sizing: border-box;
@@ -139,7 +139,6 @@
             width: 150px;
         }
 
-        /* Touch Pause Button */
         #touch-pause-btn {
             position: absolute;
             top: 10px;
@@ -167,21 +166,18 @@
 
 <div id="game-container">
     <canvas id="gameCanvas" width="480" height="640"></canvas>
-
     <button id="touch-pause-btn">⏸</button>
 
+    <!-- Title Screen Overlay -->
     <div id="title-screen" class="overlay">
         <h1>GALAXY SHOT</h1>
-        
         <div style="font-size: 12px; color: #00ffff;">SELECT LEVEL</div>
         <div class="level-select">
             <button id="lvl-easy" class="level-btn">EASY</button>
             <button id="lvl-normal" class="level-btn active">NORMAL</button>
             <button id="lvl-hard" class="level-btn">HARD</button>
         </div>
-
         <button id="start-game-btn" style="margin-top: 5px;">CLICK TO START</button>
-        
         <div class="info-text">
             [PC CONTROLS]<br>
             ← / A : LEFT | → / D : RIGHT | SPACE : FIRE<br>
@@ -194,6 +190,7 @@
         </table>
     </div>
 
+    <!-- Pause Overlay -->
     <div id="pause-screen" class="overlay hidden">
         <h1>PAUSED</h1>
         <button id="resume-btn">RESUME</button>
@@ -201,16 +198,15 @@
         <button id="to-title-btn">QUIT TO TITLE</button>
     </div>
 
+    <!-- Game Over Overlay -->
     <div id="gameover-screen" class="overlay hidden">
         <h1 style="color: #ff0055; text-shadow: 0 0 10px #ff0055;">GAME OVER</h1>
         <div id="final-score-text" style="font-size: 20px; margin: 10px 0;">SCORE: 0</div>
-        
         <div id="name-input-container" class="hidden">
             <div style="color: #ffff00; margin-bottom: 5px;" class="blink">NEW RECORD!</div>
             <input type="text" id="player-name" maxlength="8" value="PLAYER1"><br><br>
             <button id="submit-score-btn">SAVE SCORE</button>
         </div>
-
         <button id="retry-btn">RETRY</button>
         <button id="go-title-btn">TITLE</button>
     </div>
@@ -261,6 +257,7 @@ class SoundManager {
     }
     
     playShot() { this.playTone(600, 'square', 0.15, 0.06, 150); }
+    playLaser() { this.playTone(800, 'sawtooth', 0.1, 0.04, 300); }
     playExplode() { this.playNoise(0.3, 0.18); }
     playBossExplode() {
         this.playNoise(0.8, 0.25);
@@ -272,23 +269,20 @@ class SoundManager {
         setTimeout(() => this.playTone(1320, 'sine', 0.1, 0.08), 70);
         setTimeout(() => this.playTone(1760, 'sine', 0.15, 0.08), 140);
     }
-    
     playItemSpawn() {
         this.playTone(1000, 'sine', 0.05, 0.05);
         setTimeout(() => this.playTone(1500, 'sine', 0.05, 0.05), 50);
     }
-
     play1UP() {
         const notes = [1318.5, 1568.0, 2093.0];
         notes.forEach((n, i) => { this.playTone(n, 'square', 0.12, 0.08, 0, i * 0.08); });
     }
-
     playBossWarning() {
-        for(let i = 0; i < 3; i++) {
-            this.playTone(220, 'sawtooth', 0.2, 0.15, 440, i * 0.4);
-        }
+        for(let i = 0; i < 3; i++) { this.playTone(220, 'sawtooth', 0.2, 0.15, 440, i * 0.4); }
     }
-
+    playBossFlee() {
+        this.playTone(440, 'sawtooth', 1.0, 0.1, 880);
+    }
     playStartJingle() {
         const notes = [261.6, 329.6, 392.0, 523.3];
         notes.forEach((t, i) => { this.playTone(t, 'square', 0.15, 0.08, 0, i * 0.12); });
@@ -308,12 +302,11 @@ class SoundManager {
         const pattern = [110, 110, 130, 146, 110, 110, 165, 146, 117, 117, 138, 155, 117, 117, 174, 155];
         this.bgmInterval = setInterval(() => {
             let freq = pattern[this.bgmStep % pattern.length];
-            if (window.gameInstance && window.gameInstance.boss) freq *= 1.2;
+            if (window.gameInstance && window.gameInstance.bosses.length > 0) freq *= 1.2;
             this.playTone(freq, 'triangle', 0.12, 0.06);
             this.bgmStep++;
         }, 160);
     }
-
     stopBGM() {
         clearInterval(this.bgmInterval);
         this.bgmInterval = null;
@@ -327,37 +320,28 @@ class ScoreManager {
     constructor() {
         this.score = 0;
         this.extendTracker = 0;
-        this.highScore = parseInt(localStorage.getItem('galaxy_hi_score')) || 10000;
+        const savedHi = localStorage.getItem('galaxy_hi_score');
+        this.highScore = (savedHi !== null && savedHi !== undefined) ? parseInt(savedHi) : 10000;
+        
         this.ranking = JSON.parse(localStorage.getItem('galaxy_ranking')) || [
             {name: 'ACE', score: 10000, date: ''},
             {name: 'PILOT', score: 5000, date: ''},
             {name: 'ROOKIE', score: 1000, date: ''}
         ];
     }
-    
     addScore(amount) {
         this.score += amount;
         this.extendTracker += amount;
-        
         if (this.extendTracker >= 10000) {
-            if (window.gameInstance) {
-                window.gameInstance.life++;
-                sound.play1UP();
-            }
+            if (window.gameInstance) { window.gameInstance.life++; sound.play1UP(); }
             this.extendTracker %= 10000;
         }
-
         if (this.score > this.highScore) {
             this.highScore = this.score;
             localStorage.setItem('galaxy_hi_score', this.highScore);
         }
     }
-    
-    reset() {
-        this.score = 0;
-        this.extendTracker = 0;
-    }
-
+    reset() { this.score = 0; this.extendTracker = 0; }
     checkRankingEligibility() { return this.ranking.length < 5 || this.score > this.ranking[this.ranking.length - 1].score; }
     saveRanking(name) {
         const entry = { name: name.toUpperCase().substring(0, 8) || 'ANON', score: this.score, date: new Date().toLocaleDateString() };
@@ -384,17 +368,12 @@ class Player {
         this.powerLevel = 1; this.speed = this.baseSpeed; this.invulnerableTimer = 120;
         this.visible = true;
     }
-    // 【改善点】スワイプによる相対移動量(touchDx)を受け取るように拡張
-    update(keys, touchDx) {
+    update(keys, touchMove) {
         if (!this.visible) return;
-        
         let dx = 0;
         if (keys['ArrowLeft'] || keys['KeyA']) dx = -this.speed;
         if (keys['ArrowRight'] || keys['KeyD']) dx = this.speed;
-        
-        // タッチ移動量があれば加算
-        if (touchDx !== 0) dx = touchDx;
-
+        if (touchMove !== 0) dx = touchMove;
         this.x += dx;
         if (this.x < 0) this.x = 0;
         if (this.x > this.canvasWidth - this.width) this.x = this.canvasWidth - this.width;
@@ -420,75 +399,134 @@ class Player {
 class Bullet {
     constructor(x, y, vx, vy, isLaser = false, isEnemy = false) {
         this.x = x; this.y = y; this.vx = vx; this.vy = vy;
-        this.width = 4; this.height = isLaser ? 16 : 8;
+        this.width = isLaser ? 12 : (isEnemy ? 6 : 4);
+        this.height = isLaser ? 32 : 10;
         this.isLaser = isLaser; this.isEnemy = isEnemy; this.active = true;
     }
     update() {
         this.x += this.vx; this.y += this.vy;
-        if (this.y < -20 || this.y > 660 || this.x < -20 || this.x > 500) this.active = false;
+        if (this.y < -40 || this.y > 660 || this.x < -20 || this.x > 500) this.active = false;
     }
     draw(ctx) { 
         ctx.save();
         if (this.isEnemy) {
-            ctx.fillStyle = '#ff3300';
-            ctx.shadowColor = '#ff3300';
-            ctx.shadowBlur = 4;
+            ctx.fillStyle = '#ff007f';
+            ctx.shadowColor = '#ff0055';
+            ctx.shadowBlur = 6;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(this.x + 1.5, this.y + 2, this.width - 3, this.height - 4);
         } else {
-            ctx.fillStyle = this.isLaser ? '#cc00ff' : '#00ffff';
-            ctx.shadowColor = this.isLaser ? '#cc00ff' : '#00ffff';
-            ctx.shadowBlur = 4;
+            if (this.isLaser) {
+                ctx.fillStyle = '#cc00ff';
+                ctx.shadowColor = '#ff00ff';
+                ctx.shadowBlur = 10;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(this.x + 3, this.y, this.width - 6, this.height);
+            } else {
+                ctx.fillStyle = '#00ffff';
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 4;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
         }
-        ctx.fillRect(this.x, this.y, this.width, this.height);
         ctx.restore();
     }
 }
 
 class Enemy {
-    constructor(x, y, type, stage, levelFactor) {
+    constructor(x, y, type, stage, levelFactor, isBonus = false, isOftomo = false, isBonusChild = false) {
         this.x = x; this.y = y; this.startX = x; this.startY = y; this.type = type;
-        this.width = 20; this.height = 20; this.active = true;
-        this.scoreValue = type === 2 ? 150 : (type === 3 ? 200 : 100);
+        this.width = isBonusChild ? 12 : 20; 
+        this.height = isBonusChild ? 12 : 20; 
+        this.active = true;
+        this.isBonus = isBonus;
+        this.isOftomo = isOftomo;
+        this.isBonusChild = isBonusChild; 
+        this.scoreValue = isBonus ? (isBonusChild ? 500 : 300) : (isOftomo ? 50 : (type === 2 ? 150 : (type === 3 ? 200 : 100)));
         this.swingOffset = Math.random() * Math.PI * 2;
-        this.state = 'grid'; this.timer = 0;
-        this.speedFactor = (1 + (stage * 0.12)) * levelFactor;
+        this.state = isOftomo ? 'swoop' : 'grid'; 
+        this.timer = 0;
+        this.speedFactor = (1 + (stage * 0.1)) * levelFactor;
+        this.shotCooldown = 0;
+
+        this.bonusVx = (Math.random() > 0.5 ? 3.2 : -3.2) * (1 + stage * 0.02) * levelFactor;
+        this.movePattern = Math.random() < 0.5 ? 'sine' : 'normal'; 
+        if (this.isBonusChild) {
+            this.bonusVx = (Math.random() > 0.5 ? 6.5 : -6.5) * levelFactor; 
+            this.movePattern = 'crazy';
+        }
     }
     update() {
         this.timer++;
+        if (this.shotCooldown > 0) this.shotCooldown--;
+        
+        if (this.isBonus) {
+            this.x += this.bonusVx;
+            if (this.movePattern === 'sine') {
+                this.y = this.startY + Math.sin(this.timer * 0.08 + this.swingOffset) * 35 + Math.cos(this.timer * 0.03) * 30;
+            } else if (this.movePattern === 'crazy') {
+                this.y = this.startY + Math.sin(this.timer * 0.2) * 50;
+                if (this.timer % 30 === 0) this.bonusVx *= -1.3; 
+            } else {
+                this.y = this.startY + Math.sin(this.timer * 0.05) * 40;
+                if (this.timer % 45 === 0 && Math.random() < 0.4) {
+                    this.bonusVx *= 1.5;
+                } else if (this.timer % 60 === 0) {
+                    this.bonusVx = (this.bonusVx > 0 ? 3.2 : -3.2);
+                }
+            }
+            if (this.x < 15 || this.x > 480 - this.width - 15) { 
+                this.bonusVx *= -1; 
+                this.x = Math.max(15, Math.min(this.x, 480 - this.width - 15));
+            }
+            return;
+        }
+
+        if (this.isOftomo) {
+            this.y += 4 * this.speedFactor;
+            this.x += Math.sin(this.timer * 0.08 + this.swingOffset) * 3 * this.speedFactor;
+            if (this.y > 640) this.active = false;
+            return;
+        }
+
         if (this.state === 'grid') {
             this.x = this.startX + Math.sin(this.timer * 0.03 + this.swingOffset) * 20;
-            if (Math.random() < 0.0005) { this.state = 'swoop'; }
+            if (Math.random() < 0.0006) { this.state = 'swoop'; }
         } else if (this.state === 'swoop') {
             this.y += 3.5 * this.speedFactor;
             this.x += Math.sin(this.timer * 0.05) * 2 * this.speedFactor;
-            
-            if (this.y >= 640) {
-                this.y = -40;
-                this.state = 'returning';
-            }
+            if (this.y >= 640) { this.y = -40; this.state = 'returning'; }
         } else if (this.state === 'returning') {
             let targetX = this.startX + Math.sin(this.timer * 0.03 + this.swingOffset) * 20;
-            let dx = targetX - this.x;
-            let dy = this.startY - this.y;
+            let dx = targetX - this.x; let dy = this.startY - this.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
-            
             let returnSpeed = 5.5 * this.speedFactor;
-            if (distance > returnSpeed) {
-                this.x += (dx / distance) * returnSpeed;
-                this.y += (dy / distance) * returnSpeed;
-            } else {
-                this.x = targetX;
-                this.y = this.startY;
-                this.state = 'grid';
-            }
+            if (distance > returnSpeed) { this.x += (dx / distance) * returnSpeed; this.y += (dy / distance) * returnSpeed; }
+            else { this.x = targetX; this.y = this.startY; this.state = 'grid'; }
         }
     }
     draw(ctx) {
         ctx.save();
-        if (this.type === 1) {
+        if (this.isBonus) {
+            if (this.isBonusChild) {
+                ctx.fillStyle = '#ff00ff'; ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(this.x + 3, this.y + 3, 6, 3);
+            } else {
+                ctx.fillStyle = '#ffcc00'; ctx.fillRect(this.x, this.y, 20, 20);
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(this.x + 4, this.y + 4, 12, 6);
+                ctx.fillStyle = '#ff3300'; ctx.fillRect(this.x + 2, this.y + 14, 4, 4); ctx.fillRect(this.x + 14, this.y + 14, 4, 4);
+            }
+        } else if (this.isOftomo) {
+            ctx.fillStyle = '#00ffff'; ctx.fillRect(this.x + 4, this.y, 12, 12);
+            ctx.fillStyle = '#ff00ff'; ctx.fillRect(this.x, this.y + 6, 20, 4);
+        } else if (this.type === 1) {
             ctx.fillStyle = '#ff00ff'; ctx.fillRect(this.x + 4, this.y, 12, 12);
             ctx.fillStyle = '#ffffff'; ctx.fillRect(this.x, this.y + 4, 4, 4); ctx.fillRect(this.x + 16, this.y + 4, 4, 4);
         } else if (this.type === 2) {
-            ctx.fillStyle = '#00ff66'; ctx.fillRect(this.x + 2, this.y + 2, 16, 10);
+            ctx.fillStyle = (window.gameInstance && window.gameInstance.stage >= 3) ? '#ff3333' : '#00ff66'; 
+            ctx.fillRect(this.x + 2, this.y + 2, 16, 10);
             ctx.fillStyle = '#ffff00'; ctx.fillRect(this.x + 4, this.y + 12, 2, 6); ctx.fillRect(this.x + 14, this.y + 12, 2, 6);
         } else {
             ctx.fillStyle = '#ffea00'; ctx.fillRect(this.x, this.y, 20, 8);
@@ -498,54 +536,73 @@ class Enemy {
     }
 }
 
+class LuckyMeteor {
+    constructor() {
+        this.width = 16; this.height = 16;
+        this.x = -40; 
+        this.y = 25 + Math.random() * 25; 
+        this.vx = 9.5; 
+        this.active = true;
+        this.scoreValue = 10000; 
+    }
+    update() {
+        this.x += this.vx;
+        if (this.x > 500) this.active = false;
+    }
+    draw(ctx, globalTimer) {
+        ctx.save();
+        ctx.fillStyle = (Math.floor(globalTimer / 3) % 2 === 0) ? '#ff00ff' : '#9900ff';
+        ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 12;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillStyle = 'rgba(255, 0, 255, 0.4)';
+        ctx.fillRect(this.x - 15, this.y + 3, 15, 10);
+        ctx.restore();
+    }
+}
+
 class BossEnemy {
-    constructor(stage, levelFactor) {
+    constructor(x, targetY, stage, levelFactor) {
         this.width = 64; this.height = 48;
-        this.x = 240 - 32; this.y = -60; this.targetY = 80;
+        this.x = x; this.y = -60; this.targetY = targetY;
         this.active = true; this.isBoss = true;
-        this.maxHp = 5 + (stage * 3); this.hp = this.maxHp;
-        this.scoreValue = 2000; this.timer = 0; 
-        this.vx = 2 * levelFactor; this.hurtTimer = 0;
+        this.maxHp = 10 + (stage * 3); this.hp = this.maxHp;
+        this.scoreValue = 2000; this.timer = Math.random() * 100; 
+        this.vx = 2 * levelFactor * (Math.random() > 0.5 ? 1 : -1); this.hurtTimer = 0;
+        this.isFleeing = false; // 【新機能】撤退フラグ
     }
     update() {
         this.timer++;
         if (this.hurtTimer > 0) this.hurtTimer--;
+
+        // 【新機能】タイムアップによる逃走処理
+        if (this.isFleeing) {
+            this.y -= 7; // 高速で画面上部へ離脱
+            if (this.y < -80) {
+                this.active = false;
+            }
+            return;
+        }
+
         if (this.y < this.targetY) { this.y += 2; return; }
         this.x += this.vx;
-        if (this.x < 20 || this.x > 480 - this.width - 20) { this.vx *= -1; }
+        if (this.x < 15 || this.x > 480 - this.width - 15) { this.vx *= -1; }
         this.y = this.targetY + Math.sin(this.timer * 0.04) * 15;
     }
     draw(ctx) {
         ctx.save();
         if (this.hurtTimer > 0 && Math.floor(this.hurtTimer / 2) % 2 === 0) {
-            ctx.fillStyle = '#ffffff'; 
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(this.x, this.y, this.width, this.height);
         } else {
-            const cx = this.x;
-            const cy = this.y;
-
-            ctx.fillStyle = '#9900ff';
-            ctx.fillRect(cx + 12, cy + 4, 40, 16);  
-            ctx.fillRect(cx + 4, cy + 16, 56, 16);  
-
-            ctx.fillStyle = '#00ffff';
-            ctx.fillRect(cx, cy, 6, 24);            
-            ctx.fillRect(cx + 58, cy, 6, 24);       
-            ctx.fillRect(cx + 4, cy + 32, 10, 16);  
-            ctx.fillRect(cx + 50, cy + 32, 10, 16); 
-
-            ctx.fillStyle = '#ff0055';
-            ctx.fillRect(cx + 24, cy + 12, 16, 12); 
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(cx + 28, cy + 16, 8, 4);   
-
-            ctx.fillStyle = '#ffff00';
-            ctx.fillRect(cx + 14, cy, 4, 4);        
-            ctx.fillRect(cx + 46, cy, 4, 4);        
+            const cx = this.x; const cy = this.y;
+            ctx.fillStyle = '#9900ff'; ctx.fillRect(cx + 12, cy + 4, 40, 16); ctx.fillRect(cx + 4, cy + 16, 56, 16);  
+            ctx.fillStyle = '#00ffff'; ctx.fillRect(cx, cy, 6, 24); ctx.fillRect(cx + 58, cy, 6, 24); ctx.fillRect(cx + 4, cy + 32, 10, 16); ctx.fillRect(cx + 50, cy + 32, 10, 16); 
+            ctx.fillStyle = '#ff0055'; ctx.fillRect(cx + 24, cy + 12, 16, 12); ctx.fillStyle = '#ffffff'; ctx.fillRect(cx + 28, cy + 16, 8, 4);   
+            ctx.fillStyle = '#ffff00'; ctx.fillRect(cx + 14, cy, 4, 4); ctx.fillRect(cx + 46, cy, 4, 4);        
         }
-        
-        ctx.fillStyle = '#222'; ctx.fillRect(this.x, this.y - 15, this.width, 5);
-        ctx.fillStyle = '#ff0055'; ctx.fillRect(this.x, this.y - 15, this.width * (this.hp / this.maxHp), 5);
+        if (!this.isFleeing) {
+            ctx.fillStyle = '#222'; ctx.fillRect(this.x, this.y - 12, this.width, 4);
+            ctx.fillStyle = '#ff0055'; ctx.fillRect(this.x, this.y - 12, this.width * (this.hp / this.maxHp), 4);
+        }
         ctx.restore();
     }
 }
@@ -583,308 +640,312 @@ class Game {
         window.gameInstance = this;
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.state = 'TITLE';
-        this.level = 'NORMAL';
+        this.state = 'TITLE'; this.level = 'NORMAL';
         
         this.player = new Player(480, 640);
         this.life = 3; this.stage = 1;
-        this.bullets = []; this.enemyBullets = []; this.enemies = []; this.boss = null; this.items = []; this.particles = []; this.stars = [];
+        this.bullets = []; this.enemyBullets = []; this.enemies = []; this.bosses = []; this.items = []; this.particles = []; this.stars = [];
+        this.luckyMeteors = []; 
         
         this.keys = {}; this.globalTimer = 0; this.screenShake = 0;
-        this.playerRespawnTimer = 0;
-        this.stageClearTimer = 0;
+        this.playerRespawnTimer = 0; this.stageClearTimer = 0;
         
-        // 【改善点】タッチ操作用の内部変数
-        this.isTouching = false;
-        this.lastTouchX = 0;
-        this.touchDx = 0; // 現在のフレームでの左右スワイプ移動量
-        this.autoShotTimer = 0; // オート連射用タイマー
+        this.isTouching = false; this.lastTouchX = 0; this.touchDx = 0; this.autoShotTimer = 0;
         
-        this.initStars();
-        this.bindEvents();
-        this.updateLeaderboards();
-        this.loop();
+        this.stageType = 'NORMAL';
+        this.bossSpawned = false;
+        
+        this.bonusTimer = 0; 
+        this.bonusPerfect = false;
+        
+        // 【新機能】ボス戦用制限タイマー ＆ 撤退フラグ
+        this.bossTimer = 0;
+        this.bossFled = false;
+
+        this.safetyStartTimer = 0;
+
+        this.initStars(); this.bindEvents(); this.updateLeaderboards(); this.loop();
     }
 
     getLevelFactor() {
-        if (this.level === 'EASY') return 0.75;
+        if (this.level === 'EASY') return 0.85;
         if (this.level === 'HARD') return 1.35;
         return 1.0;
     }
 
     initStars() {
-        for (let i = 0; i < 60; i++) {
-            this.stars.push({ x: Math.random() * 480, y: Math.random() * 640, speed: 1 + Math.random() * 2, size: Math.random() * 2 });
+        this.stars = [];
+        for (let i = 0; i < 60; i++) { this.stars.push({ x: Math.random() * 480, y: Math.random() * 640, speed: 1 + Math.random() * 2, size: Math.random() * 2 }); }
+    }
+
+    spawnStageElements() {
+        this.enemies = []; this.bosses = []; this.luckyMeteors = [];
+        this.bossSpawned = false;
+        this.bonusPerfect = false;
+        this.bossFled = false;
+
+        this.safetyStartTimer = 90;
+
+        const remainder = this.stage % 7;
+
+        if (remainder === 3 || remainder === 6) {
+            this.stageType = 'BOSS';
+            this.spawnBossForCurrentStage();
+            this.bossSpawned = true;
+
+            // 【新機能】難易度ごとのボス制限時間（秒 × 60フレーム）
+            if (this.level === 'EASY') {
+                this.bossTimer = 2700; // 45秒
+            } else if (this.level === 'NORMAL') {
+                this.bossTimer = 2100; // 35秒
+            } else {
+                this.bossTimer = 1500; // 25秒
+            }
+
+        } else if (remainder === 0) {
+            this.stageType = 'BONUS';
+            if (this.level === 'EASY') { this.bonusTimer = 900; } 
+            else if (this.level === 'NORMAL') { this.bonusTimer = 720; } 
+            else { this.bonusTimer = 480; }
+            
+            const count = 8;
+            for (let i = 0; i < count; i++) {
+                this.enemies.push(new Enemy(40 + i * 45, 120, 1, this.stage, this.getLevelFactor(), true));
+            }
+        } else {
+            this.stageType = 'NORMAL';
+            const cols = 6, rows = 3; const factor = this.getLevelFactor();
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    this.enemies.push(new Enemy(80 + c * 50, 60 + r * 35, r + 1, this.stage, factor, false));
+                }
+            }
+        }
+
+        if (Math.random() < 0.003) {
+            this.luckyMeteorSpawnFrame = this.globalTimer + 180 + Math.floor(Math.random() * 300);
+        } else {
+            this.luckyMeteorSpawnFrame = -1;
         }
     }
 
-    spawnEnemies() {
-        this.enemies = []; this.boss = null;
-        const cols = 6, rows = 3;
+    spawnBossForCurrentStage() {
+        this.bosses = [];
         const factor = this.getLevelFactor();
-        for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-                this.enemies.push(new Enemy(80 + c * 50, 60 + r * 35, r + 1, this.stage, factor));
+        sound.playBossWarning();
+
+        if (this.level === 'EASY') {
+            this.bosses.push(new BossEnemy(240 - 32, 80, this.stage, factor));
+        } else if (this.level === 'NORMAL') {
+            if (this.stage >= 6) {
+                this.bosses.push(new BossEnemy(140 - 32, 80, this.stage, factor));
+                this.bosses.push(new BossEnemy(340 - 32, 100, this.stage, factor));
+            } else {
+                this.bosses.push(new BossEnemy(240 - 32, 80, this.stage, factor));
+            }
+        } else {
+            if (this.stage >= 3) {
+                this.bosses.push(new BossEnemy(140 - 32, 80, this.stage, factor));
+                this.bosses.push(new BossEnemy(340 - 32, 100, this.stage, factor));
+            } else {
+                this.bosses.push(new BossEnemy(240 - 32, 80, this.stage, factor));
             }
         }
     }
 
-    spawnBoss() {
-        this.enemies = [];
-        this.boss = new BossEnemy(this.stage, this.getLevelFactor());
-        sound.playBossWarning();
-    }
-
     resetGame() {
         scores.reset(); this.life = 3; this.stage = 1;
-        this.bullets = []; this.enemyBullets = []; this.items = []; this.particles = [];
-        this.playerRespawnTimer = 0; this.stageClearTimer = 0;
-        this.player.reset(); this.spawnEnemies();
+        this.bullets = []; this.enemyBullets = []; this.items = []; this.particles = []; this.luckyMeteors = [];
+        this.playerRespawnTimer = 0; this.stageClearTimer = 0; this.stageType = 'NORMAL';
+        this.bossSpawned = false; this.bonusTimer = 0; this.bonusPerfect = false;
+        this.bossTimer = 0; this.bossFled = false;
+        this.player.reset(); this.spawnStageElements();
         this.isTouching = false; this.touchDx = 0;
     }
 
     nextStage() {
-        this.stage++; this.bullets = []; this.enemyBullets = [];
-        if (this.stage % 3 === 0) { this.spawnBoss(); } else { this.spawnEnemies(); }
+        this.stage++; this.bullets = []; this.enemyBullets = []; this.bosses = []; this.enemies = []; this.luckyMeteors = [];
+        this.spawnStageElements();
         this.player.invulnerableTimer = 90;
         sound.startBGM();
     }
 
     bindEvents() {
-        // キーボード操作設定
         document.addEventListener('keydown', (e) => {
-            if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD'].includes(e.code)) {
-                e.preventDefault();
-            }
-            this.keys[e.code] = true;
-            this.keys[e.key] = true;
-
+            if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD'].includes(e.code)) e.preventDefault();
+            this.keys[e.code] = true; this.keys[e.key] = true;
             if (e.key === 'Escape' || e.key === 'Esc') this.togglePause();
             if ((e.code === 'KeyR' || e.key === 'r' || e.key === 'R') && this.state === 'PLAYING') this.triggerReset();
             if (e.code === 'Space' && this.state === 'PLAYING') this.firePlayerBullet();
         });
+        document.addEventListener('keyup', (e) => { this.keys[e.code] = false; this.keys[e.key] = false; });
 
-        document.addEventListener('keyup', (e) => {
-            this.keys[e.code] = false;
-            this.keys[e.key] = false;
-        });
-
-        // 【改善点】直感的なスワイプ移動 ＆ タッチ自動連射イベントの実装
         const getCanvasTouchX = (e) => {
             const rect = this.canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            // 実際のCanvas表示サイズから内部の論理解像度(480)にスケール変換
-            return (touch.clientX - rect.left) * (480 / rect.width);
+            return (e.touches[0].clientX - rect.left) * (480 / rect.width);
         };
-
         this.canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (this.state !== 'PLAYING') return;
-            sound.init();
-            this.isTouching = true;
-            this.lastTouchX = getCanvasTouchX(e);
-            this.touchDx = 0;
-            
-            // タップの瞬間にも即座に1発発射してキレを良くする
-            this.firePlayerBullet();
-            this.autoShotTimer = 0;
+            e.preventDefault(); if (this.state !== 'PLAYING') return;
+            sound.init(); this.isTouching = true; this.lastTouchX = getCanvasTouchX(e); this.touchDx = 0;
+            this.firePlayerBullet(); this.autoShotTimer = 0;
         });
-
         this.canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (!this.isTouching || this.state !== 'PLAYING') return;
-            const currentX = getCanvasTouchX(e);
-            
-            // 前回タッチ位置からの移動量（感度を調整可能、1.3倍に設定してより軽快に）
-            this.touchDx = (currentX - this.lastTouchX) * 1.3;
-            this.lastTouchX = currentX;
+            e.preventDefault(); if (!this.isTouching || this.state !== 'PLAYING') return;
+            const currentX = getCanvasTouchX(e); this.touchDx = (currentX - this.lastTouchX) * 1.3; this.lastTouchX = currentX;
         });
+        this.canvas.addEventListener('touchend', (e) => { e.preventDefault(); this.isTouching = false; this.touchDx = 0; });
 
-        this.canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            this.isTouching = false;
-            this.touchDx = 0;
-        });
-
-        this.canvas.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            this.isTouching = false;
-            this.touchDx = 0;
-        });
-
-        // UI用ボタンのイベント
         const setLevel = (lvl) => {
             this.level = lvl;
-            ['easy', 'normal', 'hard'].forEach(id => {
-                document.getElementById(`lvl-${id}`).classList.remove('active');
-            });
+            ['easy', 'normal', 'hard'].forEach(id => document.getElementById(`lvl-${id}`).classList.remove('active'));
             document.getElementById(`lvl-${lvl.toLowerCase()}`).classList.add('active');
             sound.init(); sound.playTone(440, 'sine', 0.08, 0.1);
         };
         document.getElementById('lvl-easy').addEventListener('click', () => setLevel('EASY'));
         document.getElementById('lvl-normal').addEventListener('click', () => setLevel('NORMAL'));
         document.getElementById('lvl-hard').addEventListener('click', () => setLevel('HARD'));
-
         document.getElementById('start-game-btn').addEventListener('click', () => {
-            sound.init();
-            if (this.state === 'TITLE') {
-                sound.playStartJingle();
-                this.startGame();
-            }
+            sound.init(); if (this.state === 'TITLE') { sound.playStartJingle(); this.startGame(); }
         });
-
-        document.getElementById('touch-pause-btn').addEventListener('touchstart', (e) => { 
-            e.preventDefault(); 
-            this.togglePause(); 
-        });
-
+        document.getElementById('touch-pause-btn').addEventListener('touchstart', (e) => { e.preventDefault(); this.togglePause(); });
         document.getElementById('resume-btn').addEventListener('click', () => this.togglePause());
         document.getElementById('reset-btn').addEventListener('click', () => this.triggerReset());
         document.getElementById('to-title-btn').addEventListener('click', () => this.backToTitle());
         document.getElementById('retry-btn').addEventListener('click', () => this.startGame());
         document.getElementById('go-title-btn').addEventListener('click', () => this.backToTitle());
         document.getElementById('submit-score-btn').addEventListener('click', () => {
-            const name = document.getElementById('player-name').value;
-            scores.saveRanking(name);
-            document.getElementById('name-input-container').classList.add('hidden');
-            this.updateLeaderboards();
+            const name = document.getElementById('player-name').value; scores.saveRanking(name);
+            document.getElementById('name-input-container').classList.add('hidden'); this.updateLeaderboards();
         });
     }
 
     togglePause() {
-        if (this.state === 'PLAYING') {
-            this.state = 'PAUSED'; 
-            sound.stopBGM();
-            document.getElementById('pause-screen').classList.remove('hidden');
-        } else if (this.state === 'PAUSED') {
-            this.state = 'PLAYING'; 
-            sound.startBGM();
-            document.getElementById('pause-screen').classList.add('hidden');
-            this.isTouching = false; this.touchDx = 0;
-        }
+        if (this.state === 'PLAYING') { this.state = 'PAUSED'; sound.stopBGM(); document.getElementById('pause-screen').classList.remove('hidden'); }
+        else if (this.state === 'PAUSED') { this.state = 'PLAYING'; sound.startBGM(); document.getElementById('pause-screen').classList.add('hidden'); this.isTouching = false; this.touchDx = 0; }
     }
-
-    triggerReset() {
-        if (confirm("ゲームをリセットして最初から開始しますか？")) {
-            document.getElementById('pause-screen').classList.add('hidden');
-            this.startGame();
-        }
-    }
-
-    backToTitle() {
-        this.state = 'TITLE';
-        sound.stopBGM();
-        document.getElementById('pause-screen').classList.add('hidden');
-        document.getElementById('gameover-screen').classList.add('hidden');
-        document.getElementById('title-screen').classList.remove('hidden');
-        this.updateLeaderboards();
-    }
-
-    startGame() {
-        this.state = 'PLAYING';
-        document.getElementById('title-screen').classList.add('hidden');
-        document.getElementById('gameover-screen').classList.add('hidden');
-        this.resetGame();
-        setTimeout(() => { if(this.state === 'PLAYING') sound.startBGM(); }, 600);
-    }
-
-    gameOver() {
-        this.state = 'GAMEOVER';
-        sound.stopBGM();
-        sound.playGameOverJingle();
-        document.getElementById('final-score-text').innerText = `FINAL SCORE: ${scores.score}`;
-        document.getElementById('gameover-screen').classList.remove('hidden');
-        if (scores.checkRankingEligibility()) { document.getElementById('name-input-container').classList.remove('hidden'); }
-        else { document.getElementById('name-input-container').classList.add('hidden'); }
-    }
-
-    updateLeaderboards() {
-        const createRows = (list) => list.map((entry, idx) => `<tr><td>${idx+1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`).join('');
-        document.getElementById('leaderboard-body-title').innerHTML = createRows(scores.ranking);
-    }
+    triggerReset() { if (confirm("ゲームをリセットして最初から開始しますか？")) { document.getElementById('pause-screen').classList.add('hidden'); this.startGame(); } }
+    backToTitle() { this.state = 'TITLE'; sound.stopBGM(); document.getElementById('pause-screen').classList.add('hidden'); document.getElementById('gameover-screen').classList.add('hidden'); document.getElementById('title-screen').classList.remove('hidden'); this.updateLeaderboards(); }
+    startGame() { this.state = 'PLAYING'; document.getElementById('title-screen').classList.add('hidden'); document.getElementById('gameover-screen').classList.add('hidden'); this.resetGame(); setTimeout(() => { if(this.state === 'PLAYING') sound.startBGM(); }, 600); }
+    updateLeaderboards() { const createRows = (list) => list.map((entry, idx) => `<tr><td>${idx+1}</td><td>${entry.name}</td><td>${entry.score}</td></tr>`).join(''); document.getElementById('leaderboard-body-title').innerHTML = createRows(scores.ranking); }
 
     firePlayerBullet() {
         if (!this.player.visible || this.stageClearTimer > 0) return;
-        
         const p = this.player;
+        
+        const currentLasers = this.bullets.filter(b => b.isLaser).length;
+        const currentNormals = this.bullets.filter(b => !b.isLaser).length;
 
-        let shotsInThisLevel = 1;
-        if (p.powerLevel === 2) shotsInThisLevel = 2;
-        if (p.powerLevel === 3) shotsInThisLevel = 3;
-        if (p.powerLevel === 4) shotsInThisLevel = 1; 
-        if (p.powerLevel === 5) shotsInThisLevel = 5; 
-
-        const maxConcurrentBullets = shotsInThisLevel * 5;
-        if (this.bullets.length >= maxConcurrentBullets) return;
-
-        sound.playShot();
-
-        if (p.powerLevel === 1) { 
-            this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y, 0, -10, false, false)); 
-        }
-        else if (p.powerLevel === 2) { 
-            this.bullets.push(new Bullet(p.x + 2, p.y, 0, -10, false, false)); 
-            this.bullets.push(new Bullet(p.x + p.width - 6, p.y, 0, -10, false, false)); 
-        }
-        else if (p.powerLevel === 3) { 
-            this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y, 0, -10, false, false)); 
-            this.bullets.push(new Bullet(p.x, p.y + 6, -2, -10, false, false)); 
-            this.bullets.push(new Bullet(p.x + p.width - 4, p.y + 6, 2, -10, false, false)); 
-        }
-        else if (p.powerLevel === 4) { 
-            this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y - 10, 0, -14, true, false)); 
-        }
-        else {
-            this.bullets.push(new Bullet(p.x + 4, p.y, 0, -11, false, false)); 
-            this.bullets.push(new Bullet(p.x + p.width - 8, p.y, 0, -11, false, false)); 
-            this.bullets.push(new Bullet(p.x + 2, p.y + 4, -2, -10, false, false)); 
-            this.bullets.push(new Bullet(p.x + p.width - 6, p.y + 4, 2, -10, false, false)); 
-            this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y - 4, 0, -12, false, false));
+        if (p.powerLevel === 4) {
+            if (currentLasers >= 2) return;
+            sound.playLaser();
+            this.bullets.push(new Bullet(p.x + p.width / 2 - 6, p.y - 20, 0, -16, true, false));
+        } else {
+            let maxShotsAllowed = (p.powerLevel === 2) ? 2 : ((p.powerLevel === 3) ? 3 : ((p.powerLevel === 5) ? 5 : 1));
+            if (currentNormals >= maxShotsAllowed * 5) return;
+            
+            sound.playShot();
+            if (p.powerLevel === 1) { 
+                this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y, 0, -10, false, false)); 
+            } else if (p.powerLevel === 2) { 
+                this.bullets.push(new Bullet(p.x + 2, p.y, 0, -10, false, false)); 
+                this.bullets.push(new Bullet(p.x + p.width - 6, p.y, 0, -10, false, false)); 
+            } else if (p.powerLevel === 3) { 
+                this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y, 0, -10, false, false)); 
+                this.bullets.push(new Bullet(p.x, p.y + 6, -2, -10, false, false)); 
+                this.bullets.push(new Bullet(p.x + p.width - 4, p.y + 6, 2, -10, false, false)); 
+            } else { 
+                this.bullets.push(new Bullet(p.x + 4, p.y, 0, -11, false, false)); 
+                this.bullets.push(new Bullet(p.x + p.width - 8, p.y, 0, -11, false, false)); 
+                this.bullets.push(new Bullet(p.x + 2, p.y + 4, -2, -10, false, false)); 
+                this.bullets.push(new Bullet(p.x + p.width - 6, p.y + 4, 2, -10, false, false)); 
+                this.bullets.push(new Bullet(p.x + p.width / 2 - 2, p.y - 4, 0, -12, false, false)); 
+            }
         }
     }
 
     enemyFire() {
-        if (this.stageClearTimer > 0) return;
+        // 【改善】安全タイム中、演出中、ボーナス面、またはボス逃走中は弾を撃たない
+        if (this.safetyStartTimer > 0 || this.stageClearTimer > 0 || this.stageType === 'BONUS' || this.bossFled) return; 
         
-        let fireChance = 0.015 + (this.stage * 0.004);
+        let fireChance = 0.012 + (this.stage * 0.002);
         if (this.level === 'EASY') fireChance *= 0.6;
-        if (this.level === 'HARD') fireChance *= 1.5;
+        if (this.level === 'HARD') fireChance *= 1.4;
 
-        if (this.boss) {
-            if (Math.random() < (this.level === 'HARD' ? 0.06 : (this.level === 'EASY' ? 0.025 : 0.04))) {
-                const angle = Math.sin(this.globalTimer * 0.05) * 0.5;
-                this.enemyBullets.push(new Bullet(this.boss.x + this.boss.width/2, this.boss.y + this.boss.height, Math.sin(angle)*3, 5, false, true));
-                this.enemyBullets.push(new Bullet(this.boss.x + this.boss.width/2, this.boss.y + this.boss.height, Math.sin(angle - 0.3)*3, 5, false, true));
-                this.enemyBullets.push(new Bullet(this.boss.x + this.boss.width/2, this.boss.y + this.boss.height, Math.sin(angle + 0.3)*3, 5, false, true));
+        this.bosses.forEach(b => {
+            if (b.active && b.y > 0 && !b.isFleeing && Math.random() < (this.level === 'HARD' ? 0.05 : (this.level === 'EASY' ? 0.025 : 0.035))) {
+                const angle = Math.sin(this.globalTimer * 0.05) * 0.4;
+                this.enemyBullets.push(new Bullet(b.x + b.width/2, b.y + b.height, Math.sin(angle)*3, 5, false, true));
+                this.enemyBullets.push(new Bullet(b.x + b.width/2, b.y + b.height, Math.sin(angle - 0.25)*3, 5, false, true));
+                this.enemyBullets.push(new Bullet(b.x + b.width/2, b.y + b.height, Math.sin(angle + 0.25)*3, 5, false, true));
             }
-        } else {
-            if (this.enemies.length > 0 && Math.random() < fireChance) {
-                const randomEnemy = this.enemies[Math.floor(Math.random() * this.enemies.length)];
-                if (randomEnemy.y > 0 && randomEnemy.state !== 'returning') { 
-                    this.enemyBullets.push(new Bullet(randomEnemy.x + randomEnemy.width / 2, randomEnemy.y + randomEnemy.height, 0, 4 + this.stage * 0.2, false, true)); 
+        });
+
+        if (this.enemies.length > 0 && Math.random() < fireChance) {
+            const randomEnemy = this.enemies[Math.floor(Math.random() * this.enemies.length)];
+            
+            if (randomEnemy.y > 0 && randomEnemy.state !== 'returning' && !randomEnemy.isOftomo) { 
+                if (this.stage >= 3 && randomEnemy.type === 2 && randomEnemy.shotCooldown === 0) {
+                    let threeWayChance = 0.25; 
+                    if (this.level === 'EASY') threeWayChance = 0.05; 
+                    if (this.level === 'HARD') threeWayChance = 0.50; 
+
+                    if (Math.random() < threeWayChance) {
+                        const ex = randomEnemy.x + randomEnemy.width / 2;
+                        const ey = randomEnemy.y + randomEnemy.height;
+                        const dx = (this.player.x + this.player.width / 2) - ex;
+                        const dy = (this.player.y + this.player.height / 2) - ey;
+                        const angle = Math.atan2(dy, dx);
+                        const speed = 3.2 + this.stage * 0.1; 
+
+                        this.enemyBullets.push(new Bullet(ex, ey, Math.cos(angle) * speed, Math.sin(angle) * speed, false, true));
+                        this.enemyBullets.push(new Bullet(ex, ey, Math.cos(angle - 0.23) * speed, Math.sin(angle - 0.23) * speed, false, true));
+                        this.enemyBullets.push(new Bullet(ex, ey, Math.cos(angle + 0.23) * speed, Math.sin(angle + 0.23) * speed, false, true));
+
+                        randomEnemy.shotCooldown = 150;
+                    } else {
+                        this.enemyBullets.push(new Bullet(randomEnemy.x + randomEnemy.width / 2, randomEnemy.y + randomEnemy.height, 0, 4 + this.stage * 0.15, false, true));
+                        randomEnemy.shotCooldown = 45; 
+                    }
+                } else if (randomEnemy.shotCooldown === 0) {
+                    this.enemyBullets.push(new Bullet(randomEnemy.x + randomEnemy.width / 2, randomEnemy.y + randomEnemy.height, 0, 4 + this.stage * 0.15, false, true)); 
+                    randomEnemy.shotCooldown = 45;
                 }
             }
         }
     }
 
-    createExplosion(x, y, count = 12) { sound.playExplode(); for (let i = 0; i < count; i++) { this.particles.push(new Particle(x, y)); } }
+    spawnBossOftomo() {
+        // ボス逃走中、またはすでに逃げてタイムアップ演出中ならお供を呼ばない
+        if (this.stageType !== 'BOSS' || this.bosses.length === 0 || this.stageClearTimer > 0 || this.bossFled) return;
+        
+        let spawnInterval = 140;
+        let maxOftomoCount = 3;
+        if (this.level === 'EASY') { spawnInterval = 200; maxOftomoCount = 1; } 
+        if (this.level === 'HARD') { spawnInterval = 80; maxOftomoCount = 6; }
+
+        const currentOftomo = this.enemies.filter(e => e.isOftomo).length;
+
+        if (this.globalTimer % spawnInterval === 0 && currentOftomo < maxOftomoCount) {
+            const spawnX = 40 + Math.random() * 400;
+            this.enemies.push(new Enemy(spawnX, -20, 1, this.stage, this.getLevelFactor(), false, true));
+        }
+    }
+
+    createExplosion(x, y, count = 12, customColor = null) { 
+        sound.playExplode(); 
+        for (let i = 0; i < count; i++) { this.particles.push(new Particle(x, y, customColor)); } 
+    }
 
     createBossExplosion(bx, by) {
-        sound.playBossExplode();
-        this.screenShake = 35;
-        const colors = ['#9900ff', '#ff0055', '#00ffff', '#ffff00', '#ffffff'];
-        for (let ring = 0; ring < 4; ring++) {
-            const particleCount = 20 + (ring * 10);
-            const baseSpeed = 2 + ring * 1.5;
-            const ringColor = colors[ring % colors.length];
+        sound.playBossExplode(); this.screenShake = 30;
+        const colors = ['#9900ff', '#ff0055', '#00ffff', '#ffff00'];
+        for (let ring = 0; ring < 3; ring++) {
+            const particleCount = 16 + (ring * 8); const baseSpeed = 2 + ring * 1.5; const ringColor = colors[ring % colors.length];
             for (let i = 0; i < particleCount; i++) {
-                const angle = (Math.PI * 2 / particleCount) * i + (Math.random() * 0.2);
-                const vx = Math.cos(angle) * (baseSpeed + Math.random() * 1);
-                const vy = Math.sin(angle) * (baseSpeed + Math.random() * 1);
-                this.particles.push(new Particle(bx, by, ringColor, vx, vy));
+                const angle = (Math.PI * 2 / particleCount) * i;
+                this.particles.push(new Particle(bx, by, ringColor, Math.cos(angle) * baseSpeed, Math.sin(angle) * baseSpeed));
             }
         }
-        for(let i=0; i<30; i++) { this.particles.push(new Particle(bx + (Math.random()-0.5)*40, by + (Math.random()-0.5)*30)); }
     }
 
     checkCollisions() {
@@ -892,28 +953,53 @@ class Game {
 
         for (let b of this.bullets) {
             if (!b.active) continue;
-            if (this.boss && this.boss.active && this.boss.y > 0) {
-                if (this.collides(b, this.boss)) {
-                    b.active = false; this.boss.hp--; this.boss.hurtTimer = 5;
-                    if (this.boss.hp <= 0) {
-                        this.boss.active = false; 
-                        this.createBossExplosion(this.boss.x + this.boss.width/2, this.boss.y + this.boss.height/2);
-                        scores.addScore(this.boss.scoreValue); this.boss = null;
-                        this.triggerStageClear();
-                    }
+
+            for (let m of this.luckyMeteors) {
+                if (!m.active) continue;
+                if (this.collides(b, m)) {
+                    m.active = false;
+                    this.createExplosion(m.x + m.width/2, m.y + m.height/2, 30, '#ff00ff');
+                    scores.addScore(m.scoreValue);
+                    this.life++; 
+                    sound.play1UP();
+                    if (!b.isLaser) b.active = false;
                     break;
                 }
             }
+            if (!b.active) continue;
+
+            for (let boss of this.bosses) {
+                if (!boss.active || boss.y < 0 || boss.isFleeing) continue; // 逃走中のボスは無敵
+                if (this.collides(b, boss)) {
+                    boss.hp--; boss.hurtTimer = 4;
+                    if (!b.isLaser) b.active = false;
+                    if (boss.hp <= 0) {
+                        boss.active = false; this.createBossExplosion(boss.x + boss.width/2, boss.y + boss.height/2);
+                        scores.addScore(boss.scoreValue);
+                    }
+                    if (!b.isLaser) break;
+                }
+            }
+
             for (let e of this.enemies) {
                 if (!e.active) continue;
                 if (this.collides(b, e)) {
-                    b.active = false; e.active = false; this.createExplosion(e.x + e.width / 2, e.y + e.height / 2);
+                    e.active = false; this.createExplosion(e.x + e.width / 2, e.y + e.height / 2);
                     scores.addScore(e.scoreValue);
-                    if (Math.random() < 0.15) { 
-                        this.items.push(new Item(e.x, e.y)); 
-                        sound.playItemSpawn();
+
+                    if (this.stageType === 'BONUS' && !e.isBonusChild) {
+                        if (Math.random() < 0.6) {
+                            this.enemies.push(new Enemy(e.x, e.y, 1, this.stage, this.getLevelFactor(), true, false, true));
+                        }
                     }
-                    break;
+
+                    let dropChance = e.isBonus ? 0.10 : 0.15; 
+                    if (e.isOftomo && this.level === 'EASY') dropChance = 0.35;
+
+                    if (Math.random() <= dropChance) { 
+                        this.items.push(new Item(e.x, e.y)); sound.playItemSpawn();
+                    }
+                    if (!b.isLaser) { b.active = false; break; }
                 }
             }
         }
@@ -922,13 +1008,16 @@ class Game {
             for (let eb of this.enemyBullets) { if (eb.active && this.collides(eb, this.player)) { eb.active = false; this.handlePlayerHit(); break; } }
             for (let e of this.enemies) { 
                 if (e.active && e.y >= 0 && this.collides(e, this.player)) { 
-                    e.active = false; 
-                    this.createExplosion(e.x + e.width/2, e.y + e.height/2); 
-                    this.handlePlayerHit(); 
+                    if (this.stageType === 'BONUS') {
+                        e.active = false; this.createExplosion(e.x + e.width/2, e.y + e.height/2);
+                    } else {
+                        e.active = false; this.createExplosion(e.x + e.width/2, e.y + e.height/2); this.handlePlayerHit(); 
+                    }
                     break; 
                 } 
             }
-            if (this.boss && this.boss.active && this.collides(this.boss, this.player)) { this.handlePlayerHit(); }
+            // 逃走中のボスとは当たらない仕様に
+            for (let boss of this.bosses) { if (boss.active && !boss.isFleeing && this.collides(boss, this.player)) { this.handlePlayerHit(); break; } }
         }
 
         for (let item of this.items) {
@@ -936,33 +1025,45 @@ class Game {
                 item.active = false; sound.playItemGet(); scores.addScore(500);
                 if (item.type === 'P') { if (this.player.powerLevel < 5) this.player.powerLevel++; }
                 else if (item.type === 'S') { this.player.speed += 1; }
-                else if (item.type === 'B') { this.player.invulnerableTimer = 300; }
+                else if (item.type === 'B') { this.player.invulnerableTimer += 300; }
             }
         }
 
-        this.bullets = this.bullets.filter(b => b.active); this.enemyBullets = this.enemyBullets.filter(b => b.active);
-        this.enemies = this.enemies.filter(e => e.active); this.items = this.items.filter(i => i.active);
+        this.bullets = this.bullets.filter(b => b.active); 
+        this.enemyBullets = this.enemyBullets.filter(b => b.active);
+        this.enemies = this.enemies.filter(e => e.active); 
+        this.bosses = this.bosses.filter(b => b.active); 
+        this.items = this.items.filter(i => i.active);
+        this.luckyMeteors = this.luckyMeteors.filter(m => m.active);
 
-        if (this.enemies.length === 0 && !this.boss && this.stageClearTimer === 0) { 
-            this.triggerStageClear(); 
+        if (this.state === 'PLAYING' && this.stageClearTimer === 0) {
+            if (this.stageType === 'BOSS') {
+                // ボスを撃破した時（タイムアップ逃走による消滅ではなく、生存ボスが0になったとき）
+                if (this.bossSpawned && this.bosses.length === 0 && !this.bossFled) { 
+                    this.enemies = []; 
+                    this.triggerStageClear(); 
+                }
+            } else if (this.stageType === 'BONUS') {
+                if (this.enemies.length === 0 && this.bonusTimer > 0) {
+                    this.bonusPerfect = true;
+                    scores.addScore(5000);
+                    this.triggerStageClear();
+                }
+            } else {
+                if (this.enemies.filter(e => !e.isOftomo).length === 0) { this.triggerStageClear(); }
+            }
         }
     }
 
-    triggerStageClear() {
-        this.stageClearTimer = 90;
-        sound.stopBGM();
-        sound.playClearJingle();
-    }
+    triggerStageClear() { this.stageClearTimer = 120; sound.stopBGM(); if(!this.bossFled) sound.playClearJingle(); }
 
     handlePlayerHit() {
-        sound.playPlayerDamage(); 
-        this.createExplosion(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, 25);
-        this.life--; 
-        if (this.player.powerLevel > 1) this.player.powerLevel--;
-        
+        sound.playPlayerDamage(); this.createExplosion(this.player.x + this.player.width / 2, this.player.y + this.player.height / 2, 25);
+        this.life--; if (this.player.powerLevel > 1) this.player.powerLevel--;
         this.player.visible = false;
         if (this.life <= 0) { this.gameOver(); } else { this.playerRespawnTimer = 30; }
     }
+    gameOver() { this.state = 'GAMEOVER'; sound.stopBGM(); sound.playGameOverJingle(); document.getElementById('gameover-screen').classList.remove('hidden'); document.getElementById('final-score-text').innerText = `SCORE: ${scores.score}`; if (scores.checkRankingEligibility()) { document.getElementById('name-input-container').classList.remove('hidden'); } else { document.getElementById('name-input-container').classList.add('hidden'); } }
 
     collides(rect1, rect2) { return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y; }
 
@@ -971,37 +1072,70 @@ class Game {
         for (let star of this.stars) { star.y += star.speed; if (star.y > 640) { star.y = 0; star.x = Math.random() * 480; } }
         if (this.state !== 'PLAYING') return;
 
-        if (this.stageClearTimer > 0) {
-            this.stageClearTimer--;
-            if (this.stageClearTimer === 0) { this.nextStage(); }
+        if (this.safetyStartTimer > 0) this.safetyStartTimer--;
+
+        if (this.luckyMeteorSpawnFrame > 0 && this.globalTimer === this.luckyMeteorSpawnFrame) {
+            this.luckyMeteors.push(new LuckyMeteor());
+            this.luckyMeteorSpawnFrame = -1; 
         }
 
-        if (!this.player.visible && this.playerRespawnTimer > 0) {
-            this.playerRespawnTimer--;
-            if (this.playerRespawnTimer === 0) { this.player.reset(); }
-        }
-
-        // 【改善点】タッチ中のオートショット（連射間隔はマイルドな8フレームに設定）
-        if (this.isTouching && this.player.visible && this.stageClearTimer === 0) {
-            this.autoShotTimer++;
-            if (this.autoShotTimer >= 8) {
-                this.firePlayerBullet();
-                this.autoShotTimer = 0;
+        // ボーナスステージタイマー処理
+        if (this.stageType === 'BONUS' && this.stageClearTimer === 0) {
+            if (this.bonusTimer > 0) {
+                this.bonusTimer--;
+                if (this.bonusTimer === 0) {
+                    this.enemies = [];
+                    this.bonusPerfect = false;
+                    this.triggerStageClear();
+                }
             }
         }
 
-        // プレイヤーの位置更新（スワイプ量を渡し、渡した後は速やかにクリア）
-        this.player.update(this.keys, this.touchDx);
-        this.touchDx = 0; 
+        // 【新機能】ボスステージタイマー処理
+        if (this.stageType === 'BOSS' && this.stageClearTimer === 0 && !this.bossFled) {
+            if (this.bossTimer > 0) {
+                this.bossTimer--;
+                if (this.bossTimer === 0) {
+                    this.bossFled = true;
+                    this.enemies = []; // 安全のためお供も一斉消滅
+                    this.enemyBullets = []; // 流れ弾もクリア
+                    sound.stopBGM();
+                    sound.playBossFlee();
+                    this.bosses.forEach(b => b.isFleeing = true); // 全ボスに逃走命令
+                }
+            }
+        }
 
+        // 【新機能】ボスが画面外に完全に逃げ去ったかチェック
+        if (this.bossFled && this.stageClearTimer === 0) {
+            if (this.bosses.length === 0) {
+                this.triggerStageClear();
+            }
+        }
+
+        if (this.stageClearTimer > 0) {
+            this.stageClearTimer--; if (this.stageClearTimer === 0) { this.nextStage(); }
+        }
+
+        if (!this.player.visible && this.playerRespawnTimer > 0) {
+            this.playerRespawnTimer--; if (this.playerRespawnTimer === 0) { 
+                this.player.reset(); 
+                this.safetyStartTimer = 60; 
+            }
+        }
+
+        if (this.isTouching && this.player.visible && this.stageClearTimer === 0) {
+            this.autoShotTimer++; if (this.autoShotTimer >= 8) { this.firePlayerBullet(); this.autoShotTimer = 0; }
+        }
+
+        this.player.update(this.keys, this.touchDx); this.touchDx = 0; 
         this.bullets.forEach(b => b.update()); this.enemyBullets.forEach(eb => eb.update());
-        if (this.boss) this.boss.update();
-        
-        this.enemies.forEach(e => e.update()); 
+        this.bosses.forEach(b => b.update()); this.enemies.forEach(e => e.update());
         this.items.forEach(i => i.update());
+        this.luckyMeteors.forEach(m => m.update()); 
         this.particles.forEach(p => p.update()); this.particles = this.particles.filter(p => p.life > 0);
 
-        this.enemyFire(); this.checkCollisions();
+        this.spawnBossOftomo(); this.enemyFire(); this.checkCollisions();
     }
 
     draw() {
@@ -1011,45 +1145,95 @@ class Game {
         this.ctx.fillStyle = '#ffffff'; for (let star of this.stars) { this.ctx.fillRect(star.x, star.y, star.size, star.size); }
 
         this.particles.forEach(p => p.draw(this.ctx)); this.items.forEach(i => i.draw(this.ctx, this.globalTimer));
+        this.luckyMeteors.forEach(m => m.draw(this.ctx, this.globalTimer)); 
         this.bullets.forEach(b => b.draw(this.ctx)); this.enemyBullets.forEach(eb => eb.draw(this.ctx));
-        
-        if (this.boss) this.boss.draw(this.ctx); 
-        this.enemies.forEach(e => { if (e.y >= -10) e.draw(this.ctx); });
-        
+        this.bosses.forEach(b => b.draw(this.ctx)); this.enemies.forEach(e => { if (e.y >= -10) e.draw(this.ctx); });
         if (this.state === 'PLAYING' || this.state === 'PAUSED') { this.player.draw(this.ctx); }
         this.ctx.restore();
         this.drawHUD();
-        
+
         if (this.stageClearTimer > 0) {
-            this.ctx.save();
-            this.ctx.fillStyle = 'rgba(0,0,0,0.4)';
-            this.ctx.fillRect(0, 260, 480, 80);
-            this.ctx.fillStyle = '#ffff00';
-            this.ctx.font = 'bold 24px "Courier New", monospace';
-            this.ctx.textAlign = 'center';
-            this.ctx.shadowColor = '#ff5500';
-            this.ctx.shadowBlur = 10;
-            this.ctx.fillText(`STAGE ${this.stage} CLEAR!`, 240, 305);
-            this.ctx.fillStyle = '#00ffff';
-            this.ctx.font = '14px "Courier New", monospace';
-            this.ctx.fillText(`PREPARING FOR NEXT AREA...`, 240, 325);
-            this.ctx.restore();
+            this.ctx.save(); this.ctx.fillStyle = 'rgba(0,0,0,0.6)'; this.ctx.fillRect(0, 240, 480, 130);
+            this.ctx.textAlign = 'center'; this.ctx.shadowBlur = 10;
+            
+            if (this.stageType === 'BOSS') {
+                if (this.bossFled) {
+                    this.ctx.fillStyle = '#ff3300'; this.ctx.shadowColor = '#ff0000';
+                    this.ctx.font = 'bold 24px "Courier New", monospace';
+                    this.ctx.fillText(`BOSS FLED...`, 240, 295);
+                } else {
+                    this.ctx.fillStyle = '#ffff00'; this.ctx.shadowColor = '#ff5500';
+                    this.ctx.font = 'bold 24px "Courier New", monospace';
+                    this.ctx.fillText(`BOSS SECTOR CLEAR!`, 240, 295);
+                }
+            } else if (this.stageType === 'BONUS') {
+                this.ctx.font = 'bold 24px "Courier New", monospace';
+                if (this.bonusPerfect) {
+                    this.ctx.fillStyle = '#ffff00'; this.ctx.shadowColor = '#ff5500';
+                    this.ctx.fillText(`BONUS PERFECT!`, 240, 295);
+                } else {
+                    this.ctx.fillStyle = '#ff3300'; this.ctx.shadowColor = '#ff0000';
+                    this.ctx.fillText(`BONUS TIME UP`, 240, 295);
+                }
+            } else {
+                this.ctx.fillStyle = '#ffff00'; this.ctx.shadowColor = '#ff5500';
+                this.ctx.font = 'bold 24px "Courier New", monospace';
+                this.ctx.fillText(`STAGE ${this.stage} CLEAR!`, 240, 295);
+            }
+            
+            this.ctx.fillStyle = '#00ffff'; this.ctx.font = '14px "Courier New", monospace';
+            this.ctx.fillText(`PREPARING FOR NEXT AREA...`, 240, 350); this.ctx.restore();
         }
     }
 
     drawHUD() {
         this.ctx.fillStyle = '#ff00ff'; this.ctx.font = 'bold 14px "Courier New", monospace'; this.ctx.fillText("SCORE", 15, 20);
         this.ctx.fillStyle = '#ffffff'; this.ctx.fillText(String(scores.score).padStart(6, '0'), 15, 38);
-        this.ctx.fillStyle = '#00ffff'; this.ctx.fillText("HI-SCORE", 190, 20);
+        this.ctx.fillStyle = '#00ffff'; this.ctx.font = 'bold 14px "Courier New", monospace'; this.ctx.fillText("HI-SCORE", 190, 20);
         this.ctx.fillStyle = '#ffffff'; this.ctx.fillText(String(scores.highScore).padStart(6, '0'), 190, 38);
-        this.ctx.fillStyle = '#ffea00'; this.ctx.fillText("STAGE", 400, 20);
+        
+        let label = "STAGE";
+        if (this.stageType === 'BOSS') { this.ctx.fillStyle = '#ff0055'; label = "BOSS"; }
+        else if (this.stageType === 'BONUS') { this.ctx.fillStyle = '#ffff00'; label = "BONUS"; }
+        else { this.ctx.fillStyle = '#ffea00'; }
+        
+        this.ctx.fillText(label, 390, 20);
         this.ctx.fillStyle = '#ffffff'; this.ctx.fillText(String(this.stage), 420, 38);
+        
+        // BONUSステージのタイマー表示
+        if (this.stageType === 'BONUS' && this.stageClearTimer === 0) {
+            this.ctx.save(); this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = this.bonusTimer < 180 ? '#ff0055' : '#ffff00'; 
+            this.ctx.font = 'bold 20px "Courier New", monospace';
+            let secondsLeft = (this.bonusTimer / 60).toFixed(1);
+            this.ctx.fillText(`TIME: ${secondsLeft}s`, 240, 75); this.ctx.restore();
+        }
+        
+        // 【新機能】BOSSステージのタイマー表示
+        if (this.stageType === 'BOSS' && this.stageClearTimer === 0 && !this.bossFled) {
+            this.ctx.save(); this.ctx.textAlign = 'center';
+            this.ctx.fillStyle = this.bossTimer < 300 ? '#ff0055' : '#ff00ff'; 
+            this.ctx.font = 'bold 18px "Courier New", monospace';
+            let secondsLeft = (this.bossTimer / 60).toFixed(1);
+            this.ctx.fillText(`LIMIT: ${secondsLeft}s`, 240, 75); this.ctx.restore();
+        }
+        
         this.ctx.fillStyle = '#ff0055'; this.ctx.fillText("LIFE: " + "🛸".repeat(Math.max(0, this.life)), 15, 620);
         this.ctx.fillStyle = '#00ff66'; this.ctx.fillText(`POWER: Lv${this.player.powerLevel}`, 340, 620);
+        
+        if (this.safetyStartTimer > 0 && this.state === 'PLAYING') {
+            this.ctx.save(); this.ctx.textAlign = 'center'; this.ctx.fillStyle = '#00ffff'; this.ctx.font = 'bold 16px monospace';
+            this.ctx.fillText("READY...", 240, 200); this.ctx.restore();
+        }
+
+        if (this.player.invulnerableTimer > 0) {
+            this.ctx.fillStyle = '#00ffff'; this.ctx.font = 'bold 11px monospace';
+            this.ctx.fillText(`BARRIER: ${Math.ceil(this.player.invulnerableTimer / 60)}s`, 15, 600);
+        }
         this.ctx.fillStyle = '#aaaaaa'; this.ctx.font = '10px monospace'; this.ctx.fillText(`LV: ${this.level}`, 250, 618);
     }
 
-    loop() { this.update(); this.draw(); requestAnimationFrame(() => this.loop()); }
+    loop() { if (this.state === 'PLAYING') { this.update(); } else if (this.state === 'PAUSED' || this.state === 'GAMEOVER') { this.update(); } this.draw(); requestAnimationFrame(() => this.loop()); }
 }
 
 window.onload = () => { new Game(); };

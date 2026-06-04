@@ -466,7 +466,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.4
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.7
   </footer>
 </div>
 
@@ -505,7 +505,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.3.4';
+const APP_VERSION = '1.3.7';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -1462,7 +1462,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.4', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.7', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });
@@ -1493,7 +1493,20 @@ function buildShareText(mode) {
   if (fs && isSolo) fortune = `💰${fmt(fs.money)} 💕${fmt(fs.love)} 💼${fmt(fs.work)} 🏃${fmt(fs.health)} 🤝${fmt(fs.social)}\n`;
   const diag = d.baseDiagnosis||d.diagnosis||'';
   const url = location.href;
-  if (mode==='x') return head + (fortune?fortune:'') + diag.substring(0,80)+'…\n'+url;
+  if (mode==='x') {
+    // X(Twitter)はURL含めて280文字制限（URLは23文字換算）
+    const xUrl = url;
+    const X_LIMIT = 280 - 24; // URL+改行分を確保
+    let xText = head;
+    // fortuneは省略（文字数節約）
+    const remain = X_LIMIT - xText.length;
+    if (remain > 20) {
+      const diagSnippet = diag.substring(0, Math.min(remain - 2, 60));
+      xText += diagSnippet + '…';
+    }
+    xText += '\n' + xUrl;
+    return xText;
+  }
   if (mode==='line') return head + (fortune?fortune:'') + '\n' + diag.substring(0,300)+(d.dailyDiagnosis?'\n\n'+d.dailyDiagnosis.substring(0,150):'')+'…\n\n▶ '+url;
   return head + (fortune?fortune:'') + '\n' + diag + (d.dailyDiagnosis?'\n\n'+d.dailyDiagnosis:'') + '\n\n▶ '+url;
 }

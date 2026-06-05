@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>🕹️ ZELBIUS METALLIC: TRUE PHYSICS 🕹️</title>
+    <title>🕹️ ZELBIUS METALLIC 🕹️</title>
     <style>
         body {
             display: flex;
@@ -61,12 +61,12 @@
         <div>SP: <div class="gauge-container"><div id="special-gauge"></div></div></div>
     </div>
 
-    <div id="control-//-guide">
+    <div id="control-guide">
         <strong>▶️ 操作方法 ◀️</strong><br>
         ・移動: 矢印キー / WASD / ドラッグ | 攻撃: スペース / タップ<br>
         ・<strong style="color:#0ff">特殊攻撃: Xキー / ダブルタップ</strong> (ゲージMAX)<br>
-        ・<strong style="color:#ff0">物理挙動: 加速度と摩擦を導入。前進中は左右移動が極めて困難です</strong><br>
-        ・<strong style="color:#fff">開始: Enter / クリック</strong> (タイトルで1,2,3で難易度選択)
+        ・<strong style="color:#ff0">物理: 前進(UP)中は左右移動が極めて鈍くなります</strong><br>
+        ・<strong style="color:#fff">開始: Enter / クリック</strong>
     </div>
 
     <script>
@@ -153,8 +153,7 @@
         }
 
         const player = {
-            x: 220, y: 600, w: 40, h: 40,
-            vx: 0, vy: 0, // 速度成分を追加
+            x: 220, y: 600, w: 40, h: 40, vx: 0, vy: 0,
             reset() { this.x = 220; this.y = 600; this.vx = 0; this.vy = 0; },
             draw() {
                 ctx.save();
@@ -295,7 +294,7 @@
 
         function gameOver() {
             gameState = 'GAMEOVER';
-            shakeIntensity = 20; shakeTimer = 120; // 2秒の振動
+            shakeIntensity = 20; shakeTimer = 120; 
             playSE(100, 'sawtooth', 0.8, 0.4);
         }
 
@@ -307,52 +306,36 @@
             frameCount++;
             if(frameCount % 25 === 0) playBGMStep();
             if(shotReloadTimer > 0) shotReloadTimer--;
-            
-            // 振動タイマーの厳格な管理
-            if(shakeTimer > 0) {
-                shakeTimer--;
-                shakeIntensity *= 0.9;
-            } else {
-                shakeIntensity = 0; // タイマー終了時に完全に停止
-            }
 
             stars.forEach(s => {
                 s.y += s.s * (2 + stage);
                 if(s.y > canvas.height) s.y = 0;
             });
 
-            // --- 物理ベースの慣性移動 ---
-            const baseAcc = 0.4 + (speedLevel * 0.1); // 加速度
-            const friction = 0.85; // 摩擦係数 (1に近いほど滑る)
+            // --- 物理ベースの慣性移動 (修正版) ---
+            const baseAcc = 0.4 + (speedLevel * 0.1);
+            const friction = 0.85;
             
-            // 前進(UP)判定
             const isMovingForward = keys['arrowup'] || keys['w'];
             
-            // 左右の加速度を決定 (前進中は極めて小さくなる)
+            // 左右の加速: 前進中は極めて低くなる (0.1倍)
             let accX = 0;
             const lateralAcc = isMovingForward ? baseAcc * 0.1 : baseAcc;
             if(keys['arrowleft'] || keys['a']) accX = -lateralAcc;
             if(keys['arrowright'] || keys['d']) accX = lateralAcc;
             
-            // 上下速度 (前進は少し重く)
+            // 上下加速: 前進・後退ともに均等に処理
             let accY = 0;
-            const verticalAcc = isMovingForward ? baseAcc * 0.8 : baseAcc;
-            if(keys['arrowup'] || keys['w']) accY = -verticalAcc;
-            if(keys['arrowdown'] || keys['s']) accY = verticalAcc;
+            if(keys['arrowup'] || keys['w']) accY = -baseAcc;
+            if(keys['arrowdown'] || keys['s']) accY = baseAcc;
 
-            // 速度の更新 (加速)
             player.vx += accX;
             player.vy += accY;
-            
-            // 摩擦の適用 (速度の減衰)
             player.vx *= friction;
             player.vy *= friction;
-            
-            // 座標の更新
             player.x += player.vx;
             player.y += player.vy;
 
-            // 壁での衝突 (速度を反転させず停止)
             if(player.x < 0) { player.x = 0; player.vx = 0; }
             if(player.x > canvas.width - player.w) { player.x = canvas.width - player.w; player.vx = 0; }
             if(player.y < 0) { player.y = 0; player.vy = 0; }
@@ -444,6 +427,14 @@
         }
 
         function draw() {
+            // 振動の減衰処理を gameState の外（描画直前）に移動
+            if(shakeTimer > 0) {
+                shakeTimer--;
+                shakeIntensity *= 0.9;
+            } else {
+                shakeIntensity = 0;
+            }
+
             ctx.save();
             if(shakeIntensity > 0.1) {
                 ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity);

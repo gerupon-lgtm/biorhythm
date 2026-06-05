@@ -442,6 +442,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
       <div class="diagnosis-text" id="baseDiagText" style="display:none"></div>
       <div class="section-label" id="dailyDiagLabel">AI診断</div>
       <div class="diagnosis-text" id="diagnosisText"></div>
+      <div id="luckyArea"></div>
     </div>
     <div class="tab-pane" id="paneWeek"  style="display:none"></div>
     <div class="tab-pane" id="paneMonth" style="display:none"></div>
@@ -466,7 +467,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.3.7
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.4.0
   </footer>
 </div>
 
@@ -505,7 +506,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.3.7';
+const APP_VERSION = '1.4.0';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -829,7 +830,10 @@ function displaySolo(d, name) {
   document.getElementById('baseDiagLabel').style.display = 'none';
   document.getElementById('baseDiagText').style.display = 'none';
   document.getElementById('dailyDiagLabel').textContent = 'AI診断';
-  document.getElementById('diagnosisText').textContent = d.diagnosis || '';
+  // ラッキー要素
+  document.getElementById('luckyArea').innerHTML = renderLucky(d.lucky, d._nameA);
+
+    document.getElementById('diagnosisText').textContent = d.diagnosis || '';
 
   if (d.fiveScores) {
     document.getElementById('fortuneRadarWrap').style.display = '';
@@ -869,7 +873,13 @@ function displayPair(d, nA, nB) {
 
   document.getElementById('compatLabel').style.display = '';
   document.getElementById('compatArea').innerHTML = renderCompatArea(d);
-  // baseDiagnosisとdailyDiagnosis両方に内容があれば2分割表示
+  // ラッキー要素（2人分）
+  let luckyHtml = '';
+  if (d.luckyA) luckyHtml += renderLucky(d.luckyA, d._nameA);
+  if (d.luckyB) luckyHtml += renderLucky(d.luckyB, d._nameB);
+  document.getElementById('luckyArea').innerHTML = luckyHtml;
+
+    // baseDiagnosisとdailyDiagnosis両方に内容があれば2分割表示
   if (d.baseDiagnosis && d.dailyDiagnosis) {
     document.getElementById('baseDiagLabel').style.display = '';
     document.getElementById('baseDiagText').style.display = '';
@@ -1462,7 +1472,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.3.7', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.4.0', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });
@@ -1473,6 +1483,32 @@ function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x
 // ========== 共有 ==========
 let lastDiagData = null;
 function toggleShareMenu() { document.getElementById('shareMenu').classList.toggle('open'); }
+// ======== ラッキー要素表示 ========
+function renderLucky(lucky, name) {
+  if (!lucky) return '';
+  const items = [
+    { icon: '🎨', label: 'ラッキーカラー', value: lucky.color },
+    { icon: '🔢', label: 'ラッキーナンバー', value: lucky.number },
+    { icon: '🧭', label: 'ラッキー方位', value: lucky.direction },
+    { icon: '✨', label: 'ラッキーアイテム', value: lucky.item },
+    { icon: '🍽️', label: 'ラッキーフード', value: lucky.food },
+    { icon: '🚀', label: '開運アクション', value: lucky.action },
+    { icon: '⛩️', label: 'パワースポット', value: lucky.powerSpot },
+  ];
+  let h = '<div class="lucky-section">';
+  h += `<h3 style="font-size:15px;color:var(--gold);margin-bottom:12px">✦ ${esc(name||'あなた')}のラッキー要素</h3>`;
+  h += '<div class="lucky-grid">';
+  items.forEach(it => {
+    h += `<div class="lucky-card">
+      <div class="lucky-icon">${it.icon}</div>
+      <div class="lucky-label">${esc(it.label)}</div>
+      <div class="lucky-value">${esc(it.value)}</div>
+    </div>`;
+  });
+  h += '</div></div>';
+  return h;
+}
+
 function buildShareText(mode) {
   const d = lastDiagData;
   if (!d) return '';

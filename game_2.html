@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>🕹️ ZELBIUS METALLIC: BOSS OVERHAUL 🕹️</title>
+    <title>🕹️ ZELBIUS METALLIC 🕹️</title>
     <style>
         body {
             display: flex;
@@ -64,8 +64,9 @@
     <div id="control-guide">
         <strong>▶️ 操作方法 ◀️</strong><br>
         ・移動: 矢印キー / WASD / ドラッグ | 攻撃: スペース / タップ<br>
-        ・<strong>特殊攻撃: Xキー / ダブルタップ</strong> (ゲージMAX)<br>
-        ・ショット制限: 2発ごとに短いリロードが発生します
+        ・<strong style="color:#0ff">特殊攻撃: Xキー / ダブルタップ</strong> (ゲージMAX)<br>
+        ・<strong style="color:#ff0">超重量感: 前進(UP)中は左右の動きが極めて鈍くなります</strong><br>
+        ・<strong style="color:#fff">開始: Enter / クリック</strong> (タイトルで1,2,3で難易度選択)
     </div>
 
     <script>
@@ -130,17 +131,17 @@
         let powerLevel = 1, speedLevel = 1, specialCharge = 0;
         let boss = null;
         let shakeIntensity = 0;
-        let shotCount = 0; // 連射制限用
-        let shotReloadTimer = 0;
+        let shakeTimer = 0; 
+        let shotCount = 0, shotReloadTimer = 0;
+        let selectedDifficulty = 1;
 
-        const MAX_POWER = 3, MAX_SPEED = 3, INITIAL_PLAYER_SPEED = 3; // 初期速度をさらに低下
+        const MAX_POWER = 3, MAX_SPEED = 3, INITIAL_PLAYER_SPEED = 1.5; 
         for(let i=0; i<60; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*3 + 1});
 
         function createExplosion(x, y, color, count = 10) {
             for(let i=0; i<count; i++) {
                 particles.push({
-                    x: x, y: y,
-                    vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
+                    x: x, y: y, vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
                     life: 20 + Math.random() * 20, color: color, size: Math.random() * 3 + 1
                 });
             }
@@ -185,12 +186,8 @@
                     this.y = Math.min(this.y + 1.5, 80);
                     this.x += Math.sin(frameCount/60) * 3;
                     this.shootTimer++;
-                    // ボスの攻撃パターン
                     if(this.shootTimer > 80) {
-                        // 扇状弾幕
-                        for(let i=-4; i<=4; i++) {
-                            enemyBullets.push({x: this.x + this.w/2, y: this.y + this.h, w: 12, h: 15, vx: i*0.8, vy: 6});
-                        }
+                        for(let i=-4; i<=4; i++) enemyBullets.push({x: this.x + this.w/2, y: this.y + this.h, w: 12, h: 15, vx: i*0.8, vy: 6});
                         this.shootTimer = 0;
                     }
                 } else {
@@ -209,11 +206,10 @@
             draw() {
                 ctx.save();
                 if(this.isBoss) {
-                    // ボスの凝ったデザイン: 巨大な装甲とコア
-                    drawMetallicShape(this.x, this.y, this.w, 40, this.color1, this.color2); // 上部装甲
-                    drawMetallicShape(this.x+30, this.y+40, this.w-60, 60, this.color1, this.color2); // 中央ボディ
+                    drawMetallicShape(this.x, this.y, this.w, 40, this.color1, this.color2);
+                    drawMetallicShape(this.x+30, this.y+40, this.w-60, 60, this.color1, this.color2);
                     ctx.fillStyle = '#ffaa00';
-                    ctx.beginPath(); ctx.arc(this.x + this.w/2, this.y + 60, 25, 0, Math.PI*2); ctx.fill(); // コア
+                    ctx.beginPath(); ctx.arc(this.x + this.w/2, this.y + 60, 25, 0, Math.PI*2); ctx.fill();
                     ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
                 } else {
                     drawMetallicShape(this.x, this.y + 10, this.w, 20, this.color1, this.color2);
@@ -238,10 +234,16 @@
         // ====================================================
         // 🕹️ 操作・制御
         // ====================================================
-        let lastTouchTime = 0;
         window.addEventListener('keydown', e => {
             keys[e.key.toLowerCase()] = true;
-            if(e.key === 'Enter' && (gameState === 'TITLE' || gameState === 'GAMEOVER')) startGame();
+            if(gameState === 'TITLE') {
+                if(e.key === '1') selectedDifficulty = 1;
+                if(e.key === '2') selectedDifficulty = 2;
+                if(e.key === '3') selectedDifficulty = 3;
+                if(e.key === 'Enter') startGame();
+            }
+            if(gameState === 'GAMEOVER' && e.key === 'Enter') startGame();
+            if(gameState === 'GAMEOVER' && e.key === 'r') gameState = 'TITLE';
             if(e.key === 'p' || e.key === 'P') {
                 if(gameState === 'PLAYING') gameState = 'PAUSED'; else if(gameState === 'PAUSED') gameState = 'PLAYING';
             }
@@ -251,25 +253,14 @@
         });
         window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-        canvas.addEventListener('touchstart', e => {
-            e.preventDefault();
-            if(gameState !== 'PLAYING') { if(gameState==='TITLE'||gameState==='GAMEOVER') startGame(); return; }
-            const now = Date.now();
-            if(now - lastTouchTime < 300) { triggerSpecial(); } else { fire(); }
-            lastTouchTime = now;
-        }, {passive: false});
-        canvas.addEventListener('touchmove', e => {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            player.x = touch.clientX - rect.left - player.w/2;
-        }, {passive: false});
+        canvas.addEventListener('mousedown', () => {
+            if(gameState === 'TITLE' || gameState === 'GAMEOVER') startGame();
+            else if(gameState === 'PLAYING') fire();
+        });
 
         function fire() {
             if(gameState !== 'PLAYING') return;
-            if(shotReloadTimer > 0) return; // リロード中
-
-            // ショット発射
+            if(shotReloadTimer > 0) return;
             if(powerLevel === 1) bullets.push({x: player.x + player.w/2 - 2, y: player.y, w: 4, h: 12});
             else if(powerLevel === 2) {
                 bullets.push({x: player.x + 10, y: player.y, w: 4, h: 12});
@@ -280,12 +271,8 @@
                 bullets.push({x: player.x + player.w - 4, y: player.y + 10, w: 4, h: 12});
             }
             playSE(800, 'sawtooth', 0.1);
-            
             shotCount++;
-            if(shotCount >= 2) {
-                shotCount = 0;
-                shotReloadTimer = 15; // 15フレームのリロード
-            }
+            if(shotCount >= 2) { shotCount = 0; shotReloadTimer = 15; }
         }
 
         function triggerSpecial() {
@@ -293,7 +280,7 @@
             specialCharge = 0;
             playSE(200, 'square', 0.6, 0.4);
             enemies.forEach(e => { e.hp -= 40; });
-            shakeIntensity = 20;
+            shakeIntensity = 20; shakeTimer = 60;
             hitFlash = 30;
         }
 
@@ -308,7 +295,7 @@
 
         function gameOver() {
             gameState = 'GAMEOVER';
-            shakeIntensity = 20;
+            shakeIntensity = 20; shakeTimer = 120; 
             playSE(100, 'sawtooth', 0.8, 0.4);
         }
 
@@ -320,19 +307,32 @@
             frameCount++;
             if(frameCount % 25 === 0) playBGMStep();
             if(shotReloadTimer > 0) shotReloadTimer--;
-
-            shakeIntensity *= 0.9;
+            
+            if(shakeTimer > 0) {
+                shakeTimer--;
+                shakeIntensity *= 0.92;
+            } else {
+                shakeIntensity = 0;
+            }
 
             stars.forEach(s => {
                 s.y += s.s * (2 + stage);
                 if(s.y > canvas.height) s.y = 0;
             });
 
-            const currentSpeed = INITIAL_PLAYER_SPEED + (speedLevel * 3);
-            if(keys['arrowleft'] || keys['a']) player.x -= currentSpeed;
-            if(keys['arrowright'] || keys['d']) player.x += currentSpeed;
-            if(keys['arrowup'] || keys['w']) player.y -= currentSpeed;
-            if(keys['arrowdown'] || keys['s']) player.y += currentSpeed;
+            // --- 超重量感の慣性ロジック ---
+            let currentMoveSpeed = INITIAL_PLAYER_SPEED + (speedLevel * 3);
+            
+            // 前向き(UP)を押している時は左右の移動速度を劇的に低下 (20%に制限)
+            const isMovingForward = keys['arrowup'] || keys['w'];
+            const lateralSpeed = isMovingForward ? currentMoveSpeed * 0.2 : currentMoveSpeed;
+            // 前進自体の速度もわずかに抑えて「重さ」を出す
+            const verticalSpeed = isMovingForward ? currentMoveSpeed * 0.8 : currentMoveSpeed;
+
+            if(keys['arrowleft'] || keys['a']) player.x -= lateralSpeed;
+            if(keys['arrowright'] || keys['d']) player.x += lateralSpeed;
+            if(keys['arrowup'] || keys['w']) player.y -= verticalSpeed;
+            if(keys['arrowdown'] || keys['s']) player.y += verticalSpeed;
             player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
             player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
 
@@ -347,7 +347,7 @@
                 if(eb.y > canvas.height) enemyBullets.splice(i, 1);
                 if(player.x < eb.x + eb.w && player.x + player.w > eb.x && player.y < eb.y + eb.h && player.y + player.h > eb.y) {
                     hp--; enemyBullets.splice(i, 1); 
-                    hitFlash = 10; shakeIntensity = 15;
+                    hitFlash = 10; shakeIntensity = 15; shakeTimer = 30;
                     powerLevel = 1; speedLevel = 1;
                     createExplosion(player.x + player.w/2, player.y + player.h/2, '#ff0', 15);
                     playSE(150, 'sawtooth', 0.3);
@@ -365,7 +365,7 @@
                     boss = new Enemy('BOSS', true);
                     enemies.push(boss);
                     playSE(200, 'square', 1.0, 0.5);
-                    shakeIntensity = 20;
+                    shakeIntensity = 20; shakeTimer = 60;
                 }
             }
 
@@ -378,7 +378,7 @@
                 e.update();
                 if(e.y > canvas.height) enemies.splice(i, 1);
                 if(player.x < e.x + e.w && player.x + player.w > e.x && player.y < e.y + e.h && player.y + player.h > e.y) {
-                    hp--; enemies.splice(i, 1); hitFlash = 10; shakeIntensity = 15;
+                    hp--; enemies.splice(i, 1); hitFlash = 10; shakeIntensity = 15; shakeTimer = 30;
                     powerLevel = 1; speedLevel = 1;
                     createExplosion(e.x + e.w/2, e.y + e.h/2, e.color2, 15);
                     playSE(150, 'sawtooth', 0.3);
@@ -431,16 +431,19 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#fff';
             stars.forEach(s => ctx.fillRect(s.x, s.y, 2, 2));
+
             if(gameState === 'TITLE') {
                 ctx.fillStyle = '#00ff00'; ctx.font = '30px Courier New'; ctx.textAlign = 'center';
-                ctx.fillText("ZELBIUS METALLIC", canvas.width/2, 300);
-                ctx.font = '20px Courier New'; ctx.fillText("CLICK TO START", canvas.width/2, 350);
+                ctx.fillText("ZELBIUS METALLIC", canvas.width/2, 250);
+                ctx.font = '20px Courier New'; ctx.fillText("CLICK or ENTER to START", canvas.width/2, 350);
                 ctx.restore(); return;
             }
             if(gameState === 'GAMEOVER') {
                 ctx.fillStyle = '#ff0000'; ctx.font = '40px Courier New'; ctx.textAlign = 'center';
                 ctx.fillText("GAME OVER", canvas.width/2, 300);
-                ctx.font = '20px Courier New'; ctx.fillText("CLICK TO RESTART", canvas.width/2, 350);
+                ctx.font = '20px Courier New'; ctx.fillStyle = '#fff';
+                ctx.fillText("CLICK or ENTER to RESTART", canvas.width/2, 350);
+                ctx.fillText("Press 'R' to Return to Title", canvas.width/2, 390);
                 ctx.restore(); return;
             }
             if(gameState === 'PAUSED') {

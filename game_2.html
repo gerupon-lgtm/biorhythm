@@ -1,8 +1,23 @@
-<!DOCTYPE html>
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>🕹️ レトロ・ドット絵シューティング・マスター 🕹️</title>
+    <title>🕹️ ZELBIUS METALLIC: IMPACT EDITION 🕹️</title>
     <style>
         body {
             display: flex;
@@ -15,556 +30,480 @@
             color: #00ff00;
             font-family: 'Courier New', monospace;
             user-select: none;
-            /* 矢印キー操作のアクセシビリティ向上 */
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
+            overflow: hidden;
         }
         #gameContainer {
             position: relative;
             width: 480px;
-            border: 4px solid #00ff00;
-            box-shadow: 0 0 25px #00ff00;
+            border: 4px solid #444;
+            box-shadow: 0 0 30px #00ff00;
             background-color: #000011;
         }
-        canvas {
-            display: block;
-        }
+        canvas { display: block; }
         #ui-overlay {
-            width: 100%;
+            width: 480px;
             padding: 10px 0;
             background-color: rgba(0, 0, 0, 0.9);
-            border-top: 1px solid #00ff00;
+            border-top: 1px solid #444;
             display: flex;
             justify-content: space-around;
-            font-size: 1.2em;
+            font-size: 1.1em;
         }
         #control-guide {
-            margin-top: 20px;
+            margin-top: 15px;
             padding: 10px;
             background-color: rgba(0, 30, 0, 0.7);
-            width: 90%;
-            max-width: 400px;
+            width: 450px;
             text-align: left;
             border: 1px dashed #00ff00;
+            font-size: 13px;
+            line-height: 1.4;
         }
+        .gauge-container { width: 100px; height: 10px; border: 1px solid #00ff00; display: inline-block; vertical-align: middle; }
+        #special-gauge { width: 0%; height: 100%; background: #0ff; transition: width 0.2s; }
     </style>
 </head>
 <body oncontextmenu="event.preventDefault()">
 
     <div id="gameContainer">
         <canvas id="gameCanvas" width="480" height="700"></canvas>
-        <div id="canvas-hint"></div> 
     </div>
 
     <div id="ui-overlay">
         <div id="score-display">SCORE: 0</div>
+        <div id="stage-display">STAGE: 1</div>
         <div id="hp-display">HP: 3</div>
-        <div id="pause-button" style="cursor: pointer;">[P] ポーズ</div>
+        <div>SP: <div class="gauge-container"><div id="special-gauge"></div></div></div>
     </div>
 
     <div id="control-guide">
-        <strong>▶️ 操作ガイド ◀️</strong><br>
-        <strong>[キーボード]</strong>: 
-        移動: ← / → (A/D) | 弾発射: Space | 一時停止: P<br>
-        <strong>[スマートフォン]</strong>:
-        移動: 画面をドラッグ<br>
-        発射: 画面をタップ（指を離すまで自動発射）<br>
-        <strong>[Enter]</strong>: ゲーム開始 / リスタート
+        <strong>▶️ 操作方法 ◀️</strong><br>
+        ・移動: 矢印キー / WASD / ドラッグ | 攻撃: スペース / タップ<br>
+        ・<strong>特殊攻撃: Xキー / ダブルタップ</strong> (ゲージMAX)<br>
+        ・被弾時: パワーアップがリセットされ、画面が激しく揺れます
     </div>
 
-    <!-- Web Audio Contextは今回は非表示にして、コード内部で管理します。 -->
-    
     <script>
         // ====================================================
-        // 🔈 1. Web Audio Context (サウンドエンジン)
+        // 🔈 サウンドエンジン
         // ====================================================
-        let audioContext;
-        let bgmOscillator;
-        let isAudioRunning = false;
+        let audioCtx = null;
+        let melodyIdx = 0, bassIdx = 0;
+        const MELODY_DATA = [220, 246.9, 261.6, 293.6, 329.6, 293.6, 261.6, 246.9, 220, 196.0, 174.6, 196.0, 220, 246.9, 261.6, 293.6];
+        const BASS_DATA = [55, 55, 65, 65, 55, 55, 73, 73];
 
-        function setupAudioContext() {
-            if (!window.AudioContext) {
-                console.error("お使いのブラウザはWeb Audio APIをサポートしていません。サウンドが動作しません。");
-                return null;
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        function playBGMStep() {
+            if (!audioCtx || gameState !== 'PLAYING') return;
+            const mOsc = audioCtx.createOscillator();
+            const mGain = audioCtx.createGain();
+            mOsc.type = 'square';
+            mOsc.frequency.setValueAtTime(MELODY_DATA[melodyIdx], audioCtx.currentTime);
+            mGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            mGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+            mOsc.connect(mGain); mGain.connect(audioCtx.destination);
+            mOsc.start(); mOsc.stop(audioCtx.currentTime + 0.2);
+            melodyIdx = (melodyIdx + 1) % MELODY_DATA.length;
+            if (frameCount % 50 === 0) {
+                const bOsc = audioCtx.createOscillator();
+                const bGain = audioCtx.createGain();
+                bOsc.type = 'triangle';
+                bOsc.frequency.setValueAtTime(BASS_DATA[bassIdx], audioCtx.currentTime);
+                bGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                bGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                bOsc.connect(bGain); bGain.connect(audioCtx.destination);
+                bOsc.start(); bOsc.stop(audioCtx.currentTime + 0.4);
+                bassIdx = (bassIdx + 1) % BASS_DATA.length;
             }
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            return audioContext;
         }
-
-        /** 環境音を合成して再生 (BGM代替) */
-        function playBGM() {
-            if (!audioContext || isAudioRunning) return;
-            
-            bgmOscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            bgmOscillator.type = 'sine'; 
-            bgmOscillator.frequency.setValueAtTime(70, audioContext.currentTime);
-            
-            bgmOscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 1);
-            
-            bgmOscillator.start();
-            isAudioRunning = true;
-        }
-        
-        /** レーザー発射音 (SE代替) */
-        function playLaserSound() {
-            if (!audioContext) return;
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.type = 'sawtooth';
-            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-            
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.05); 
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.15);
-        }
-
-        /** 爆発・被弾音 (SE代替) */
-        function playHitSound() {
-            if (!audioContext) return;
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.type = 'sawtooth'; 
-            oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-            
-            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.2);
+        function playSE(freq, type, duration, volume = 0.2) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + duration);
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
         }
 
         // ====================================================
-        // 🎨 2. ゲームステート変数と描画
+        // ⚙️ ゲームエンジン & エフェクト管理
         // ====================================================
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const scoreDisplay = document.getElementById('score-display');
-        const hpDisplay = document.getElementById('hp-display');
-        
-        let gameState = 'TITLE'; 
-        let score = 0;
-        let playerHP = 3;
-        let isDrawing = false; 
-        let touchStartX = 0;
+        const scoreDisp = document.getElementById('score-display');
+        const stageDisp = document.getElementById('stage-display');
+        const hpDisp = document.getElementById('hp-display');
+        const spGauge = document.getElementById('special-gauge');
 
-        const PLAYER_SPEED = 15;
-        const BULLET_SPEED = 15;
-        const ENEMY_SPEED = 8;
-        const ENEMY_SPAWN_RATE = 60;
-        const MAX_BULLETS = 6;
-        
-        let bullets = [];
-        let enemies = [];
-        let keys = {};
-        let frameCount = 0;
+        let gameState = 'TITLE', score = 0, stage = 1, hp = 3, frameCount = 0;
+        let bullets = [], enemyBullets = [], enemies = [], items = [], particles = [];
+        let keys = {}, stars = [], hitFlash = 0;
+        let powerLevel = 1, speedLevel = 1, specialCharge = 0;
+        let boss = null;
+        let shakeIntensity = 0; // カメラシェイク強度
 
+        const MAX_POWER = 3, MAX_SPEED = 3, INITIAL_PLAYER_SPEED = 5;
+        for(let i=0; i<60; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*3 + 1});
 
-        // --- プレイヤーオブジェクト (ドット絵対応) ---
-        let player = {
-            x: canvas.width / 2 - 30,
-            y: canvas.height - 80,
-            width: 60,
-            height: 60,
-            color: '#00ff00',
-            isDrawing: false,
-            
-            // プレイヤーを描画 (ドット絵のブロック構造をシミュレート)
-            draw: function() {
-                // 胴体
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-                
-                // ドット絵のディテール追加
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(this.x + 5, this.y + 10, 8, 8); 
-                ctx.fillRect(this.x + this.width - 13, this.y + 10, 8, 8);
-                ctx.fillStyle = '#00aa00';
-                ctx.fillRect(this.x + 15, this.y + 20, 30, 10);
+        // パーティクル生成関数
+        function createExplosion(x, y, color, count = 10) {
+            for(let i=0; i<count; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 20 + Math.random() * 20,
+                    color: color,
+                    size: Math.random() * 3 + 1
+                });
+            }
+        }
+
+        function drawMetallicShape(x, y, w, h, color1, color2) {
+            let grad = ctx.createLinearGradient(x, y, x + w, y);
+            grad.addColorStop(0, color1); grad.addColorStop(0.5, color2); grad.addColorStop(1, color1);
+            ctx.fillStyle = grad; ctx.fillRect(x, y, w, h);
+        }
+
+        const player = {
+            x: 220, y: 600, w: 40, h: 40,
+            reset() { this.x = 220; this.y = 600; },
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                drawMetallicShape(0, 15, 40, 10, '#006600', '#00ff00');
+                drawMetallicShape(15, 0, 10, 40, '#004400', '#ffffff');
+                ctx.fillStyle = '#88ccff';
+                ctx.beginPath(); ctx.arc(20, 15, 5, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
             }
         };
-        
-        // --- 敵のクラス定義 (ドット絵対応) ---
+
         class Enemy {
-            constructor(x, y, type) {
-                this.x = x;
-                this.y = y;
-                this.width = 50;
-                this.height = 50;
-                this.type = type; 
-                this.hp = type === 'Hunter' ? 3 : 1;
+            constructor(type, isBoss = false) {
+                this.isBoss = isBoss; this.type = type;
+                this.w = isBoss ? 150 : 40; this.h = isBoss ? 100 : 40;
+                this.x = isBoss ? canvas.width/2 - 75 : Math.random() * (canvas.width - 40);
+                this.y = isBoss ? -150 : -50;
+                this.hp = isBoss ? 100 * stage : (type === 'H' ? 3 : 1) * Math.ceil(stage/2);
                 this.maxHp = this.hp;
-                this.color = this.getColor(type);
-                this.moveTimer = Math.random() * 100;
+                this.color1 = type === 'B' ? '#aa8800' : (type === 'H' ? '#aa4400' : '#660066');
+                this.color2 = type === 'B' ? '#ffff00' : (type === 'H' ? '#ffaa00' : '#ff00ff');
+                if(isBoss) { this.color1 = '#440000'; this.color2 = '#ff0000'; }
+                this.speed = (type === 'H' ? 2 : 4) + (stage * 0.6);
+                this.shootTimer = Math.random() * 100;
             }
-            
-            getColor(type) {
-                if (type === 'Basic') return '#ffff00';
-                if (type === 'Hunter') return '#ff6600';
-                if (type === 'Shooter') return '#ff0000';
-                return '#00ccff';
-            }
-
-            draw() {
-                // 敵本体の描画
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-                
-                // HPバー (緑〜赤)
-                const hpRatio = this.hp / this.maxHp;
-                ctx.fillStyle = `rgba(255, ${Math.floor(255 * hpRatio)}, 0, 1)`;
-                ctx.fillRect(this.x, this.y - 15, this.width * hpRatio, 5);
-                
-                // ドット絵の目
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(this.x + 5, this.y + 5, 5, 5);
-                ctx.fillRect(this.x + this.width - 10, this.y + 5, 5, 5);
-            }
-
             update() {
-                this.moveTimer++;
-                
-                if (this.type === 'Basic') {
-                    this.y += ENEMY_SPEED * 0.7;
-                } else if (this.type === 'Hunter') {
-                    // プレイヤーを追尾するロジック
-                    const dx = player.x + player.width / 2 - (this.x + this.width / 2);
-                    const dy = player.y + player.height / 2 - (this.y + this.height / 2);
-                    this.x += dx * 0.005;
-                    this.y += dy * 0.005 + ENEMY_SPEED * 0.5;
-                } else if (this.type === 'Shooter') {
-                    // 蛇行と下降
-                    this.y += ENEMY_SPEED * 0.6;
-                    this.x += Math.sin(this.moveTimer / 25) * 1.8;
-                }
-            }
-        }
-
-        // ====================================================
-        // 🚀 3. 入力処理 (Keyboard & Touch)
-        // ====================================================
-        window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            if (e.key === ' ' && gameState === 'PLAYING') {
-                e.preventDefault(); // スペースキーによるスクロール防止
-                fireBullet();
-            }
-            if (e.key === 'p' || e.key === 'P') {
-                e.preventDefault();
-                if (gameState === 'PLAYING') togglePause();
-            }
-            // Enterキーの初期起動・リスタート制御は、キーリスナー外の制御フローで行うため、ここでは処理を抑制
-        });
-
-        window.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-        });
-
-        // タッチイベント処理 (モバイル対応)
-        const container = document.getElementById('gameContainer');
-        
-        container.addEventListener('touchstart', (e) => {
-            e.preventDefault(); 
-            if (gameState !== 'PLAYING') return;
-            
-            player.isDrawing = true;
-            touchStartX = e.touches[0].clientX;
-            
-            // 初回タップは弾発射のトリガーとする
-            fireBullet(); 
-        }, { passive: false });
-
-        container.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (gameState !== 'PLAYING') return;
-            
-            const currentX = e.touches[0].clientX;
-            const deltaX = currentX - touchStartX;
-            
-            player.x += deltaX * 0.5;
-        }, { passive: false });
-
-        container.addEventListener('touchend', (e) => {
-            if (gameState !== 'PLAYING') return;
-            
-            // タップを離した時にも弾発射をシミュレート
-            fireBullet();
-            player.isDrawing = false;
-        });
-
-        // ====================================================
-        // 💣 4. ゲームロジック関数
-        // ====================================================
-
-        function fireBullet() {
-            if (bullets.length >= MAX_BULLETS) return;
-            
-            bullets.push({
-                x: player.x + player.width / 2 - 2,
-                y: player.y - 10,
-                width: 4,
-                height: 12,
-                type: 'Player'
-            });
-            playLaserSound();
-        }
-
-        function updatePlayer() {
-            let moveX = 0;
-            if (keys['arrowleft'] || keys['a']) moveX -= PLAYER_SPEED;
-            if (keys['arrowright'] || keys['d']) moveX += PLAYER_SPEED;
-            
-            // キーボード操作を優先しつつ、移動を適用
-            player.x += moveX;
-
-            // 境界チェック
-            if (player.x < 0) player.x = 0;
-            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
-        }
-
-        function updateBullets() {
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                let b = bullets[i];
-                b.y -= BULLET_SPEED;
-
-                if (b.y < 0) {
-                    bullets.splice(i, 1);
-                }
-            }
-        }
-
-        function spawnEnemy() {
-            if (frameCount % ENEMY_SPAWN_RATE === 0) {
-                const typeRoll = Math.floor(Math.random() * 3);
-                let type;
-                if (typeRoll === 0) type = 'Basic';
-                else if (typeRoll === 1) type = 'Hunter';
-                else type = 'Shooter';
-
-                let newEnemy = new Enemy(
-                    Math.random() * (canvas.width - 60) + 30,
-                    -50,
-                    type
-                );
-                enemies.push(newEnemy);
-            }
-        }
-
-        function updateEnemies() {
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                let e = enemies[i];
-                e.update();
-                
-                if (e.y > canvas.height + e.height) {
-                    enemies.splice(i, 1);
-                }
-            }
-        }
-        
-        function checkBulletEnemyCollision() {
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                let bullet = bullets[i];
-                let hit = false;
-
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    let enemy = enemies[j];
-
-                    if (checkCollision(bullet, enemy)) {
-                        hit = true;
-                        
-                        enemy.hp--;
-                        score += 10;
-
-                        if (enemy.hp <= 0) {
-                            enemies.splice(j, 1);
-                            bullets.splice(i, 1);
-                            playHitSound();
-                            break; 
+                if(this.isBoss) {
+                    this.y = Math.min(this.y + 1, 80);
+                    this.x += Math.sin(frameCount/40) * 3;
+                    this.shootTimer++;
+                    if(this.shootTimer > 50) {
+                        for(let i=-3; i<=3; i++) enemyBullets.push({x: this.x + this.w/2, y: this.y + this.h, w: 10, h: 15, vx: i, vy: 7});
+                        this.shootTimer = 0;
+                    }
+                } else {
+                    this.y += this.speed;
+                    if(this.type === 'S') this.x += Math.sin(frameCount/20)*4;
+                    if(this.type === 'H') { if(this.x < player.x) this.x += 1.5; else this.x -= 1.5; }
+                    if(this.type === 'S' || this.type === 'A') {
+                        this.shootTimer++;
+                        if(this.shootTimer > 120 - (stage * 5)) {
+                            enemyBullets.push({x: this.x + this.w/2, y: this.y + this.h, w: 6, h: 10, vx: 0, vy: 8 + stage});
+                            this.shootTimer = 0;
                         }
                     }
                 }
             }
-        }
-
-        function checkPlayerEnemyCollision() {
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                let enemy = enemies[i];
-                if (checkCollision(player, enemy)) {
-                    playerHP--;
-                    score = Math.max(0, score - 5); 
-                    enemies.splice(i, 1); 
-
-                    if (playerHP <= 0) {
-                        gameOver();
-                        break;
-                    }
-                    playHitSound();
+            draw() {
+                ctx.save();
+                if(this.isBoss) {
+                    drawMetallicShape(this.x, this.y, this.w, this.h, this.color1, this.color2);
+                    ctx.fillStyle = '#330000'; ctx.fillRect(this.x + 20, this.y + 20, this.w - 40, this.h - 40);
+                    ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(this.x + this.w/2, this.y + this.h/2, 20, 0, Math.PI*2); ctx.fill();
+                } else {
+                    drawMetallicShape(this.x, this.y + 10, this.w, 20, this.color1, this.color2);
+                    drawMetallicShape(this.x + 15, this.y, 10, 40, this.color1, this.color2);
                 }
+                ctx.fillStyle = '#444'; ctx.fillRect(this.x, this.y-15, this.w, 5);
+                ctx.fillStyle = 'lime'; ctx.fillRect(this.x, this.y-15, (this.hp/this.maxHp)*this.w, 5);
+                ctx.restore();
             }
         }
 
-        // ==================== ゲームフロー制御 ===================
-        
-        function updateUI() {
-            scoreDisplay.textContent = `SCORE: ${score}`;
-            hpDisplay.textContent = `HP: ${Math.max(0, playerHP)} / 3`;
-        }
-
-        function togglePause() {
-            if (gameState === 'PLAYING') {
-                gameState = 'PAUSED';
-                // BGMは音を継続させるが、ゲームロジックは停止
-                alert("--- ゲーム一時停止中 --- \nポーズ解除するにはEnterキーを押してください。");
-            } else if (gameState === 'PAUSED') {
-                gameState = 'PLAYING';
-                alert("--- ゲーム再開 ---");
-                // ここで再度プレイを再開するために、次のフレームの処理を呼び出す必要がありますが、
-                // ゲームループが既に動いているため、ここでは単なるステート変更として扱います。
+        class Item {
+            constructor(x, y, type) { this.x = x; this.y = y; this.w = 24; this.h = 24; this.type = type; }
+            update() { this.y += 2; }
+            draw() {
+                ctx.fillStyle = this.type === 'P' ? '#0ff' : '#f0f';
+                ctx.beginPath(); ctx.arc(this.x + 12, this.y + 12, 12, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(this.type, this.x+12, this.y+17);
             }
         }
 
-        function initGame() {
-            // 初期化とリセット処理
-            score = 0;
-            playerHP = 3;
-            bullets = [];
-            enemies = [];
-            
-            // プレイヤー位置リセット
-            player.x = canvas.width / 2 - 30;
-            player.y = canvas.height - 80;
-            
+        // ====================================================
+        // 🕹️ 操作・制御
+        // ====================================================
+        let lastTouchTime = 0;
+        window.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            if(e.key === 'Enter' && (gameState === 'TITLE' || gameState === 'GAMEOVER')) startGame();
+            if(e.key === 'p' || e.key === 'P') {
+                if(gameState === 'PLAYING') gameState = 'PAUSED'; else if(gameState === 'PAUSED') gameState = 'PLAYING';
+            }
+            if(e.key === 'r' || e.key === 'R') { if(gameState === 'PAUSED') gameState = 'TITLE'; }
+            if(e.key === 'x' || e.key === 'X') triggerSpecial();
+            if(e.key === ' ') { e.preventDefault(); fire(); }
+        });
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            if(gameState !== 'PLAYING') { if(gameState==='TITLE'||gameState==='GAMEOVER') startGame(); return; }
+            const now = Date.now();
+            if(now - lastTouchTime < 300) { triggerSpecial(); } else { fire(); }
+            lastTouchTime = now;
+        }, {passive: false});
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            player.x = touch.clientX - rect.left - player.w/2;
+        }, {passive: false});
+
+        function fire() {
+            if(gameState !== 'PLAYING') return;
+            if(powerLevel === 1) bullets.push({x: player.x + player.w/2 - 2, y: player.y, w: 4, h: 12});
+            else if(powerLevel === 2) {
+                bullets.push({x: player.x + 10, y: player.y, w: 4, h: 12});
+                bullets.push({x: player.x + player.w - 14, y: player.y, w: 4, h: 12});
+            } else {
+                bullets.push({x: player.x + player.w/2 - 2, y: player.y, w: 4, h: 12});
+                bullets.push({x: player.x, y: player.y + 10, w: 4, h: 12});
+                bullets.push({x: player.x + player.w - 4, y: player.y + 10, w: 4, h: 12});
+            }
+            playSE(800, 'sawtooth', 0.1);
+        }
+
+        function triggerSpecial() {
+            if(gameState !== 'PLAYING' || specialCharge < 100) return;
+            specialCharge = 0;
+            playSE(200, 'square', 0.6, 0.4);
+            shakeIntensity = 15; // 激しく揺らす
+            hitFlash = 30;
+            enemies.forEach(e => {
+                e.hp -= 30;
+                createExplosion(e.x + e.w/2, e.y + e.h/2, e.color2, 20);
+            });
+        }
+
+        function startGame() {
+            initAudio();
+            score = 0; stage = 1; hp = 3; bullets = []; enemyBullets = []; enemies = []; items = []; particles = [];
+            powerLevel = 1; speedLevel = 1; specialCharge = 0; boss = null;
+            player.reset();
             gameState = 'PLAYING';
-            
-            // サウンドの再生開始
-            if (audioContext) {
-                 audioContext.resume(); 
-                 playBGM();
-            }
-
-            // ゲームループは自動的に続くため、ここでは状態変更のみ。
         }
-        
+
         function gameOver() {
             gameState = 'GAMEOVER';
-            // BGM停止の処理（アニメーションやUIでより丁寧に表現できますが、ここでは簡略化）
-            
-            setTimeout(() => {
-                alert(`\n=== 💥 ゲームオーバー！ 💥 ===\n最終スコア: ${score}\n\n[Enter]キーを押して再挑戦してください。`);
-            }, 100);
+            shakeIntensity = 20;
+            playSE(100, 'sawtooth', 0.8, 0.4);
         }
-        
-        // 描画をまとめた関数
-        function drawScene(isGameplay) {
-             // 宇宙背景の描画（星やグリッドは毎フレーム描画しなくても良いが、雰囲気のため描画）
-            ctx.fillStyle = '#000011';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // 敵の描画
-            enemies.forEach(e => e.draw());
-            
-            // 弾の描画
-            ctx.fillStyle = '#ffff00'; 
-            bullets.forEach(b => {
-                ctx.fillRect(b.x, b.y, b.width, b.height);
+
+        // ====================================================
+        // 🔄 メインループ
+        // ====================================================
+        function update() {
+            if(gameState !== 'PLAYING') return;
+            frameCount++;
+            if(frameCount % 25 === 0) playBGMStep();
+
+            // シェイク減衰
+            shakeIntensity *= 0.9;
+
+            stars.forEach(s => {
+                s.y += s.s * (2 + stage);
+                if(s.y > canvas.height) s.y = 0;
             });
 
-            // プレイヤーの描画
-            player.draw();
-        }
+            const currentSpeed = INITIAL_PLAYER_SPEED + (speedLevel * 3);
+            if(keys['arrowleft'] || keys['a']) player.x -= currentSpeed;
+            if(keys['arrowright'] || keys['d']) player.x += currentSpeed;
+            if(keys['arrowup'] || keys['w']) player.y -= currentSpeed;
+            if(keys['arrowdown'] || keys['s']) player.y += currentSpeed;
+            player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+            player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
 
-        function drawTitleScreen() {
-             // 擬似ピクセルグリッド背景
-             ctx.fillStyle = '#000011';
-             ctx.fillRect(0, 0, canvas.width, canvas.height);
-             ctx.strokeStyle = '#001100';
-             for (let i = 0; i < canvas.width; i += 16) {
-                 for (let j = 0; j < canvas.height; j += 16) {
-                    ctx.strokeRect(i, j, 1, 1); 
-                 }
-             }
+            bullets.forEach((b, i) => {
+                b.y -= 15;
+                if(b.y < 0) bullets.splice(i, 1);
+            });
 
-            ctx.fillStyle = '#00ff00';
-            ctx.font = '36px "Courier New"';
-            ctx.textAlign = 'center';
-            ctx.fillText("ZELBIUS ARCADE", canvas.width / 2, 100);
-            
-            ctx.font = '20px "Courier New"';
-            ctx.fillText("【超ドット絵・縦スクロール・シューター】", canvas.width / 2, 160);
-            
-            ctx.font = '24px "Courier New"';
-            ctx.fillText("--- 難易度を選択してください ---", canvas.width / 2, 220);
-            
-            ctx.fillStyle = '#ff6600';
-            ctx.fillText("[1] 標準 (Standard)", canvas.width / 2 - 100, 280);
-            ctx.fillStyle = '#00ff00';
-            ctx.fillText("[2] ハード (Hard)", canvas.width / 2 - 100, 320);
-            ctx.fillStyle = '#ff0000';
-            ctx.fillText("[3] 究極 (Extreme)", canvas.width / 2 - 100, 360);
+            enemyBullets.forEach((eb, i) => {
+                eb.y += eb.vy || 7;
+                eb.x += eb.vx || 0;
+                if(eb.y > canvas.height) enemyBullets.splice(i, 1);
+                if(player.x < eb.x + eb.w && player.x + player.w > eb.x && player.y < eb.y + eb.h && player.y + player.h > eb.y) {
+                    hp--; enemyBullets.splice(i, 1); 
+                    hitFlash = 10; shakeIntensity = 10;
+                    powerLevel = 1; speedLevel = 1;
+                    createExplosion(player.x + player.w/2, player.y + player.h/2, '#ff0', 15);
+                    playSE(150, 'sawtooth', 0.3);
+                    if(hp <= 0) gameOver();
+                }
+            });
 
-            ctx.fillStyle = '#00ff00';
-            ctx.font = '20px "Courier New"';
-            ctx.fillText("(Enterキーで開始)", canvas.width / 2, 500);
-        }
-
-        // ==================== メインゲームループと初期化 ====================
-        
-        function gameLoop() {
-            if (!gameState) return;
-
-            // 1. ステートに応じた描画処理
-            if (gameState === 'TITLE') {
-                drawTitleScreen();
-            } else if (gameState === 'PAUSED') {
-                drawScene(false);
-            } else if (gameState === 'GAMEOVER') {
-                drawScene(false);
-            } else if (gameState === 'PLAYING') {
-                // 更新処理
-                updatePlayer();
-                updateBullets();
-                spawnEnemy();
-                updateEnemies();
-
-                // 衝突判定
-                checkBulletEnemyCollision();
-                checkPlayerEnemyCollision();
-                
-                // 描画
-                drawScene(true);
+            if(!boss) {
+                const spawnRate = Math.max(20, 60 - (stage * 5));
+                if(frameCount % spawnRate === 0 && score < stage * 500) {
+                    const types = ['B', 'H', 'S', 'A'];
+                    enemies.push(new Enemy(types[Math.floor(Math.random()*4)]));
+                }
+                if(score >= stage * 500) {
+                    boss = new Enemy('BOSS', true);
+                    enemies.push(boss);
+                    playSE(200, 'square', 1.0, 0.5);
+                    shakeIntensity = 10;
+                }
             }
 
-            // 2. UI更新
-            updateUI();
+            if(score > stage * 1000) {
+                stage++; boss = null;
+                playSE(600, 'square', 0.3);
+            }
 
-            // 3. 次のフレーム
-            requestAnimationFrame(gameLoop);
+            enemies.forEach((e, i) => {
+                e.update();
+                if(e.y > canvas.height) enemies.splice(i, 1);
+                if(player.x < e.x + e.w && player.x + player.w > e.x && player.y < e.y + e.h && player.y + player.h > e.y) {
+                    hp--; enemies.splice(i, 1); hitFlash = 10; shakeIntensity = 10;
+                    powerLevel = 1; speedLevel = 1;
+                    createExplosion(e.x + e.w/2, e.y + e.h/2, e.color2, 15);
+                    playSE(150, 'sawtooth', 0.3);
+                    if(hp <= 0) gameOver();
+                }
+                bullets.forEach((b, bi) => {
+                    if(b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+                        e.hp--; bullets.splice(bi, 1);
+                        if(e.hp <= 0) {
+                            if(!e.isBoss && Math.random() < 0.15) items.push(new Item(e.x, e.y, Math.random() < 0.5 ? 'P' : 'S'));
+                            if(e.isBoss) { score += 500; boss = null; } else { score += 10; }
+                            createExplosion(e.x + e.w/2, e.y + e.h/2, e.color2, 12);
+                            enemies.splice(i, 1);
+                            specialCharge = Math.min(100, specialCharge + 5);
+                            playSE(400, 'square', 0.1);
+                        }
+                    }
+                });
+            });
+
+            items.forEach((it, i) => {
+                it.update();
+                if(it.y > canvas.height) items.splice(i, 1);
+                if(player.x < it.x + it.w && player.x + player.w > it.x && player.y < it.y + it.h && player.y + player.h > it.y) {
+                    if(it.type === 'P') powerLevel = Math.min(MAX_POWER, powerLevel + 1);
+                    else speedLevel = Math.min(MAX_SPEED, speedLevel + 1);
+                    items.splice(i, 1);
+                    playSE(1000, 'sine', 0.2);
+                }
+            });
+
+            // パーティクル更新
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life--;
+                if(p.life <= 0) particles.splice(i, 1);
+            });
+
+            scoreDisp.innerText = `SCORE: ${score}`;
+            stageDisp.innerText = `STAGE: ${stage}`;
+            hpDisp.innerText = `HP: ${hp}`;
+            spGauge.style.width = specialCharge + '%';
         }
-        
-        // 初回起動時、すべての定義が完了した後にゲームループを開始する
-        window.onload = function() {
-            // Web Audio Contextを初期化
-            setupAudioContext();
-            // ゲームループを起動
-            gameLoop();
-        };
+
+        function draw() {
+            ctx.save();
+            // カメラシェイクの適用
+            if(shakeIntensity > 0.1) {
+                ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity);
+            }
+
+            const bgColors = ['#000011', '#001100', '#110000', '#110011', '#001111'];
+            ctx.fillStyle = bgColors[(stage-1) % bgColors.length];
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            stars.forEach(s => ctx.fillRect(s.x, s.y, 2, 2));
+
+            if(gameState === 'TITLE') {
+                ctx.fillStyle = '#00ff00';
+                ctx.font = '30px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText("ZELBIUS METALLIC: IMPACT", canvas.width/2, 300);
+                ctx.font = '20px Courier New';
+                ctx.fillText("CLICK TO START", canvas.width/2, 350);
+                ctx.restore(); return;
+            }
+            if(gameState === 'GAMEOVER') {
+                ctx.fillStyle = '#ff0000';
+                ctx.font = '40px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText("GAME OVER", canvas.width/2, 300);
+                ctx.font = '20px Courier New';
+                ctx.fillText("CLICK TO RESTART", canvas.width/2, 350);
+                ctx.restore(); return;
+            }
+            if(gameState === 'PAUSED') {
+                ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                ctx.fillRect(0,0,canvas.width, canvas.height);
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.font = '30px Courier New';
+                ctx.fillText("PAUSED", canvas.width/2, 300);
+                ctx.font = '20px Courier New';
+                ctx.fillText("Press 'R' to Reset to Title", canvas.width/2, 350);
+                ctx.restore(); return;
+            }
+
+            if(hitFlash > 0) {
+                ctx.fillStyle = `rgba(255, 0, 0, ${hitFlash/10})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                hitFlash--;
+            }
+
+            player.draw();
+            ctx.fillStyle = '#ffff00';
+            bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+            ctx.fillStyle = '#f0f';
+            enemyBullets.forEach(eb => ctx.fillRect(eb.x, eb.y, eb.w, eb.h));
+            enemies.forEach(e => e.draw());
+            items.forEach(it => it.draw());
+
+            // パーティクルの描画
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+            });
+
+            ctx.restore();
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+        loop();
     </script>
 </body>
 </html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    

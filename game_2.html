@@ -1,23 +1,8 @@
-
-                        <!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-							<style>
-								body {
-									background-color: white; /* Ensure the iframe has a white background */
-								}
-
-								
-							</style>
-                        </head>
-                        <body>
-                            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>🕹️ ZELBIUS METALLIC: IMPACT EDITION 🕹️</title>
+    <title>🕹️ ZELBIUS METALLIC: BOSS OVERHAUL 🕹️</title>
     <style>
         body {
             display: flex;
@@ -80,7 +65,7 @@
         <strong>▶️ 操作方法 ◀️</strong><br>
         ・移動: 矢印キー / WASD / ドラッグ | 攻撃: スペース / タップ<br>
         ・<strong>特殊攻撃: Xキー / ダブルタップ</strong> (ゲージMAX)<br>
-        ・被弾時: パワーアップがリセットされ、画面が激しく揺れます
+        ・ショット制限: 2発ごとに短いリロードが発生します
     </div>
 
     <script>
@@ -130,7 +115,7 @@
         }
 
         // ====================================================
-        // ⚙️ ゲームエンジン & エフェクト管理
+        // ⚙️ ゲームエンジン
         // ====================================================
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -144,21 +129,19 @@
         let keys = {}, stars = [], hitFlash = 0;
         let powerLevel = 1, speedLevel = 1, specialCharge = 0;
         let boss = null;
-        let shakeIntensity = 0; // カメラシェイク強度
+        let shakeIntensity = 0;
+        let shotCount = 0; // 連射制限用
+        let shotReloadTimer = 0;
 
-        const MAX_POWER = 3, MAX_SPEED = 3, INITIAL_PLAYER_SPEED = 5;
+        const MAX_POWER = 3, MAX_SPEED = 3, INITIAL_PLAYER_SPEED = 3; // 初期速度をさらに低下
         for(let i=0; i<60; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*3 + 1});
 
-        // パーティクル生成関数
         function createExplosion(x, y, color, count = 10) {
             for(let i=0; i<count; i++) {
                 particles.push({
                     x: x, y: y,
-                    vx: (Math.random() - 0.5) * 10,
-                    vy: (Math.random() - 0.5) * 10,
-                    life: 20 + Math.random() * 20,
-                    color: color,
-                    size: Math.random() * 3 + 1
+                    vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12,
+                    life: 20 + Math.random() * 20, color: color, size: Math.random() * 3 + 1
                 });
             }
         }
@@ -186,24 +169,28 @@
         class Enemy {
             constructor(type, isBoss = false) {
                 this.isBoss = isBoss; this.type = type;
-                this.w = isBoss ? 150 : 40; this.h = isBoss ? 100 : 40;
-                this.x = isBoss ? canvas.width/2 - 75 : Math.random() * (canvas.width - 40);
-                this.y = isBoss ? -150 : -50;
-                this.hp = isBoss ? 100 * stage : (type === 'H' ? 3 : 1) * Math.ceil(stage/2);
+                this.w = isBoss ? 180 : 40; this.h = isBoss ? 120 : 40;
+                this.x = isBoss ? canvas.width/2 - 90 : Math.random() * (canvas.width - 40);
+                this.y = isBoss ? -200 : -50;
+                this.hp = isBoss ? 150 * stage : (type === 'H' ? 3 : 1) * Math.ceil(stage/2);
                 this.maxHp = this.hp;
                 this.color1 = type === 'B' ? '#aa8800' : (type === 'H' ? '#aa4400' : '#660066');
                 this.color2 = type === 'B' ? '#ffff00' : (type === 'H' ? '#ffaa00' : '#ff00ff');
-                if(isBoss) { this.color1 = '#440000'; this.color2 = '#ff0000'; }
+                if(isBoss) { this.color1 = '#330000'; this.color2 = '#ff0000'; }
                 this.speed = (type === 'H' ? 2 : 4) + (stage * 0.6);
                 this.shootTimer = Math.random() * 100;
             }
             update() {
                 if(this.isBoss) {
-                    this.y = Math.min(this.y + 1, 80);
-                    this.x += Math.sin(frameCount/40) * 3;
+                    this.y = Math.min(this.y + 1.5, 80);
+                    this.x += Math.sin(frameCount/60) * 3;
                     this.shootTimer++;
-                    if(this.shootTimer > 50) {
-                        for(let i=-3; i<=3; i++) enemyBullets.push({x: this.x + this.w/2, y: this.y + this.h, w: 10, h: 15, vx: i, vy: 7});
+                    // ボスの攻撃パターン
+                    if(this.shootTimer > 80) {
+                        // 扇状弾幕
+                        for(let i=-4; i<=4; i++) {
+                            enemyBullets.push({x: this.x + this.w/2, y: this.y + this.h, w: 12, h: 15, vx: i*0.8, vy: 6});
+                        }
                         this.shootTimer = 0;
                     }
                 } else {
@@ -222,9 +209,12 @@
             draw() {
                 ctx.save();
                 if(this.isBoss) {
-                    drawMetallicShape(this.x, this.y, this.w, this.h, this.color1, this.color2);
-                    ctx.fillStyle = '#330000'; ctx.fillRect(this.x + 20, this.y + 20, this.w - 40, this.h - 40);
-                    ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(this.x + this.w/2, this.y + this.h/2, 20, 0, Math.PI*2); ctx.fill();
+                    // ボスの凝ったデザイン: 巨大な装甲とコア
+                    drawMetallicShape(this.x, this.y, this.w, 40, this.color1, this.color2); // 上部装甲
+                    drawMetallicShape(this.x+30, this.y+40, this.w-60, 60, this.color1, this.color2); // 中央ボディ
+                    ctx.fillStyle = '#ffaa00';
+                    ctx.beginPath(); ctx.arc(this.x + this.w/2, this.y + 60, 25, 0, Math.PI*2); ctx.fill(); // コア
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
                 } else {
                     drawMetallicShape(this.x, this.y + 10, this.w, 20, this.color1, this.color2);
                     drawMetallicShape(this.x + 15, this.y, 10, 40, this.color1, this.color2);
@@ -277,6 +267,9 @@
 
         function fire() {
             if(gameState !== 'PLAYING') return;
+            if(shotReloadTimer > 0) return; // リロード中
+
+            // ショット発射
             if(powerLevel === 1) bullets.push({x: player.x + player.w/2 - 2, y: player.y, w: 4, h: 12});
             else if(powerLevel === 2) {
                 bullets.push({x: player.x + 10, y: player.y, w: 4, h: 12});
@@ -287,24 +280,28 @@
                 bullets.push({x: player.x + player.w - 4, y: player.y + 10, w: 4, h: 12});
             }
             playSE(800, 'sawtooth', 0.1);
+            
+            shotCount++;
+            if(shotCount >= 2) {
+                shotCount = 0;
+                shotReloadTimer = 15; // 15フレームのリロード
+            }
         }
 
         function triggerSpecial() {
             if(gameState !== 'PLAYING' || specialCharge < 100) return;
             specialCharge = 0;
             playSE(200, 'square', 0.6, 0.4);
-            shakeIntensity = 15; // 激しく揺らす
+            enemies.forEach(e => { e.hp -= 40; });
+            shakeIntensity = 20;
             hitFlash = 30;
-            enemies.forEach(e => {
-                e.hp -= 30;
-                createExplosion(e.x + e.w/2, e.y + e.h/2, e.color2, 20);
-            });
         }
 
         function startGame() {
             initAudio();
-            score = 0; stage = 1; hp = 3; bullets = []; enemyBullets = []; enemies = []; items = []; particles = [];
-            powerLevel = 1; speedLevel = 1; specialCharge = 0; boss = null;
+            score = 0; stage = 1; hp = 3; bullets = []; enemyBullets = []; enemies = []; items = [];
+            powerLevel = 1; speedLevel = 1; specialCharge = 0;
+            boss = null; shotCount = 0; shotReloadTimer = 0;
             player.reset();
             gameState = 'PLAYING';
         }
@@ -322,8 +319,8 @@
             if(gameState !== 'PLAYING') return;
             frameCount++;
             if(frameCount % 25 === 0) playBGMStep();
+            if(shotReloadTimer > 0) shotReloadTimer--;
 
-            // シェイク減衰
             shakeIntensity *= 0.9;
 
             stars.forEach(s => {
@@ -350,7 +347,7 @@
                 if(eb.y > canvas.height) enemyBullets.splice(i, 1);
                 if(player.x < eb.x + eb.w && player.x + player.w > eb.x && player.y < eb.y + eb.h && player.y + player.h > eb.y) {
                     hp--; enemyBullets.splice(i, 1); 
-                    hitFlash = 10; shakeIntensity = 10;
+                    hitFlash = 10; shakeIntensity = 15;
                     powerLevel = 1; speedLevel = 1;
                     createExplosion(player.x + player.w/2, player.y + player.h/2, '#ff0', 15);
                     playSE(150, 'sawtooth', 0.3);
@@ -368,7 +365,7 @@
                     boss = new Enemy('BOSS', true);
                     enemies.push(boss);
                     playSE(200, 'square', 1.0, 0.5);
-                    shakeIntensity = 10;
+                    shakeIntensity = 20;
                 }
             }
 
@@ -381,7 +378,7 @@
                 e.update();
                 if(e.y > canvas.height) enemies.splice(i, 1);
                 if(player.x < e.x + e.w && player.x + player.w > e.x && player.y < e.y + e.h && player.y + player.h > e.y) {
-                    hp--; enemies.splice(i, 1); hitFlash = 10; shakeIntensity = 10;
+                    hp--; enemies.splice(i, 1); hitFlash = 10; shakeIntensity = 15;
                     powerLevel = 1; speedLevel = 1;
                     createExplosion(e.x + e.w/2, e.y + e.h/2, e.color2, 15);
                     playSE(150, 'sawtooth', 0.3);
@@ -413,7 +410,6 @@
                 }
             });
 
-            // パーティクル更新
             particles.forEach((p, i) => {
                 p.x += p.vx; p.y += p.vy; p.life--;
                 if(p.life <= 0) particles.splice(i, 1);
@@ -427,83 +423,49 @@
 
         function draw() {
             ctx.save();
-            // カメラシェイクの適用
             if(shakeIntensity > 0.1) {
                 ctx.translate((Math.random()-0.5)*shakeIntensity, (Math.random()-0.5)*shakeIntensity);
             }
-
             const bgColors = ['#000011', '#001100', '#110000', '#110011', '#001111'];
             ctx.fillStyle = bgColors[(stage-1) % bgColors.length];
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#fff';
             stars.forEach(s => ctx.fillRect(s.x, s.y, 2, 2));
-
             if(gameState === 'TITLE') {
-                ctx.fillStyle = '#00ff00';
-                ctx.font = '30px Courier New';
-                ctx.textAlign = 'center';
-                ctx.fillText("ZELBIUS METALLIC: IMPACT", canvas.width/2, 300);
-                ctx.font = '20px Courier New';
-                ctx.fillText("CLICK TO START", canvas.width/2, 350);
+                ctx.fillStyle = '#00ff00'; ctx.font = '30px Courier New'; ctx.textAlign = 'center';
+                ctx.fillText("ZELBIUS METALLIC", canvas.width/2, 300);
+                ctx.font = '20px Courier New'; ctx.fillText("CLICK TO START", canvas.width/2, 350);
                 ctx.restore(); return;
             }
             if(gameState === 'GAMEOVER') {
-                ctx.fillStyle = '#ff0000';
-                ctx.font = '40px Courier New';
-                ctx.textAlign = 'center';
+                ctx.fillStyle = '#ff0000'; ctx.font = '40px Courier New'; ctx.textAlign = 'center';
                 ctx.fillText("GAME OVER", canvas.width/2, 300);
-                ctx.font = '20px Courier New';
-                ctx.fillText("CLICK TO RESTART", canvas.width/2, 350);
+                ctx.font = '20px Courier New'; ctx.fillText("CLICK TO RESTART", canvas.width/2, 350);
                 ctx.restore(); return;
             }
             if(gameState === 'PAUSED') {
-                ctx.fillStyle = 'rgba(0,0,0,0.6)';
-                ctx.fillRect(0,0,canvas.width, canvas.height);
-                ctx.fillStyle = '#fff';
-                ctx.textAlign = 'center';
-                ctx.font = '30px Courier New';
+                ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0,0,canvas.width, canvas.height);
+                ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = '30px Courier New';
                 ctx.fillText("PAUSED", canvas.width/2, 300);
-                ctx.font = '20px Courier New';
-                ctx.fillText("Press 'R' to Reset to Title", canvas.width/2, 350);
+                ctx.font = '20px Courier New'; ctx.fillText("Press 'R' to Reset to Title", canvas.width/2, 350);
                 ctx.restore(); return;
             }
-
             if(hitFlash > 0) {
                 ctx.fillStyle = `rgba(255, 0, 0, ${hitFlash/10})`;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 hitFlash--;
             }
-
             player.draw();
-            ctx.fillStyle = '#ffff00';
-            bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
-            ctx.fillStyle = '#f0f';
-            enemyBullets.forEach(eb => ctx.fillRect(eb.x, eb.y, eb.w, eb.h));
+            ctx.fillStyle = '#ffff00'; bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+            ctx.fillStyle = '#f0f'; enemyBullets.forEach(eb => ctx.fillRect(eb.x, eb.y, eb.w, eb.h));
             enemies.forEach(e => e.draw());
             items.forEach(it => it.draw());
-
-            // パーティクルの描画
-            particles.forEach(p => {
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, p.size, p.size);
-            });
-
+            particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
             ctx.restore();
         }
 
-        function loop() {
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
+        function loop() { update(); draw(); requestAnimationFrame(loop); }
         loop();
     </script>
 </body>
 </html>
-
-							<script>
-                            	
-							</script>
-                        </body>
-                        </html>
-                    

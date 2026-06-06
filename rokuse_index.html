@@ -1493,7 +1493,7 @@ function generateShareImage() {
           if (!forMeasure) {
             ctx.fillStyle = 'rgba(255,255,255,.07)';
             roundRect(ctx, chipX, chipY, tw, chipH, 11); ctx.fill();
-            ctx.fillStyle = '#c0c0d0'; ctx.textAlign = 'left';
+            ctx.fillStyle = '#c0c0d0'; ctx.textAlign = 'left';ctx.textBaseline = 'middle';
             ctx.fillText(txt, chipX + chipPadX, chipY + chipH/2);
           }
           chipX += tw + chipGap;
@@ -1513,6 +1513,7 @@ function generateShareImage() {
           }
           curY += 20;
           chipX = 22; chipY = curY;
+          if (!forMeasure) { ctx.font = '11px sans-serif'; ctx.textBaseline = 'middle'; }
           chipItemsB.forEach(([icon, val]) => {
             const short = val.length > 22 ? val.substring(0, 20) + '…' : val;
             const txt = icon + ' ' + short;
@@ -1521,7 +1522,7 @@ function generateShareImage() {
             if (!forMeasure) {
               ctx.fillStyle = 'rgba(255,255,255,.07)';
               roundRect(ctx, chipX, chipY, tw, chipH, 11); ctx.fill();
-              ctx.fillStyle = '#c0c0d0'; ctx.textAlign = 'left';
+              ctx.fillStyle = '#c0c0d0'; ctx.textAlign = 'left';ctx.textBaseline = 'middle';
               ctx.fillText(txt, chipX + chipPadX, chipY + chipH/2);
             }
             chipX += tw + chipGap;

@@ -1,9 +1,24 @@
-<!DOCTYPE html>
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tetris Neon Audio-Reactive</title>
+    <title>Tetris Neon Symphony - Correct Rhythm</title>
     <style>
         :root {
             --neon-blue: #00f2ff;
@@ -74,21 +89,21 @@
             background-color: #000;
             border: 5px solid #333;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-            position: relative;
         }
         .cell {
             width: 20px;
             height: 20px;
             box-sizing: border-box;
             border: 1px solid #111;
+            position: relative;
         }
         .block {
             position: absolute;
-            top: 1px; left: 1px;
-            width: 18px; height: 18px;
-            border-radius: 3px;
-            box-shadow: inset 0 2px 4px rgba(255,255,255,0.5), 
-                        inset 0 -2px 4px rgba(0,0,0,0.5),
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 2px;
+            box-shadow: inset 0 3px 4px rgba(255,255,255,0.4), 
+                        inset 0 -3px 4px rgba(0,0,0,0.4),
                         0 0 8px currentColor;
         }
         #side-panel {
@@ -156,13 +171,21 @@
             0% { background-color: #fff; }
             100% { background-color: transparent; }
         }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100;
+        }
     </style>
 </head>
 <body style="background-color: var(--bg-dark);">
 
     <div id="game-container">
         <div id="title-screen" class="screen">
-            <h1>TETRIS AUDIO</h1>
+            <h1>TETRIS SYMPHONY</h1>
             <p>難易度を選択してください</p>
             <button onclick="startGame(1)">Easy</button>
             <button onclick="startGame(2)">Normal</button>
@@ -213,13 +236,13 @@
     </div>
 
     <script>
-        /* --- 高度なオーディオエンジン --- */
+        /* --- 高度なオーディオエンジン (シーケンサー方式) --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playTone(freq, type, duration, volume = 0.1) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const gain =, audioCtx.createGain();
             osc.type = type;
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
             gain.gain.setValueAtTime(volume, audioCtx.currentTime);
@@ -228,6 +251,47 @@
             gain.connect(audioCtx.destination);
             osc.start();
             osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // 正しいテトリスBGMのシーケンス (音名, 長さ)
+        const BGM_SEQUENCE = [
+            {n:'E4', d:0.4}, {n:'B3', d:0.4}, {n:'C4', d:0.4}, {n:'D4', d:0.4},
+            {n:'C4', d:0.4}, {n:'B3', d:0.4}, {n:'A3', d:0.8},
+            {n:'C4', d:0.4}, {n:'E4', d:0.4}, {n:'D4', d:0.4}, {n:'C4', d:0.4},
+            {n:'B3', d:0.4}, {n:'B3', d:0.4}, {n:'C4', d:0.4}, {n:'D4', d:0.4},
+            {n:'E4', d:0.4}, {n:'C4', d:0.4}, {n:'A3', d:0.8}
+        ];
+        const freqs = { 'E4': 329.63, 'B3': 246.94, 'C4': 261.63, 'D4': 293.66, 'A3': 220.00, 'G4': 392.00 };
+
+        let bgmTimer = null;
+        let noteIdx = 0;
+
+        function playBGMStep() {
+            if (!game.active || game.paused) return;
+            
+            const item = BGM_SEQUENCE[noteIdx % BGM_SEQUENCE.length];
+            const freq = freqs[item.n];
+            
+            if (freq) {
+                // 1. メインメロディ
+                const type = game.level < 3 ? 'triangle' : 'square';
+                playTone(freq, type, item.d, 0.08);
+                
+                // 2. ベースライン (Lv2以上: 低音を重ねる)
+                if (game.level >= 2) {
+                    playTone(freq / 2, 'sine', item.d, 0.06);
+                }
+                
+                // 3. ハーモニー (Lv3以上: 和音を追加)
+                if (game.level >= 3) {
+                    playTone(freq * 1.5, 'sine', item.d * 0.8, 0.04);
+                }
+            }
+
+            noteIdx++;
+            // 次の音までの時間を正確に計算してスケジューリング
+            const nextInterval = item.d * 1000 * (1 - (game.level - 1) * 0.1);
+            bgmTimer = setTimeout(playBGMStep, Math.max(150, nextInterval));
         }
 
         const SE = {
@@ -241,56 +305,22 @@
             },
             tetris: () => {
                 [200, 400, 600, 800, 1200].forEach((f, i) => {
-                    setTimeout(() => playTone(f, 'sawtooth', 0.3, 0.15), i * 80);
+                    setTimeout(() => playTone(f, 'sawtooth', 0.4, 0.15), i * 100);
                 });
             },
             levelUp: () => {
                 [440, 660, 880, 1100].forEach((f, i) => {
-                    setTimeout(() => playTone(f, 'sine', 0.3, 0.1), i * 100);
+                    setTimeout(() => playTone(f, 'sine', 0.3, 0.1), i * 120);
                 });
             },
             gameOver: () => {
                 [400, 300, 200, 100].forEach((f, i) => {
-                    setTimeout(() => playTone(f, 'sawtooth', 0.5, 0.15), i * 250);
+                    setTimeout(() => playTone(f, 'sawtooth', 0.6, 0.15), i * 300);
                 });
             }
         };
 
-        // BGMデータ (メロディとベースの分離)
-        let bgmInterval = null;
-        const melody = [
-            {n:'E4', d:0.4}, {n:'B3', d:0.4}, {n:'C4', d:0.4}, {n:'D4', d:0.4},
-            {n:'C4', d:0.4}, {n:'B3', d:0.4}, {n:'A3', d:0.8},
-            {n:'C4', d:0.4}, {n:'E4', d:0.4}, {n:'D4', d:0.4}, {n:'C4', d:0.4},
-            {n:'B3', d:0.4}, {n:'B3', d:0.4}, {n:'C4', d:0.4}, {n:'D4', d:0.4},
-            {n:'E4', d:0.4}, {n:'C4', d:0.4}, {n:'A3', d:0.8}
-        ];
-        const freqs = { 'E4': 329.63, 'B3': 246.94, 'C4': 261.63, 'D4': 293.66, 'A3': 220.00 };
-        let noteIdx = 0;
-
-        function playBGM() {
-            if (!game.active || game.paused) return;
-            const item = melody[noteIdx % melody.length];
-            const freq = freqs[item.n];
-            if (freq) {
-                // メロディライン: レベルが上がると音色をリッチに
-                const type = game.level < 3 ? 'triangle' : 'square'; 
-                playTone(freq, type, item.d, 0.06);
-                
-                // ベースライン: Lv2以上で追加
-                if (game.level >= 2 && noteIdx % 2 === 0) {
-                    playTone(110.00, 'sine', 0.5, 0.04);
-                }
-                
-                // 装飾音: Lv3以上でランダムに追加
-                if (game.level >= 3 && Math.random() > 0.7) {
-                    playTone(freq * 2, 'sine', 0.1, 0.02);
-                }
-            }
-            noteIdx++;
-        }
-
-        /* --- ゲームロジック --- */
+        /* --- ゲームロジック (描画・操作・パーティクルは変更なし) --- */
         const COLS = 10;
         const ROWS = 20;
         const SHAPES = {
@@ -440,15 +470,21 @@
 
         function clearLines() {
             let rowsCleared = 0;
+            let rowsToClear = [];
             for (let r = ROWS - 1; r >= 0; r--) {
                 if (game.board[r].every(cell => cell !== 0)) {
-                    game.board.splice(r, 1);
-                    game.board.unshift(Array(COLS).fill(0));
+                    rowsToClear.push(r);
                     rowsCleared++;
-                    r++;
                 }
             }
             if (rowsCleared > 0) {
+                rowsToClear.forEach(r => {
+                    for (let c = 0; c < COLS; c++) {
+                        createParticles(r, c, game.board[r][c], rowsCleared === 4);
+                    }
+                    game.board.splice(r, 1);
+                    game.board.unshift(Array(COLS).fill(0));
+                });
                 if (rowsCleared === 4) {
                     SE.tetris();
                     document.body.classList.add('flash');
@@ -459,14 +495,9 @@
                 const bonus = { 1: 100, 2: 300, 3: 500, 4: 1200 };
                 game.score += bonus[rowsCleared] || 0;
                 game.totalLines += rowsCleared;
-                
                 const oldLevel = game.level;
                 game.level = Math.floor(game.totalLines / 10) + 1;
-                
-                if (game.level > oldLevel) {
-                    SE.levelUp();
-                }
-
+                if (game.level > oldLevel) SE.levelUp();
                 document.getElementById('score-board').innerText = game.score;
                 document.getElementById('level-board').innerText = game.level;
                 updateSpeed();
@@ -528,8 +559,9 @@
             game.current = getRandomPiece();
             drawNext();
             updateSpeed();
-            if (bgmInterval) clearInterval(bgmInterval);
-            bgmInterval = setInterval(playBGM, 400);
+            if (bgmInterval) clearTimeout(bgmInterval);
+            noteIdx = 0;
+            playBGM(); // BGMシーケンサー開始
             draw();
         }
 
@@ -547,7 +579,7 @@
             SE.gameOver();
             game.active = false;
             clearInterval(game.timer);
-            clearInterval(bgmInterval);
+            clearTimeout(bgmInterval);
             document.getElementById('play-area').style.display = 'none';
             document.getElementById('game-over-screen').style.display = 'block';
             document.getElementById('final-score').innerText = `SCORE: ${game.score}`;
@@ -563,6 +595,35 @@
             localStorage.setItem('tetris-rankings', JSON.stringify(rankings));
             alert("Score Saved!");
             goToTitle();
+        }
+
+        /* --- パーティクル --- */
+        function createParticles(r, c, color, isTetris = false) {
+            const gridRect = document.getElementById('tetris-grid').getBoundingClientRect();
+            const count = isTetris ? 20 : 8;
+            for (let i = 0; i < count; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.backgroundColor = color;
+                p.style.boxShadow = `0 0 8px ${color}`;
+                const startX = gridRect.left + c * 20 + 10;
+                const startY = gridRect.top + r * 20 + 10;
+                p.style.left = startX + 'px';
+                p.style.top = startY + 'px';
+                document.body.appendChild(p);
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = isTetris ? Math.random() * 8 + 4 : Math.random() * 4 + 2;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity;
+                let posX = startX, posY = startY, opacity = 1;
+                const anim = setInterval(() => {
+                    posX += vx; posY += vy; opacity -= 0.03;
+                    p.style.left = posX + 'px';
+                    p.style.top = posY + 'px';
+                    p.style.opacity = opacity;
+                    if (opacity <= 0) { clearInterval(anim); p.remove(); }
+                }, 16);
+            }
         }
 
         /* --- スワイプ操作 --- */
@@ -612,3 +673,10 @@
     </script>
 </body>
 </html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    

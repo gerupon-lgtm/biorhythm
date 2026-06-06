@@ -200,6 +200,13 @@ input::placeholder{color:var(--text3)}
 .share-opt:hover{border-color:var(--accent);color:var(--accent2)}
 .share-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 24px;border-radius:24px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
 .share-toast.show{opacity:1}
+/* ラッキー要素チップ */
+.lucky-strip{padding:6px 0 12px}
+.lucky-strip-title{font-size:12px;color:var(--earth);margin-bottom:7px;letter-spacing:1px;font-weight:700}
+.lucky-chips{display:flex;flex-wrap:wrap;gap:6px}
+.lucky-chip{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:5px 10px 5px 7px;font-size:12px;color:var(--text2);white-space:nowrap}
+.lucky-chip-icon{font-size:14px;flex-shrink:0}
+.lucky-note{font-size:12px;color:var(--text3);line-height:1.6;margin-top:7px}
 /* バイオリズムグラフ */
 #bioCanvas{width:100%;height:auto;border-radius:10px;background:var(--surface);border:1px solid rgba(255,255,255,.06)}
 .bio-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:13px;justify-content:center}
@@ -341,6 +348,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
       <div id="meishikiArea"></div>
       <div class="section-label" id="fortuneLabel" style="display:none">この日の運気</div>
       <div id="fortuneArea"></div>
+      <div id="luckyArea"></div>
       <div class="section-label" id="compatLabel" style="display:none">相性分析</div>
       <div id="compatArea"></div>
       <div class="section-label" id="baseDiagLabel" style="display:none">基本相性</div>
@@ -370,7 +378,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.7.0
+    ver 3.7.1
   </footer>
 </div>
 
@@ -429,7 +437,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.7.0';
+const APP_VERSION='3.7.1';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -651,6 +659,7 @@ function displaySolo(d,name){
   document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,name);
   document.getElementById('fortuneLabel').style.display='';
   document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:name,fortune:d.fortuneA}],true);
+  document.getElementById('luckyArea').innerHTML=renderLucky(d.lucky,d._nameA);
   document.getElementById('compatLabel').style.display='none';
   document.getElementById('compatArea').innerHTML='';
   document.getElementById('baseDiagLabel').style.display='none';
@@ -677,6 +686,10 @@ function displayPair(d,nA,nB){
   document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,nA)+renderMeishiki(d.meishikiB,nB);
   document.getElementById('fortuneLabel').style.display='';
   document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:nA,fortune:d.fortuneA},{name:nB,fortune:d.fortuneB}],false);
+  let luckyHtml='';
+  if(d.luckyA) luckyHtml+=renderLucky(d.luckyA,d._nameA);
+  if(d.luckyB) luckyHtml+=renderLucky(d.luckyB,d._nameB);
+  document.getElementById('luckyArea').innerHTML=luckyHtml;
   document.getElementById('compatLabel').style.display='';
   document.getElementById('compatArea').innerHTML=renderCompat(d);
   if(d.baseDiagnosis){
@@ -694,6 +707,27 @@ function displayPair(d,nA,nB){
   document.getElementById('fortuneRadarWrap').style.display='none';
   showResult();
   setTimeout(()=>showRangeTabs(d,nA,nB),300);
+}
+
+
+function renderLucky(lucky,name){
+  if(!lucky) return '';
+  const chips=[
+    ['🎨',lucky.color],['🔢',lucky.number],['🧭',lucky.direction],
+    ['✨',lucky.item||lucky.material],['🍽️',lucky.food],['🕒',lucky.time],['📅',lucky.day],
+  ];
+  let h='<div class="lucky-strip">';
+  h+='<div class="lucky-strip-title">✦ '+esc(name||'あなた')+'のラッキー要素</div>';
+  h+='<div class="lucky-chips">';
+  chips.forEach(([icon,val])=>{
+    if(!val) return;
+    const short=String(val).length>18?String(val).substring(0,16)+'…':String(val);
+    h+='<div class="lucky-chip"><span class="lucky-chip-icon">'+icon+'</span><span>'+esc(short)+'</span></div>';
+  });
+  h+='</div>';
+  if(lucky.note) h+='<div class="lucky-note">'+esc(lucky.note)+'</div>';
+  h+='</div>';
+  return h;
 }
 
 function renderMeishiki(m,name){
@@ -1081,7 +1115,7 @@ function generateShareImage(){
     if(!d){resolve(null);return}
     const isSolo=d.mode==='solo';
     const fs=d.fiveScores;
-    const W=720,H=isSolo&&fs?700:500;
+    const W=720,H=isSolo&&fs?800:620;
     const c=document.createElement('canvas');
     c.width=W;c.height=H;
     const ctx=c.getContext('2d');
@@ -1203,6 +1237,42 @@ function generateShareImage(){
         ctx.fillStyle='#f0f0f8';ctx.font='bold 14px sans-serif';ctx.textAlign='left';
         ctx.fillText(rVals[i],fBarX+fBarW+8,y+fBarH/2);
       });
+    }
+
+
+
+    // ===== ラッキー要素 =====
+    function drawLuckyChips(lucky,name,startY,titleColor){
+      if(!lucky) return startY;
+      const chipItems=[
+        ['🎨',lucky.color],['🔢',lucky.number],['🧭',lucky.direction],
+        ['✨',lucky.item||lucky.material],['🍽️',lucky.food],['🕒',lucky.time],['📅',lucky.day],
+      ].filter(item=>item[1]);
+      ctx.fillStyle=titleColor||'#fbbf24';ctx.font='bold 13px sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.fillText('✦ '+(name||'あなた')+'のラッキー要素',70,startY+12);
+      let chipX=70,chipY=startY+22;
+      const chipH=24,chipGap=6,chipPadX=9;
+      ctx.font='12px sans-serif';ctx.textBaseline='middle';
+      chipItems.forEach(([icon,val])=>{
+        const value=String(val);
+        const short=value.length>16?value.substring(0,14)+'…':value;
+        const txt=icon+' '+short;
+        const tw=ctx.measureText(txt).width+chipPadX*2;
+        if(chipX+tw>W-70){chipX=70;chipY+=chipH+chipGap;}
+        ctx.fillStyle='rgba(255,255,255,.07)';roundRect(ctx,chipX,chipY,tw,chipH,12);ctx.fill();
+        ctx.fillStyle='#d0d0e0';ctx.textAlign='left';
+        ctx.fillText(txt,chipX+chipPadX,chipY+chipH/2);
+        chipX+=tw+chipGap;
+      });
+      return chipY+chipH+14;
+    }
+
+    let luckyY=isSolo&&fs?555:245;
+    if(isSolo){
+      luckyY=drawLuckyChips(d.lucky,d._nameA,luckyY,'#fbbf24');
+    } else {
+      luckyY=drawLuckyChips(d.luckyA,d._nameA,luckyY,'#fbbf24');
+      luckyY=drawLuckyChips(d.luckyB,d._nameB,luckyY,'#60a5fa');
     }
 
     // フッター

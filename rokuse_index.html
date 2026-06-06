@@ -1486,7 +1486,7 @@ function generateShareImage() {
         const chipH = 22, chipGap = 5, chipPadX = 8;
         if (!forMeasure) { ctx.font = '11px sans-serif'; ctx.textBaseline = 'middle'; }
         chipItems.forEach(([icon, val]) => {
-          const short = val.length > 14 ? val.substring(0, 12) + '…' : val;
+          const short = val.length > 22 ? val.substring(0, 20) + '…' : val;
           const txt = icon + ' ' + short;
           const tw = forMeasure ? (txt.length * 7 + chipPadX*2) : (ctx.measureText(txt).width + chipPadX*2);
           if (chipX + tw > W - 22) { chipX = 22; chipY += chipH + chipGap; }

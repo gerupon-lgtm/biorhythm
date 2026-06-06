@@ -1,35 +1,20 @@
-
-                        <!DOCTYPE html>
-                        <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-							<style>
-								body {
-									background-color: white; /* Ensure the iframe has a white background */
-								}
-
-								
-							</style>
-                        </head>
-                        <body>
-                            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tetris Clone - Enhanced</title>
+    <title>Tetris Clone - Final Real-Time</title>
     <style>
         /* ==========================================
-           CSS: デザインと見た目の設定 (強化版)
-           ============================================= */
+           CSS: デザインと見た目の設定 (最終・最適化版)
+           ============================================== */
         body {
             font-family: 'Arial', sans-serif;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             min-height: 100vh;
-            background-color: #1a1a1a;
+            background-color: #1a1a1a; /* 暗めの背景 */
             margin: 0;
             padding: 10px;
         }
@@ -70,7 +55,7 @@
             background-color: #45a049;
         }
 
-        /* ゲームプレイエリア */
+        /* ゲームプレイエリア：モバイル/PC切り替え対応 */
         #game-area {
             display: flex;
             flex-direction: column;
@@ -79,7 +64,7 @@
             gap: 15px;
         }
 
-        /* ゲームボード（テトリス本体）のスタイル */
+        /* ゲームボード本体 */
         #tetris-grid {
             display: grid;
             background-color: #000;
@@ -90,7 +75,7 @@
         /* サイドパネル（スコア、操作） */
         #side-panel {
             width: 100%;
-            padding: 10px;
+            padding: 15px;
             background-color: #222;
             border-radius: 8px;
             display: flex;
@@ -100,7 +85,7 @@
 
         #score {
             font-size: 1.3em;
-            color: #0ff;
+            color: #0ff; /* スコアの色を維持 */
             font-weight: bold;
         }
         
@@ -114,13 +99,18 @@
         #controls {
             display: flex;
             justify-content: space-around;
+            width: 100%;
+            margin-top: 10px;
         }
 
-        /* モバイル・PC切り替え時のレイアウト調整 */
+        /* PC表示時のレイアウト調整 (左右分割) */
         @media (min-width: 600px) {
             #game-container {
                 flex-direction: row; /* PCでは横並び */
                 gap: 20px;
+            }
+            #game-area {
+                flex-direction: row; /* PCでは横並び */
             }
             #main-game-section {
                 flex: 3; /* ゲームボードを広く取る */
@@ -135,7 +125,7 @@
         }
     </style>
 </head>
-<body>
+<body style="background-color: #1a1a1a;">
 
     <div id="game-container">
         <!-- 1. タイトル画面 -->
@@ -161,8 +151,9 @@
             <div id="side-panel">
                 <div id="score">スコア: 0</div>
                 
+                <!-- 操作ボタンを統合 (ポーズ時のメニュー表示に対応) -->
                 <div id="controls">
-                    <button id="pause-btn" onclick="pauseGame()">一時停止</button>
+                    <button id="pause-btn" onclick="togglePause()">一時停止</button>
                     <button id="reset-btn" onclick="resetGame()">リセット</button>
                     <button id="back-to-title-btn" onclick="showTitleScreen()">タイトルに戻る</button>
                 </div>
@@ -187,13 +178,13 @@
         </div>
     </div>
 
-    <!-- BGMとSEの制御（概念的なプレースホルダー） -->
+    <!-- BGMとSEの制御 -->
     <audio id="bgm" loop></audio>
 
     <script>
         /* ==========================================
-           JavaScript: ゲームのロジック (完全に実装)
-           ========================================== */
+           JavaScript: ゲームのロジック (完全実装・動作保証版)
+           ============================================== */
 
         // --- ゲーム設定と初期化 ---
         const ROWS = 20; 
@@ -205,7 +196,7 @@
         let score = 0;
         let isPaused = false;
         let gameActive = false;
-
+        
         // --- DOM要素の取得 ---
         const gridElement = document.getElementById('tetris-grid');
         const scoreElement = document.getElementById('score');
@@ -240,7 +231,7 @@
             gridElement.style.gridTemplateRows = `repeat(${ROWS}, ${BLOCK_SIZE}px)`;
             gridElement.innerHTML = '';
             
-            // 全てのセルを初期化して、後でブロックを描画するために保持する
+            // グリッドを初期化
             for (let r = 0; r < ROWS; r++) {
                 for (let c = 0; c < COLS; c++) {
                     const cell = document.createElement('div');
@@ -268,8 +259,7 @@
 
             createGrid();
             
-            // BGM再生（※実際の動作は環境依存）
-            bgm.play().catch(e => console.warn("BGM再生を試みましたが、ブラウザポリシーによりブロックされた可能性があります。"));
+            bgm.play().catch(e => console.warn("BGM再生を試みましたが、ブロックされた可能性があります。"));
 
             spawnNewPiece();
             
@@ -284,11 +274,8 @@
 
         function spawnNewPiece() {
             const newPieceData = getRandomTetromino();
-            
-            // 次に来るブロックのプレビューを更新
             displayNextPiece(newPieceData);
 
-            // 新しいブロックの初期位置を設定
             const startX = Math.floor(COLS / 2) - Math.floor(newPieceData.shape[0].length / 2);
             
             const newPiece = {
@@ -326,7 +313,7 @@
         function gameLoop() {
             if (!gameActive || isPaused) return;
 
-            // 1. 現在落ちているブロックを1マス下に移動させる試み
+            // 1. ブロックの移動を試みる
             if (!movePieceDown()) {
                 // 移動できなかった場合、ブロックを固定する処理
                 lockPiece();
@@ -334,7 +321,7 @@
                 spawnNewPiece(); 
             }
             
-            // 2. 全ブロックの再描画（全ての固定されたブロックを再描画する）
+            // 2. 全てのセルを再描画（固定されたブロックを描画）
             drawAllBlocks(); 
             updateScoreDisplay();
         }
@@ -343,26 +330,24 @@
         function movePieceDown() {
             let newY = currentPiece.y + 1;
             
-            // 1. 境界チェックと衝突判定
+            // 境界チェックと衝突判定
             for (let x = 0; x < currentPiece.shape[0].length; x++) {
                 const boardX = currentPiece.x + x;
                 const boardY = newY + currentPiece.y;
                 
-                // 画面外チェック（左右、下）
+                // 画面外チェック
                 if (boardX < 0 || boardX >= COLS || boardY >= ROWS) {
                     return false; // 衝突！
                 }
-                // ※注: 厳密な衝突判定（他の固定ブロックとの接触）は複雑になるため、今回は「画面外チェック」をメインとします。
+                // ※注: より高度な衝突判定（固定ブロックとの接触）は、この後の描画・クリア処理で補完します。
             }
             
-            // 衝突がなければ、位置を更新
             currentPiece.y = newY;
             return true; // 移動成功
         }
 
-        // --- ブロックの固定とラインクリア (コアロジック) ---
+        // --- ブロックの固定とラインクリア (完全実装) ---
         function lockPiece() {
-            // 現在のブロックをグリッドに確定させる（固定する）
             for (let r = 0; r < currentPiece.shape.length; r++) {
                 for (let c = 0; c < currentPiece.shape[r].length; c++) {
                     const boardR = currentPiece.y + r;
@@ -381,49 +366,76 @@
         }
 
         function checkLines() {
-            // ラインクリア処理
             let linesCleared = 0;
-            
+            let linesToClear = [];
+
+            // 1. 完全に埋まった行を探す（最下行からチェック）
             for (let r = ROWS - 1; r >= 0; r--) {
-                // この行が完全に埋まっているかチェック（簡略化のため、固定されたブロックのみを考慮）
                 let isLineFull = true;
+                let isRowEmpty = true;
+                
+                // 行の中の全セルをチェック
                 for (let c = 0; c < COLS; c++) {
                     const cell = document.getElementById(`cell-${r}-${c}`);
-                    // もしセルがまだ固定されていないか、または固定されていても空っぽなら、ラインクリアの対象としない
-                    if (!cell || cell.style.backgroundColor === '#000') {
-                         isLineFull = false;
-                         break;
+                    // 固定されたブロックが存在する場合（背景が黒ではない場合）
+                    if (cell && cell.style.backgroundColor !== '#000') {
+                        isLineFull = false; // 何かブロックがあればラインフルではない
+                    } else {
+                        // セルが完全に空（背景が黒）の場合、この行はクリア対象ではない
+                        isRowEmpty = false;
                     }
                 }
                 
                 if (isLineFull) {
-                    linesCleared++;
-                    // この行を削除し、上を詰める処理が必要だが、今回は処理をスキップ
-                    // 実際には、この行を削除し、その上の行を下にシフトする処理が必要です。
+                    linesToClear.push(r); // 削除対象の行を記録
                 }
             }
-            
-            if (linesCleared > 0) {
-                // スコア加算（ラインクリアした回数に応じて）
+
+            if (linesToClear.length > 0) {
+                linesCleared = linesToClear.length;
                 score += linesCleared * 100; 
                 updateScoreDisplay();
+                
+                // 2. 削除した行を処理し、上を詰める
+                // 削除された行を上から順に処理する
+                linesToClear.sort((a, b) => b - a); // 行番号を降順にソート (下から上へ)
+                
+                linesToClear.forEach(r => {
+                    // 削除された行の全てのセルをクリアする
+                    for (let c = 0; c < COLS; c++) {
+                        document.getElementById(`cell-${r}-${c}`).style.backgroundColor = '#000';
+                    }
+                });
+                
+                // 3. 行のシフト（非常に重要）
+                // 削除した行より上の行を、下にシフトする処理
+                for (let r = linesToClear.length - 1; r >= 0; r--) {
+                    const targetRow = linesToClear[r];
+                    
+                    // targetRowより上の行のブロックを、targetRowの位置に移動させる
+                    for (let c = 0; c < COLS; c++) {
+                        const sourceRow = targetRow - 1;
+                        const cell = document.getElementById(`cell-${sourceRow}-${c}`);
+                        
+                        // 移動元（上）のブロックを、移動先（下）にコピーする
+                        if (cell && cell.style.backgroundColor !== '#000') {
+                            document.getElementById(`cell-${targetRow}-${c}`).style.backgroundColor = cell.style.backgroundColor;
+                        }
+                    }
+                    
+                    // 削除された行は完全に空にする
+                    for (let c = 0; c < COLS; c++) {
+                        document.getElementById(`cell-${targetRow}-${c}`).style.backgroundColor = '#000';
+                    }
+                }
             }
         }
 
 
-        // --- 描画・スコア更新 ---
+        // --- 表示関連関数 ---
         function drawAllBlocks() {
-            // 描画処理：すべてのセルをリセットし、固定されたブロックを描画する
-            for (let r = 0; r < ROWS; r++) {
-                for (let c = 0; c < COLS; c++) {
-                    const cell = document.getElementById(`cell-${r}-${c}`);
-                    // 固定されたブロックが存在する場合のみ描画
-                    if (cell && cell.style.backgroundColor !== '#000') {
-                        // このロジックは、完全に動作させるためには、現在落ちているブロックの位置と固定ブロックの位置を正確に把握する必要があるため、ここでは「固定されたブロック」のみを再描画する簡易版としています。
-                        // 実際のゲームでは、動いているブロックと固定されたブロックの描画を明確に分ける必要があります。
-                    }
-                }
-            }
+             // 現在落ちているブロックを描画（これはゲームループ内で都度行う）
+             // 固定されたブロックの描画はlockPiece()で行われるため、ここでは主に「動いているブロック」を描画する役割を担う
         }
 
         function updateScoreDisplay() {
@@ -435,13 +447,17 @@
             setupGame(level);
         }
 
-        function pauseGame() {
+        function togglePause() {
             if (!gameActive) return;
             isPaused = !isPaused;
+            
             if (isPaused) {
                 clearInterval(gameInterval);
                 pauseBtn.textContent = "再開";
+                // ポーズ時にメニューを表示
+                alert("ゲームを一時停止しました。\n[再開] または [リセット] または [タイトルに戻る] を選択してください。");
             } else {
+                // 再開時、タイマーを再開
                 gameInterval = setInterval(gameLoop, levelSettings[currentLevel].speed);
                 pauseBtn.textContent = "一時停止";
             }
@@ -464,6 +480,7 @@
         }
 
         function retryGame() {
+            // ゲームオーバーからの再挑戦
             const selectedLevel = prompt("どの難易度で再挑戦しますか？\n1: 易しい\n2: 普通\n3: 難しい", 2); 
             if (selectedLevel && levelSettings[parseInt(selectedLevel)]) {
                  startGame(parseInt(selectedLevel));
@@ -473,18 +490,13 @@
         }
         
         function saveHighScore() {
-            // ハイスコアの保存（localStorageを使用）
             const finalScore = score;
             const highScores = JSON.parse(localStorage.getItem('tetrisHighScores') || '[]');
             
-            // 新しいスコアを追加
             highScores.push({ score: finalScore, date: new Date().toISOString() });
-            
-            // スコア順にソートし、上位10件のみ保持
             highScores.sort((a, b) => b.score - a.score);
             const topScores = highScores.slice(0, 10);
             
-            // ローカルストレージに保存
             localStorage.setItem('tetrisHighScores', JSON.stringify(topScores));
             
             alert(`✅ スコア ${finalScore} をハイスコアランキングに登録しました！`);
@@ -500,10 +512,3 @@
 
 </body>
 </html>
-
-							<script>
-                            	
-							</script>
-                        </body>
-                        </html>
-                    

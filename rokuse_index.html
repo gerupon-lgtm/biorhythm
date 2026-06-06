@@ -479,7 +479,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.4.2
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.4.3
   </footer>
 </div>
 
@@ -518,7 +518,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.4.3';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -832,7 +832,10 @@ function displaySolo(d, name) {
   const totalScore = Math.min(100, Math.max(0, Math.round((d.rokuseScore??0)*0.5 + (d.bioScore??0)*0.5)));
   const tsEl = document.getElementById('totalScoreValue');
   const tsArea = document.getElementById('totalScoreArea');
-  if (tsEl) { tsEl.textContent = totalScore; tsEl.className = totalScore>=80?'score-excellent':totalScore>=65?'score-hi':totalScore>=45?'score-mid':totalScore>=25?'score-lo':'score-danger'; }
+  if (tsEl) {
+      tsEl.textContent = totalScore;
+      tsEl.style.color = totalScore>=80?'#22d3ee':totalScore>=65?'#4ade80':totalScore>=45?'#fbbf24':totalScore>=25?'#fb923c':'#f87171';
+    }
   if (tsArea) tsArea.style.display = '';
   setScores(d); setBars(d);
 
@@ -884,7 +887,10 @@ function displayPair(d, nA, nB) {
   const totalScoreP = Math.min(100, Math.max(0, Math.round((d.rokuseScore??0)*0.5 + (d.bioScore??0)*0.5)));
   const tsElP = document.getElementById('totalScoreValue');
   const tsAreaP = document.getElementById('totalScoreArea');
-  if (tsElP) { tsElP.textContent = totalScoreP; tsElP.className = totalScoreP>=80?'score-excellent':totalScoreP>=65?'score-hi':totalScoreP>=45?'score-mid':totalScoreP>=25?'score-lo':'score-danger'; }
+  if (tsElP) {
+      tsElP.textContent = totalScoreP;
+      tsElP.style.color = totalScoreP>=80?'#22d3ee':totalScoreP>=65?'#4ade80':totalScoreP>=45?'#fbbf24':totalScoreP>=25?'#fb923c':'#f87171';
+    }
   if (tsAreaP) tsAreaP.style.display = '';
   setScores(d); setBars(d);
 
@@ -1147,7 +1153,8 @@ function renderRangeTable(data, targetDate, isPair, label) {
     h += `<td style="text-align:center;width:28px">${icon}</td>`;
     h += `<td>${fmtDateShort(r.date)} (${dow})</td>`;
     h += `<td>${esc(isPair ? (r.cycleA||'')+'/'+(r.cycleB||'') : (r.cycle||''))}${daiMark}</td>`;
-    h += `<td class="score-cell ${scClass}">${sc}</td>`;
+    const scColor = sc>=80?'#22d3ee':sc>=65?'#4ade80':sc>=45?'#fbbf24':sc>=25?'#fb923c':'#f87171';
+    h += `<td class="score-cell" style="color:${scColor}">${sc}</td>`;
     h += '</tr>';
   });
   h += '</table>';
@@ -1558,7 +1565,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.4.2', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.4.3', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

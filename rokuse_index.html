@@ -518,7 +518,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.4.3';
+const APP_VERSION = '1.4.4';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -1407,16 +1407,16 @@ function generateShareImage() {
         gradTotal.addColorStop(1, '#c084fc');
 
         ctx.fillStyle = '#d8d8ee';
-        ctx.font = 'bold 18px sans-serif';
+        ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('この日の総合スコア', W/2, totalTopY + 24);
 
         ctx.fillStyle = gradTotal;
-        ctx.font = 'bold 46px sans-serif';
+        ctx.font = 'bold 44px sans-serif';
         ctx.fillText(String(totalScore), W/2 - 18, totalTopY + 58);
         ctx.fillStyle = '#e4e4ee';
-        ctx.font = 'bold 18px sans-serif';
+        ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText('点', W/2 + 34, totalTopY + 60);
       }

@@ -729,7 +729,7 @@ function renderLucky(lucky,name){
   h+='<div class="lucky-chips">';
   chips.forEach(([icon,val])=>{
     if(!val) return;
-    const short=String(val).length>18?String(val).substring(0,16)+'…':String(val);
+    const short=String(val).length>20?String(val).substring(0,18)+'…':String(val);
     h+='<div class="lucky-chip"><span class="lucky-chip-icon">'+icon+'</span><span>'+esc(short)+'</span></div>';
   });
   h+='</div>';

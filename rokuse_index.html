@@ -252,6 +252,13 @@ input::placeholder{color:var(--text3)}
 .share-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,50,.95);color:var(--text);font-size:14px;padding:10px 24px;border-radius:50px;border:1px solid rgba(255,255,255,.1);opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:300}
 .share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* ラッキー要素チップ */
+.lucky-strip{padding:6px 0 10px}
+.lucky-strip-title{font-size:11px;color:var(--gold);margin-bottom:6px;letter-spacing:1px}
+.lucky-chips{display:flex;flex-wrap:wrap;gap:5px}
+.lucky-chip{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.06);border-radius:16px;padding:4px 10px 4px 6px;font-size:11px;color:var(--text2);white-space:nowrap}
+.lucky-chip-icon{font-size:13px;flex-shrink:0}
+
 /* LINEブラウザ警告バナー */
 .line-browser-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#00b900,#00d000);color:#fff;padding:14px 16px 14px 16px;box-shadow:0 2px 12px rgba(0,185,0,.4);animation:slideDown .3s ease}
 @keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
@@ -436,13 +443,13 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
       <div id="rokuseArea"></div>
       <div class="section-label" id="cycleLabel">年・月・日のサイクル</div>
       <div id="cycleArea"></div>
+      <div id="luckyArea"></div>
       <div class="section-label" id="compatLabel" style="display:none">相性分析</div>
       <div id="compatArea"></div>
       <div class="section-label" id="baseDiagLabel" style="display:none">基本相性</div>
       <div class="diagnosis-text" id="baseDiagText" style="display:none"></div>
       <div class="section-label" id="dailyDiagLabel">AI診断</div>
       <div class="diagnosis-text" id="diagnosisText"></div>
-      <div id="luckyArea"></div>
     </div>
     <div class="tab-pane" id="paneWeek"  style="display:none"></div>
     <div class="tab-pane" id="paneMonth" style="display:none"></div>
@@ -467,7 +474,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.4.0
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.4.1
   </footer>
 </div>
 
@@ -506,7 +513,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -1397,6 +1404,68 @@ function generateShareImage() {
         curY = drawCycleRow(cardsB, curY) + 12;
       }
 
+      // ラッキー要素チップ（サイクルカード直後に描画）
+      const luckyData = isSolo ? d.lucky : d.luckyA;
+      if (luckyData) {
+        const chipItems = [
+          ['🎨', luckyData.color],  ['🔢', luckyData.number], ['🧭', luckyData.direction],
+          ['✨', luckyData.item],   ['🍽️', luckyData.food],   ['🚀', luckyData.action],
+          ['⛩️', luckyData.powerSpot],
+        ];
+        if (!forMeasure) {
+          ctx.fillStyle = '#f6d860'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText('✦ ' + (isSolo ? (d._nameA||'あなた') : d._nameA) + 'のラッキー', 24, curY + 12);
+        }
+        curY += 20;
+        // チップを横並びで描画（折り返しあり）
+        let chipX = 22, chipY = curY;
+        const chipH = 22, chipGap = 5, chipPadX = 8;
+        if (!forMeasure) { ctx.font = '11px sans-serif'; ctx.textBaseline = 'middle'; }
+        chipItems.forEach(([icon, val]) => {
+          const short = val.length > 14 ? val.substring(0, 12) + '…' : val;
+          const txt = icon + ' ' + short;
+          const tw = forMeasure ? (txt.length * 7 + chipPadX*2) : (ctx.measureText(txt).width + chipPadX*2);
+          if (chipX + tw > W - 22) { chipX = 22; chipY += chipH + chipGap; }
+          if (!forMeasure) {
+            ctx.fillStyle = 'rgba(255,255,255,.07)';
+            roundRect(ctx, chipX, chipY, tw, chipH, 11); ctx.fill();
+            ctx.fillStyle = '#c0c0d0'; ctx.textAlign = 'left';
+            ctx.fillText(txt, chipX + chipPadX, chipY + chipH/2);
+          }
+          chipX += tw + chipGap;
+        });
+        curY = chipY + chipH + 10;
+
+        // ペアの場合はBさんのラッキーも描画
+        if (!isSolo && d.luckyB) {
+          const chipItemsB = [
+            ['🎨', d.luckyB.color],  ['🔢', d.luckyB.number], ['🧭', d.luckyB.direction],
+            ['✨', d.luckyB.item],   ['🍽️', d.luckyB.food],   ['🚀', d.luckyB.action],
+            ['⛩️', d.luckyB.powerSpot],
+          ];
+          if (!forMeasure) {
+            ctx.fillStyle = '#60a5fa'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+            ctx.fillText('✦ ' + (d._nameB||'Bさん') + 'のラッキー', 24, curY + 12);
+          }
+          curY += 20;
+          chipX = 22; chipY = curY;
+          chipItemsB.forEach(([icon, val]) => {
+            const short = val.length > 14 ? val.substring(0, 12) + '…' : val;
+            const txt = icon + ' ' + short;
+            const tw = forMeasure ? (txt.length * 7 + chipPadX*2) : (ctx.measureText(txt).width + chipPadX*2);
+            if (chipX + tw > W - 22) { chipX = 22; chipY += chipH + chipGap; }
+            if (!forMeasure) {
+              ctx.fillStyle = 'rgba(255,255,255,.07)';
+              roundRect(ctx, chipX, chipY, tw, chipH, 11); ctx.fill();
+              ctx.fillStyle = '#c0c0d0'; ctx.textAlign = 'left';
+              ctx.fillText(txt, chipX + chipPadX, chipY + chipH/2);
+            }
+            chipX += tw + chipGap;
+          });
+          curY = chipY + chipH + 10;
+        }
+      }
+
       // 大殺界バナー
       if (bannerLines.length > 0) {
         const totalBH = 16 + bannerLines.length * 38;
@@ -1472,7 +1541,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.4.0', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.4.1', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });
@@ -1486,24 +1555,17 @@ function toggleShareMenu() { document.getElementById('shareMenu').classList.togg
 // ======== ラッキー要素表示 ========
 function renderLucky(lucky, name) {
   if (!lucky) return '';
-  const items = [
-    { icon: '🎨', label: 'ラッキーカラー', value: lucky.color },
-    { icon: '🔢', label: 'ラッキーナンバー', value: lucky.number },
-    { icon: '🧭', label: 'ラッキー方位', value: lucky.direction },
-    { icon: '✨', label: 'ラッキーアイテム', value: lucky.item },
-    { icon: '🍽️', label: 'ラッキーフード', value: lucky.food },
-    { icon: '🚀', label: '開運アクション', value: lucky.action },
-    { icon: '⛩️', label: 'パワースポット', value: lucky.powerSpot },
+  const chips = [
+    ['🎨', lucky.color],  ['🔢', lucky.number], ['🧭', lucky.direction],
+    ['✨', lucky.item],   ['🍽️', lucky.food],   ['🚀', lucky.action],
+    ['⛩️', lucky.powerSpot],
   ];
-  let h = '<div class="lucky-section">';
-  h += `<h3 style="font-size:15px;color:var(--gold);margin-bottom:12px">✦ ${esc(name||'あなた')}のラッキー要素</h3>`;
-  h += '<div class="lucky-grid">';
-  items.forEach(it => {
-    h += `<div class="lucky-card">
-      <div class="lucky-icon">${it.icon}</div>
-      <div class="lucky-label">${esc(it.label)}</div>
-      <div class="lucky-value">${esc(it.value)}</div>
-    </div>`;
+  let h = '<div class="lucky-strip">';
+  h += `<div class="lucky-strip-title">✦ ${esc(name||'あなた')}のラッキー</div>`;
+  h += '<div class="lucky-chips">';
+  chips.forEach(([icon, val]) => {
+    const short = val.length > 16 ? val.substring(0, 14) + '…' : val;
+    h += `<div class="lucky-chip"><span class="lucky-chip-icon">${icon}</span><span>${esc(short)}</span></div>`;
   });
   h += '</div></div>';
   return h;

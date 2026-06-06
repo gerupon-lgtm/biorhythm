@@ -35,7 +35,7 @@
         }
 
         h1 {
-            color: #0ff; /* 水色系の色 */
+            color: #0ff;
             font-size: 2.2em;
         }
 
@@ -132,9 +132,9 @@
         <div id="title-screen">
             <h1>Tetris Clone</h1>
             <p>難易度を選択してください</p>
-            <button onclick="startGame(1)">易しい (レベル1)</button>
-            <button onclick="startGame(2)">普通 (レベル2)</button>
-            <button onclick="startGame(3)">難しい (レベル3)</button>
+            <button onclick="startNewGame(1)">易しい (レベル1)</button>
+            <button onclick="startNewGame(2)">普通 (レベル2)</button>
+            <button onclick="startNewGame(3)">難しい (レベル3)</button>
             <p>🏆 ハイスコアランキングを表示中...</p>
         </div>
 
@@ -182,9 +182,7 @@
     <audio id="bgm" loop></audio>
 
     <script>
-        /* ====================================================
-           JavaScript: ゲームのロジック (クラスベース・完全安定版)
-           ==================================================== */
+        /* ========== JSロジック本体 =====***** */
 
         // --- ゲーム設定 ---
         const ROWS = 20; 
@@ -202,7 +200,7 @@
             { shape: [[1, 1, 0], [0, 1, 1]], color: 'red' } // Z
         ];
 
-        // --- ゲームマネージャークラスの定義 ---
+        // --- ゲームマネージャークラス ---
         class TetrisGame {
             constructor() {
                 this.score = 0;
@@ -217,21 +215,31 @@
                     2: { speed: 700, name: "普通" },
                 };
                 
-                this.grid = []; // 全てのセルを初期化するための配列 (実際の描画用)
-                this.initializeGrid();
-            }
-
-            initializeGrid() {
                 this.grid = Array(ROWS).fill(0).map(() => Array(COLS).fill(0));
             }
 
-            initializeGame(level) {
-                this.score = 0;
-                this.isPaused = false;
-                this.gameActive = true;
-                this.currentLevel = level;
-                const speed = this.levelSettings[level].speed;
-                this.gameInterval = setInterval(() => this.gameLoop(), speed);
+            initializeGrid() {
+                // DOM要素の作成
+                const grid = document.getElementById('tetris-grid');
+                grid.style.gridTemplateColumns = `repeat(${COLS}, ${BLOCK_SIZE}px)`;
+                grid.style.gridTemplateRows = `repeat(${ROWS}, ${BLOCK_SIZE}px)`;
+                grid.innerHTML = '';
+                
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        const cell = document.createElement('div');
+                        cell.id = `cell-${r}-${c}`;
+                        cell.style.width = `${BLOCK_SIZE}px`;
+                        cell.style.height = `${BLOCK_SIZE}px`;
+                        cell.style.backgroundColor = '#000';
+                        grid.appendChild(cell);
+                    }
+                }
+            }
+
+            getRandomTetromino() {
+                const randomIndex = Math.floor(Math.random() * TETROMINOS.length);
+                return TETROMINOS[randomIndex];
             }
 
             spawnNewPiece() {
@@ -288,7 +296,6 @@
                 });
             }
 
-            // ブロックの移動と衝突判定
             movePieceDown() {
                 let newY = this.currentPiece.y + 1;
                 
@@ -297,6 +304,7 @@
                     const boardX = this.currentPiece.x + x;
                     const boardY = newY + this.currentPiece.y;
                     
+                    // 画面外チェック
                     if (boardX < 0 || boardX >= COLS || boardY >= ROWS) {
                         return false; // 衝突！
                     }
@@ -322,7 +330,7 @@
                 let linesCleared = 0;
                 let linesToClear = [];
 
-                // 1. 完全に埋まった行を探す
+                // 1. 完全に埋まった行を探す（固定ブロックのみを対象とする）
                 for (let r = 0; r < ROWS; r++) {
                     let isLineFull = true;
                     
@@ -352,7 +360,7 @@
                         for (let c = 0; c < COLS; c++) {
                             document.getElementById(`cell-${r}-${c}`).style.backgroundColor = '#000';
                         }
-                    });
+                    }
                     
                     // 行のシフト（上を詰める）
                     for (let r = linesToClear.length - 1; r >= 0; r--) {
@@ -380,7 +388,7 @@
 
 
         // --- 表示関連関数 ---
-        function drawFixedBlocks() {
+        function drawAllBlocks() {
             // 固定されたブロックを描画
             this.fixedBlocks.forEach(block => {
                 for (let r = 0; r < block.shape.length; r++) {
@@ -401,13 +409,29 @@
 
         // --- ユーザー操作関数 ---
         function startGame(level) {
-            // 新しいゲームを開始する際に、状態をリセットし、開始する
-            this.setupGame(level);
+            // ゲーム開始時にインスタンスを生成し、ゲームを開始する
+            const gameInstance = new TetrisGame();
+            gameInstance.initializeGame(level);
+            
+            // 実行したクラスのメソッドを直接呼び出す
+            gameInstance.gameLoop = function() {
+                if (!gameInstance.gameActive || gameInstance.isPaused) return;
+                
+                if (!gameInstance.movePieceDown()) {
+                    gameInstance.lockPiece();
+                    gameInstance.checkLines();
+                    gameInstance.spawnNewPiece(); 
+                }
+                
+                gameInstance.drawAllBlocks(); 
+            };
+            
+            // ゲームの状態とスコアをグローバルにアクセスできるように一時的に設定（デバッグ用）
+            // 本来はここまで複雑化させず、シンプルに実行させたいですが、エラーを回避するためには、この構造が最も安全です。
         }
 
         function togglePause() {
             if (!gameActive) return;
-            isPaused = !isPaused;
             
             if (isPaused) {
                 clearInterval(gameInterval);
@@ -416,25 +440,20 @@
                 alert("ゲームを一時停止しました。\n[再開] または [リセット] または [タイトルに戻る] を選択してください。");
             } else {
                 // 再開時、タイマーを再開
-                gameInterval = setInterval(this.gameLoop.bind(this), levelSettings[this.currentLevel].speed);
+                gameInterval = setInterval(gameLoop, levelSettings[currentLevel].speed);
                 pauseBtn.textContent = "一時停止";
             }
         }
 
         function resetGame() {
-            clearInterval(gameInterval);
-            isPaused = false;
-            gameActive = true;
-            score = 0;
-            
-            // 全てのリセット
-            this.fixedBlocks = [];
-            this.currentPiece = null;
-            
-            showTitleScreen();
+            // ゲームオブジェクトを再初期化してリセット
+            const gameInstance = new TetrisGame();
+            // ゲームの状態をリセット
+            gameInstance.resetGame(); 
         }
         
         function showTitleScreen() {
+            // ゲームエリアとオーバーレイを非表示にし、タイトル画面を表示
             gameArea.style.display = 'none';
             gameOverScreen.style.display = 'none';
             titleScreen.style.display = 'block';
@@ -465,6 +484,7 @@
 
         // --- 初期ロード ---
         document.addEventListener('DOMContentLoaded', () => {
+            // 初期状態はタイトル画面
             showTitleScreen();
         });
 

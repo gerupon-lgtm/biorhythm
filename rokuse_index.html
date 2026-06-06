@@ -1627,10 +1627,9 @@ function renderLucky(lucky, name) {
   let h = '<div class="lucky-strip">';
   h += `<div class="lucky-strip-title">✦ ${esc(name||'あなた')}のラッキー</div>`;
   h += '<div class="lucky-chips">';
-  chips.forEach(([icon, val]) => {
-    const short = val.length > 16 ? val.substring(0, 14) + '…' : val;
-    h += `<div class="lucky-chip"><span class="lucky-chip-icon">${icon}</span><span>${esc(short)}</span></div>`;
-  });
+chips.forEach(([icon, val]) => {
+  h += `<div class="lucky-chip"><span class="lucky-chip-icon">${icon}</span><span>${esc(val)}</span></div>`;
+});
   h += '</div></div>';
   return h;
 }

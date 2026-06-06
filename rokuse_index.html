@@ -217,12 +217,19 @@ input::placeholder{color:var(--text3)}
 .bio-legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 
 /* 判定日ピッカー */
-.date-picker-row{display:flex;align-items:center;gap:12px;margin:0 0 8px;padding:12px 20px;background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius)}
+.date-picker-row{display:flex;align-items:center;gap:12px;margin:0 0 8px;padding:12px 20px;background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);flex-wrap:wrap}
 .date-picker-row label{font-size:14px;font-weight:500;color:var(--text2);white-space:nowrap;margin:0;flex-shrink:0}
 .date-picker-row input[type="date"]{width:100%;padding:8px 38px 8px 12px;font-size:15px;margin:0}
 .date-picker-row .field-group{margin-bottom:0;flex:0 0 170px}
+.date-picker-row .target-date-field{flex:0 0 auto}
 .date-picker-row .picker-icon{right:12px;bottom:11px}
 .date-picker-row .optional-hint{font-size:13px;color:var(--text3);margin:0}
+.date-picker-row .target-date-note{flex:1 1 180px;text-align:left;margin:0;color:var(--text2)}
+@media (max-width:520px){
+  .date-picker-row{align-items:flex-start;gap:8px 12px}
+  .date-picker-row .target-date-field{flex:1 1 calc(100% - 58px);min-width:0}
+  .date-picker-row .target-date-note{flex:0 0 100%;text-align:left;margin-top:2px}
+}
 
 /* ヘルプ・モーダル */
 .help-btn{display:inline-flex;align-items:center;gap:5px;margin-top:14px;padding:6px 16px;border:1px solid rgba(167,139,250,.22);border-radius:20px;background:transparent;color:var(--accent2);font-size:13px;font-family:inherit;cursor:pointer;transition:background .2s,border-color .2s}
@@ -373,16 +380,16 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
   <div class="date-picker-row">
     <label for="targetDate_text">判定日</label>
-    <div class="field-group" style="flex:0 0 auto;position:relative">
+    <div class="field-group target-date-field" style="flex:0 0 auto;position:relative">
       <div class="date-input-wrap">
         <input type="text" id="targetDate_text" class="date-text-input" placeholder="YYYY/MM/DD" maxlength="10" inputmode="numeric" autocomplete="off">
         <button type="button" class="date-cal-btn" onclick="openDatePicker('targetDate')" title="カレンダーで選択">
           <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         </button>
         <input type="date" id="targetDate" class="date-hidden">
-        </div>
-        <p class="card-note">未指定なら今日を判定</p>
-        </div>
+      </div>
+    </div>
+    <p class="card-note target-date-note">未指定なら今日を判定</p>
   </div>
 
   <div class="btn-wrap">

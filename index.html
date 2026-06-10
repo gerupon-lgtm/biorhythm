@@ -386,7 +386,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.9.0
+    ver 3.9.1
   </footer>
 </div>
 
@@ -445,7 +445,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.9.0';
+const APP_VERSION='3.9.1';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -1388,8 +1388,17 @@ async function shareResult(mode){
     return;
   }
   if(mode==='line'){
-    const lineUrl='https://line.me/R/msg/text/?'+encodeURIComponent(text);
-    window.open(lineUrl,'_blank');
+    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent));
+    if(isMobile){
+      window.open('https://line.me/R/msg/text/?'+encodeURIComponent(text),'_blank','noopener,noreferrer');
+    }else{
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast('テキストをコピーしました。LINEに貼り付けてください');
+      }catch(e){
+        showToast('コピーに失敗しました');
+      }
+    }
     return;
   }
 

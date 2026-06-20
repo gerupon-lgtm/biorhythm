@@ -487,7 +487,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.4.7
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.4.8
   </footer>
 </div>
 
@@ -526,7 +526,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.4.7';
+const APP_VERSION = '1.4.8';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -792,7 +792,17 @@ async function runDiagnosis() {
   const nameB    = document.getElementById('nameB').value.trim();
   const birthB   = document.getElementById('birthB').value;
   const genderB  = document.getElementById('genderB').value || null;
-  const targetDate = document.getElementById('targetDate').value || null;
+  // 判定日が空欄の場合は null を送らず、送信時点のクライアント当日を明示送信する。
+  // （null 送信だとペイロードが毎回同一になり、キャッシュで古い日付の結果が再利用されるため）
+  // toISOString() は UTC 変換で日付がずれるため使用不可。ローカル時刻基準で組み立てる。
+  let targetDate = document.getElementById('targetDate').value;
+  if (!targetDate) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    targetDate = `${y}-${m}-${dd}`;
+  }
   if (!birthA) { showError('一人目の生年月日を入力してください'); return; }
   const isSolo = !birthB;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -805,7 +815,7 @@ async function runDiagnosis() {
   document.getElementById('errorMsg').classList.remove('show');
   showLoading();
   try {
-    const res = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const res = await fetch(API_URL, { method:'POST', cache:'no-store', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error || 'サーバーエラー ('+res.status+')'); }
     const data = await res.json();
     hideLoading();
@@ -1606,7 +1616,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.4.7', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.4.8', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

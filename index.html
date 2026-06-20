@@ -386,7 +386,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.9.1
+    ver 3.9.2
   </footer>
 </div>
 
@@ -445,7 +445,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.9.1';
+const APP_VERSION='3.9.2';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -628,7 +628,15 @@ async function runDiagnosis(){
   const timeBraw=document.getElementById('timeB').value.trim();
   const targetDateRaw=document.getElementById('targetDate').value.trim();
   if(targetDateRaw&&!/^\d{4}\/\d{2}\/\d{2}$/.test(targetDateRaw)){showError('判定日はYYYY/MM/DD形式で入力してください（例: 2026/05/22）');return}
-  const targetDate=targetDateRaw?targetDateRaw.replace(/\//g,'-'):null;
+  // 判定日が空欄の場合は「占い実施日（アクセス当日）」をクライアント側で確定して送信する。
+  // ページを過去に開いたまま放置していても、送信時点の当日が正しく使われる。
+  let targetDate;
+  if(targetDateRaw){
+    targetDate=targetDateRaw.replace(/\//g,'-');
+  }else{
+    const td=new Date();
+    targetDate=td.getFullYear()+'-'+String(td.getMonth()+1).padStart(2,'0')+'-'+String(td.getDate()).padStart(2,'0');
+  }
   if(!birthAraw){showError('一人目の生年月日を入力してください');return}
   if(!/^\d{4}\/\d{2}\/\d{2}$/.test(birthAraw)){showError('一人目の生年月日はYYYY/MM/DD形式で入力してください（例: 2000/01/15）');return}
   if(birthBraw&&!/^\d{4}\/\d{2}\/\d{2}$/.test(birthBraw)){showError('二人目の生年月日はYYYY/MM/DD形式で入力してください（例: 2000/01/15）');return}
@@ -650,7 +658,7 @@ async function runDiagnosis(){
   document.getElementById('result').classList.remove('visible');document.getElementById('errorMsg').classList.remove('show');
   showLoading();
   try{
-    const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const res=await fetch(API_URL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error||'サーバーエラー ('+res.status+')')}
     const data=await res.json();
     hideLoading();

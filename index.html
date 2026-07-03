@@ -386,7 +386,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.9.2
+    ver 3.a.1
   </footer>
 </div>
 
@@ -445,10 +445,13 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.9.2';
+const APP_VERSION='3.a.1';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
+  // 保存済みの入力内容を復元（判定対象日=targetDateは保持対象外）
+  loadSavedInputs();
+
   const now=new Date();
   const y=now.getFullYear()-20;
   const m=String(now.getMonth()+1).padStart(2,'0');
@@ -495,7 +498,43 @@ document.addEventListener('DOMContentLoaded',function(){
       this.value=v;
     });
   });
+  // 入力内容の自動保存（判定対象日を除く全フィールド）
+  SAVED_FIELDS.forEach(id=>{
+    const inp=document.getElementById(id);
+    if(!inp) return;
+    inp.addEventListener('change',saveInputs);
+    inp.addEventListener('input',saveInputs);
+  });
 });
+
+// ================================================================
+//  入力内容のLocalStorage保持（判定対象日 targetDate は保持しない）
+// ================================================================
+const LS_KEY='unmei_saved_inputs_v1';
+const SAVED_FIELDS=['nameA','genderA','birthA','timeA','nameB','genderB','birthB','timeB'];
+
+function saveInputs(){
+  try{
+    const data={};
+    SAVED_FIELDS.forEach(id=>{
+      const inp=document.getElementById(id);
+      if(inp) data[id]=inp.value;
+    });
+    localStorage.setItem(LS_KEY,JSON.stringify(data));
+  }catch(e){/* プライベートモード等で失敗しても無視 */}
+}
+
+function loadSavedInputs(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    const data=JSON.parse(raw);
+    SAVED_FIELDS.forEach(id=>{
+      const inp=document.getElementById(id);
+      if(inp&&typeof data[id]==='string'&&data[id]!=='') inp.value=data[id];
+    });
+  }catch(e){/* 破損データ等は無視 */}
+}
 
 // ピッカー起動（隠しdate/time inputを使用）
 function openPicker(pickerId, textId, type){
@@ -518,6 +557,7 @@ function openPicker(pickerId, textId, type){
     } else if(type==='time'&&this.value){
       textInput.value=this.value;
     }
+    if(typeof saveInputs==='function') saveInputs();
   };
 
   // showPickerが使えるブラウザはそれを使う、なければfocus+clickで代替

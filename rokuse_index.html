@@ -393,6 +393,15 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
     <p class="card-note target-date-note">未指定なら今日を判定</p>
   </div>
 
+  <div class="save-inputs-row" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:4px 0 12px;">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;color:#cbd5e1;user-select:none;">
+      <input type="checkbox" id="saveInputs" style="width:16px;height:16px;accent-color:#a78bfa;cursor:pointer;">
+      入力内容を保存する（判定日を除く）
+    </label>
+    <button type="button" id="clearSavedBtn" onclick="clearSavedInputs()" title="保存した入力内容を消去"
+      style="display:none;background:none;border:1px solid #475569;color:#94a3b8;border-radius:6px;padding:2px 8px;font-size:0.75rem;cursor:pointer;">消去</button>
+  </div>
+
   <div class="btn-wrap">
     <button class="btn" id="diagnoseBtn" onclick="runDiagnosis()">
       <span class="spinner"></span>
@@ -487,7 +496,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.4.8
+    六星占術 × バイオリズム — Powered by Gemini AI<br>ver 1.5.0
   </footer>
 </div>
 
@@ -526,7 +535,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.4.8';
+const APP_VERSION = '1.5.0';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -665,13 +674,92 @@ function setupDateInput(textId, dateId) {
   });
 }
 
+// ================================================================
+//  入力内容の保存（LocalStorage）
+//  判定日（targetDate）は「その時の占い対象日」であり保存対象外。
+//  保存対象: 一人目/二人目の名前・性別・生年月日、および保存フラグ自体。
+// ================================================================
+const STORAGE_KEY = 'rokuse_saved_inputs_v1';
+
+function saveInputs() {
+  try {
+    const data = {
+      nameA:   document.getElementById('nameA').value,
+      genderA: document.getElementById('genderA').value,
+      birthA:  document.getElementById('birthA').value,
+      nameB:   document.getElementById('nameB').value,
+      genderB: document.getElementById('genderB').value,
+      birthB:  document.getElementById('birthB').value,
+      // 判定日は意図的に保存しない
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) { console.error('saveInputs error:', e); }
+}
+
+function loadInputs() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    const setDate = (dateId, textId, iso) => {
+      if (!iso) return;
+      const dEl = document.getElementById(dateId);
+      const tEl = document.getElementById(textId);
+      if (dEl) dEl.value = iso;
+      if (tEl) tEl.value = isoToDisplay(iso);
+    };
+    if (data.nameA   != null) document.getElementById('nameA').value   = data.nameA;
+    if (data.genderA != null) document.getElementById('genderA').value = data.genderA;
+    setDate('birthA', 'birthA_text', data.birthA);
+    if (data.nameB   != null) document.getElementById('nameB').value   = data.nameB;
+    if (data.genderB != null) document.getElementById('genderB').value = data.genderB;
+    setDate('birthB', 'birthB_text', data.birthB);
+    return true;
+  } catch (e) { console.error('loadInputs error:', e); return false; }
+}
+
+function clearSavedInputs() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    const cb = document.getElementById('saveInputs');
+    if (cb) cb.checked = false;
+    updateClearBtnVisibility();
+    showToast('保存した入力内容を消去しました');
+  } catch (e) { console.error('clearSavedInputs error:', e); }
+}
+
+function updateClearBtnVisibility() {
+  try {
+    const btn = document.getElementById('clearSavedBtn');
+    if (!btn) return;
+    btn.style.display = localStorage.getItem(STORAGE_KEY) ? 'inline-block' : 'none';
+  } catch (e) {}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // 日付入力の双方向同期を設定
   setupDateInput('birthA_text', 'birthA');
   setupDateInput('birthB_text', 'birthB');
   setupDateInput('targetDate_text', 'targetDate');
 
-  // birthAのデフォルト値（20年前）
+  // 保存された入力内容の復元（判定日は対象外）
+  let hasSaved = false;
+  try {
+    hasSaved = !!localStorage.getItem(STORAGE_KEY);
+    if (hasSaved) loadInputs();
+    const cb = document.getElementById('saveInputs');
+    if (cb) {
+      cb.checked = hasSaved; // 保存済みならチェックON状態で表示
+      cb.addEventListener('change', () => {
+        if (cb.checked) { saveInputs(); }
+        else { localStorage.removeItem(STORAGE_KEY); }
+        updateClearBtnVisibility();
+      });
+    }
+    updateClearBtnVisibility();
+  } catch(e) { console.error('restore error:', e); }
+
+  // birthAのデフォルト値（20年前）※保存データがある場合は上書きしない
   try {
     const now = new Date();
     const y = now.getFullYear() - 20;
@@ -804,6 +892,13 @@ async function runDiagnosis() {
     targetDate = `${y}-${m}-${dd}`;
   }
   if (!birthA) { showError('一人目の生年月日を入力してください'); return; }
+
+  // 保存フラグがONなら、診断実行時点の入力内容を保存（判定日は除外）
+  try {
+    const cb = document.getElementById('saveInputs');
+    if (cb && cb.checked) { saveInputs(); updateClearBtnVisibility(); }
+  } catch(e) {}
+
   const isSolo = !birthB;
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const payload = { nameA, birthA, genderA, targetDate, timezone: tz, mode: isSolo ? 'solo' : 'pair' };
@@ -1616,7 +1711,7 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.4.8', W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText('六星占術 × バイオリズム — Powered by Gemini AI  ver 1.5.0', W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

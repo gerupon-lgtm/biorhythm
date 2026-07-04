@@ -496,7 +496,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by AI<br>ver 1.6.0
+    六星占術 × バイオリズム — Powered by <span id="footerModelLabel">AI</span><br>ver 1.6.1
   </footer>
 </div>
 
@@ -535,7 +535,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.6.1';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -923,8 +923,35 @@ async function runDiagnosis() {
   finally { btn.disabled = false; btn.classList.remove('loading'); }
 }
 
+// ========== フッターのLLM名表示 ==========
+// usedModel は "provider:model" 形式（例: ollama:llama3.1:8b, openrouter:meta-llama/llama-3.1-70b-instruct）
+// または Gemini 単独時は "gemini-2.5-flash" のようにプロバイダ接頭辞なしで返る。
+// 画面表示: 詳細モデル名まで表示。共有画像（PNG）: プロバイダ名のみ（自宅環境の詳細を外部に出さないため）。
+function formatUsedModelLabel(usedModel) {
+  if (!usedModel) return 'AI';
+  if (usedModel.startsWith('ollama:'))     return 'Ollama (' + usedModel.slice('ollama:'.length) + ')';
+  if (usedModel.startsWith('openrouter:')) return 'OpenRouter (' + usedModel.slice('openrouter:'.length) + ')';
+  if (usedModel.startsWith('gemini'))      return 'Gemini (' + usedModel + ')';
+  return usedModel;
+}
+function formatUsedModelProviderOnly(usedModel) {
+  if (!usedModel) return 'AI';
+  if (usedModel.startsWith('ollama:'))     return 'Ollama';
+  if (usedModel.startsWith('openrouter:')) return 'OpenRouter';
+  if (usedModel.startsWith('gemini'))      return 'Gemini';
+  return 'AI';
+}
+function updateFooterModel(usedModel) {
+  try {
+    const label = formatUsedModelLabel(usedModel);
+    const el = document.getElementById('footerModelLabel');
+    if (el) el.textContent = label;
+  } catch(e) { console.error('updateFooterModel error:', e); }
+}
+
 // ========== 表示（ソロ） ==========
 function displaySolo(d, name) {
+  updateFooterModel(d.usedModel);
   d._nameA = name;
   lastDiagData = d;
   document.getElementById('resultTitle').innerHTML = `${esc(name)}の六星運勢<br>（${esc(fmtDateFull(d.targetDate))}）`;
@@ -981,6 +1008,7 @@ function displaySolo(d, name) {
 
 // ========== 表示（ペア） ==========
 function displayPair(d, nA, nB) {
+  updateFooterModel(d.usedModel);
   d._nameA = nA; d._nameB = nB;
   lastDiagData = d;
   document.getElementById('resultTitle').innerHTML = `${esc(nA)} × ${esc(nB)} の六星相性<br>（${esc(fmtDateFull(d.targetDate))}）`;
@@ -1711,7 +1739,8 @@ function generateShareImage() {
 
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('六星占術 × バイオリズム — Powered by AI  ver 1.6.0', W/2, contentBottom + FOOTER_H/2 + 4);
+    const footerModelLabel = formatUsedModelProviderOnly(lastDiagData && lastDiagData.usedModel);
+    ctx.fillText(`六星占術 × バイオリズム — Powered by ${footerModelLabel}  ver 1.6.1`, W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

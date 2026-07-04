@@ -385,8 +385,8 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     </div>
   </div>
   <footer>
-    Biorhythm × 四柱推命 — Powered by Gemini AI<br>
-    ver 3.a.1
+    Biorhythm × 四柱推命 — Powered by <span id="poweredByModel">AI</span><br>
+    ver 3.a.3
   </footer>
 </div>
 
@@ -445,7 +445,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.a.1';
+const APP_VERSION='3.a.3';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -706,9 +706,22 @@ async function runDiagnosis(){
   }catch(e){hideLoading();showError('診断に失敗しました: '+e.message)}finally{btn.disabled=false;btn.classList.remove('loading')}
 }
 
+// 診断結果に使われたAIモデルをfooterの「Powered by」に反映する
+// usedModelは "ollama:llama3.1" のような "プロバイダ:モデル名" 形式
+function updatePoweredByFooter(usedModel){
+  const el=document.getElementById('poweredByModel');
+  if(!el||!usedModel) return;
+  const [provider,...rest]=String(usedModel).split(':');
+  const modelName=rest.join(':')||provider;
+  const PROVIDER_LABEL={ollama:'Ollama',openrouter:'OpenRouter',gemini:'Gemini'};
+  const label=PROVIDER_LABEL[provider]||provider;
+  el.textContent=label+' ('+modelName+')';
+}
+
 function displaySolo(d,name){
   d._nameA=name;
   lastDiagData=d;
+  updatePoweredByFooter(d.usedModel);
   document.getElementById('resultTitle').innerHTML=esc(name)+'のコンディション'+(d.targetDate?'<br>（'+esc(fmtDateFull(d.targetDate))+'）':'');
   document.getElementById('scorePct').textContent='点';
   setScore(d.overallScore);setBars(d);
@@ -736,6 +749,7 @@ function displaySolo(d,name){
 function displayPair(d,nA,nB){
   d._nameA=nA;d._nameB=nB;
   lastDiagData=d;
+  updatePoweredByFooter(d.usedModel);
   document.getElementById('resultTitle').innerHTML=esc(nA)+' × '+esc(nB)+' の運命相性'+(d.targetDate?'<br>（'+esc(fmtDateFull(d.targetDate))+'）':'');
   document.getElementById('scorePct').textContent='%';
   setScore(d.overallScore);setBars(d);

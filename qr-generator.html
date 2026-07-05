@@ -6,7 +6,6 @@
 <title>QRコード生成</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     background: #f5f5f5;
     color: #222;
@@ -17,21 +16,8 @@
     justify-content: center;
     padding: 40px 16px;
   }
-
-  .container {
-    width: 100%;
-    max-width: 420px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  h1 {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #111;
-  }
-
+  .container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
+  h1 { font-size: 1.2rem; font-weight: 700; color: #111; }
   .card {
     background: #fff;
     border: 1px solid #ddd;
@@ -41,15 +27,7 @@
     flex-direction: column;
     gap: 12px;
   }
-
-  label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #555;
-    display: block;
-    margin-bottom: 4px;
-  }
-
+  label { font-size: 0.8rem; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
   textarea {
     width: 100%;
     min-height: 80px;
@@ -58,19 +36,12 @@
     padding: 9px 11px;
     font-family: inherit;
     font-size: 0.9rem;
-    color: #222;
     resize: vertical;
     outline: none;
     transition: border-color 0.15s;
   }
   textarea:focus { border-color: #4a90d9; }
-
-  .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   select, input[type="number"] {
     width: 100%;
     border: 1px solid #ccc;
@@ -78,16 +49,12 @@
     padding: 8px 10px;
     font-family: inherit;
     font-size: 0.9rem;
-    color: #222;
     background: #fff;
     outline: none;
     transition: border-color 0.15s;
-    appearance: none;
-    -webkit-appearance: none;
   }
+  select { appearance: none; -webkit-appearance: none; }
   select:focus, input[type="number"]:focus { border-color: #4a90d9; }
-  input[type="number"] { appearance: auto; -webkit-appearance: auto; }
-
   button {
     width: 100%;
     padding: 10px;
@@ -103,7 +70,6 @@
   }
   button:hover { background: #235d9e; }
   button:active { background: #1c4f88; }
-
   .error {
     display: none;
     background: #fff3f3;
@@ -113,7 +79,6 @@
     font-size: 0.82rem;
     color: #c0392b;
   }
-
   .output-card {
     display: none;
     background: #fff;
@@ -125,33 +90,19 @@
     gap: 14px;
   }
   .output-card.visible { display: flex; }
-
-  #qr-canvas {
-    display: block;
-    border: 1px solid #e0e0e0;
-    image-rendering: pixelated;
-    max-width: 100%;
-  }
-
-  .btn-dl {
-    background: #fff;
-    color: #2a6db5;
-    border: 1px solid #2a6db5;
-  }
+  #qr-canvas { display: block; border: 1px solid #e0e0e0; image-rendering: pixelated; max-width: 100%; }
+  .btn-dl { background: #fff; color: #2a6db5; border: 1px solid #2a6db5; }
   .btn-dl:hover { background: #eaf2fb; }
-  .btn-dl:active { background: #d5e8f7; }
 </style>
 </head>
 <body>
 <div class="container">
   <h1>QRコード生成</h1>
-
   <div class="card">
     <div>
       <label for="qr-text">テキスト / URL</label>
       <textarea id="qr-text" placeholder="URLやテキストを入力&#10;例: https://example.com"></textarea>
     </div>
-
     <div class="row">
       <div>
         <label for="ec-level">誤り訂正レベル</label>
@@ -167,11 +118,9 @@
         <input type="number" id="qr-size" value="300" min="100" max="2000" step="10">
       </div>
     </div>
-
     <div class="error" id="error-msg"></div>
     <button onclick="generateQR()">生成　（Ctrl+Enter）</button>
   </div>
-
   <div class="output-card" id="output-card">
     <canvas id="qr-canvas"></canvas>
     <button class="btn-dl" onclick="downloadQR()">⬇ PNGとして保存</button>
@@ -180,45 +129,52 @@
 
 <script>
 // ============================================================
-//  QR Code Pure JS (ISO 18004, byte mode, versions 1-10)
+//  QR Code Pure JS  (ISO 18004, byte mode, versions 1-10)
+//
+//  Module values:
+//    -1 = unset (will be filled by placeData)
+//     0 = data module, light
+//     1 = data module, dark
+//     2 = functional module, dark  (finder/align/timing/format)
+//     3 = functional module, light
+//  Only 0/1 modules are touched by applyMask, so functional
+//  patterns (finder patterns etc.) are never corrupted.
 // ============================================================
 const QR = (() => {
-  const EXP = new Uint8Array(512);
-  const LOG = new Uint8Array(256);
+
+  // GF(256) arithmetic
+  const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
   (() => {
     let x = 1;
     for (let i = 0; i < 255; i++) {
       EXP[i] = x; LOG[x] = i;
-      x = x << 1; if (x & 0x100) x ^= 0x11d;
+      x <<= 1; if (x & 0x100) x ^= 0x11d;
     }
     for (let i = 255; i < 512; i++) EXP[i] = EXP[i - 255];
   })();
   const gfMul = (a, b) => (a && b) ? EXP[LOG[a] + LOG[b]] : 0;
-  const gfPoly = (deg) => {
+  const gfPoly = deg => {
     let p = [1];
     for (let i = 0; i < deg; i++) {
-      const q = [1, EXP[i]];
-      const r = new Array(p.length + 1).fill(0);
+      const q = [1, EXP[i]], r = new Array(p.length + 1).fill(0);
       for (let j = 0; j < p.length; j++)
-        for (let k = 0; k < q.length; k++)
-          r[j + k] ^= gfMul(p[j], q[k]);
+        for (let k = 0; k < q.length; k++) r[j+k] ^= gfMul(p[j], q[k]);
       p = r;
     }
     return p;
   };
   const rsEncode = (data, nec) => {
-    const gen = gfPoly(nec);
-    const msg = [...data, ...new Array(nec).fill(0)];
+    const gen = gfPoly(nec), msg = [...data, ...new Array(nec).fill(0)];
     for (let i = 0; i < data.length; i++) {
       const c = msg[i];
-      if (c) for (let j = 0; j < gen.length; j++) msg[i + j] ^= gfMul(gen[j], c);
+      if (c) for (let j = 0; j < gen.length; j++) msg[i+j] ^= gfMul(gen[j], c);
     }
     return msg.slice(data.length);
   };
 
-  const utf8 = (str) => [...new TextEncoder().encode(str)];
+  const utf8 = str => [...new TextEncoder().encode(str)];
 
-  const EC_IDX = {L:0, M:1, Q:2, H:3};
+  const EC_IDX = { L:0, M:1, Q:2, H:3 };
   const VER_EC = [
     null,
     [[19,7,[[1,19]]],[16,10,[[1,16]]],[13,13,[[1,13]]],[9,17,[[1,9]]]],
@@ -232,219 +188,260 @@ const QR = (() => {
     [[232,30,[[2,116]]],[182,22,[[3,36],[2,37]]],[132,20,[[4,16],[4,17]]],[100,24,[[4,12],[4,13]]]],
     [[274,18,[[2,68],[2,69]]],[216,26,[[4,43],[1,44]]],[154,24,[[6,19],[2,20]]],[122,28,[[6,15],[2,16]]]],
   ];
-
   const ALIGN_POS = [
     [],[],[6,18],[6,22],[6,26],[6,30],[6,34],
     [6,22,38],[6,24,42],[6,26,46],[6,28,50],
   ];
-
   const FORMAT_INFO = {
     L:[0x77C4,0x72F3,0x7DAA,0x789D,0x662F,0x6318,0x6C41,0x6976],
     M:[0x5412,0x5125,0x5E7C,0x5B4B,0x45F9,0x40CE,0x4F97,0x4AA0],
     Q:[0x355F,0x3068,0x3F31,0x3A06,0x24B4,0x2183,0x2EDA,0x2BED],
     H:[0x1689,0x13BE,0x1CE7,0x19D0,0x0762,0x0255,0x0D0C,0x083B],
   };
-
   const MASK_FN = [
-    (r,c)=>(r+c)%2===0,(r,c)=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,
-    (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>(r*c)%2+(r*c)%3===0,
-    (r,c)=>((r*c)%2+(r*c)%3)%2===0,(r,c)=>((r+c)%2+(r*c)%3)%2===0,
+    (r,c)=>(r+c)%2===0, (r,c)=>r%2===0, (r,c)=>c%3===0,
+    (r,c)=>(r+c)%3===0, (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,
+    (r,c)=>(r*c)%2+(r*c)%3===0, (r,c)=>((r*c)%2+(r*c)%3)%2===0,
+    (r,c)=>((r+c)%2+(r*c)%3)%2===0,
   ];
 
-  const makeMatrix = (size) => Array.from({length:size},()=>new Int8Array(size).fill(-1));
-  const setM = (m,r,c,v) => { if(r>=0&&r<m.length&&c>=0&&c<m.length) m[r][c]=v; };
+  const DARK = 2, LIGHT = 3;
+  const makeMatrix = sz => Array.from({length:sz}, () => new Array(sz).fill(-1));
+  const setF = (m, r, c, dark) => {
+    if (r >= 0 && r < m.length && c >= 0 && c < m.length)
+      m[r][c] = dark ? DARK : LIGHT;
+  };
 
-  const placeFinder = (m,r,c) => {
-    for(let dr=-1;dr<=7;dr++) for(let dc=-1;dc<=7;dc++) {
-      const v=(dr===0||dr===6||dc===0||dc===6||(dr>=2&&dr<=4&&dc>=2&&dc<=4))?1:0;
-      setM(m,r+dr,c+dc,(dr<0||dr>6||dc<0||dc>6)?0:v);
+  // Finder pattern 7×7 + 1-wide separator
+  const placeFinder = (m, r, c) => {
+    for (let dr = -1; dr <= 7; dr++) for (let dc = -1; dc <= 7; dc++) {
+      const inP = dr>=0&&dr<=6&&dc>=0&&dc<=6;
+      const dark = inP && (dr===0||dr===6||dc===0||dc===6||(dr>=2&&dr<=4&&dc>=2&&dc<=4));
+      setF(m, r+dr, c+dc, dark);
     }
   };
-  const placeAlign = (m,r,c) => {
-    for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++) {
-      const v=(dr===-2||dr===2||dc===-2||dc===2||(dr===0&&dc===0))?1:0;
-      if(m[r+dr][c+dc]===-1) m[r+dr][c+dc]=v;
+
+  // Alignment pattern 5×5
+  const placeAlign = (m, r, c) => {
+    for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++)
+      if (m[r+dr][c+dc] < 0)
+        m[r+dr][c+dc] = (dr===-2||dr===2||dc===-2||dc===2||(dr===0&&dc===0)) ? DARK : LIGHT;
+  };
+
+  // Timing patterns (row 6 and col 6)
+  const placeTiming = (m, sz) => {
+    for (let i = 8; i < sz-8; i++) {
+      if (m[6][i] < 0) m[6][i] = (i%2===0) ? DARK : LIGHT;
+      if (m[i][6] < 0) m[i][6] = (i%2===0) ? DARK : LIGHT;
     }
   };
-  const reserveFormat = (m,size) => {
-    for(let i=0;i<9;i++){if(m[8][i]===-1)m[8][i]=-2;if(m[i][8]===-1)m[i][8]=-2;}
-    for(let i=0;i<8;i++){if(m[8][size-1-i]===-1)m[8][size-1-i]=-2;if(m[size-1-i][8]===-1)m[size-1-i][8]=-2;}
-    m[size-8][8]=-2;
-  };
-  const placeTiming = (m,size) => {
-    for(let i=8;i<size-8;i++){
-      if(m[6][i]===-1)m[6][i]=(i%2===0)?1:0;
-      if(m[i][6]===-1)m[i][6]=(i%2===0)?1:0;
+
+  // Reserve format info areas (temporary LIGHT; replaced by placeFormat)
+  const reserveFormat = (m, sz) => {
+    for (let i = 0; i < 9; i++) {
+      if (m[8][i] < 0)     m[8][i]   = LIGHT;
+      if (m[i][8] < 0)     m[i][8]   = LIGHT;
     }
+    for (let i = 0; i < 8; i++) {
+      if (m[8][sz-1-i] < 0) m[8][sz-1-i] = LIGHT;
+      if (m[sz-1-i][8] < 0) m[sz-1-i][8] = LIGHT;
+    }
+    m[sz-8][8] = DARK; // always-dark module
   };
-  const placeData = (m,size,data) => {
-    let bit=0, up=true;
-    for(let col=size-1;col>=1;col-=2){
-      if(col===6)col=5;
-      for(let row=0;row<size;row++){
-        const r=up?size-1-row:row;
-        for(let dc=0;dc<2;dc++){
-          const c=col-dc;
-          if(m[r][c]===-1){
-            m[r][c]=(bit<data.length*8)?((data[bit>>3]>>(7-(bit&7)))&1):0;
+
+  // Data placement (two-column serpentine, right to left)
+  const placeData = (m, sz, data) => {
+    let bit = 0, up = true;
+    for (let col = sz-1; col >= 1; col -= 2) {
+      if (col === 6) col = 5; // skip timing column; while-style: next will be col=3
+      for (let row = 0; row < sz; row++) {
+        const r = up ? sz-1-row : row;
+        for (let dc = 0; dc < 2; dc++) {
+          const c = col - dc;
+          if (m[r][c] === -1) {
+            m[r][c] = (bit < data.length*8) ? ((data[bit>>3] >> (7-(bit&7))) & 1) : 0;
             bit++;
           }
         }
       }
-      up=!up;
+      up = !up;
     }
   };
-  const applyMask = (m,size,mask) => {
-    const fn=MASK_FN[mask];
-    const out=m.map(r=>[...r]);
-    for(let r=0;r<size;r++) for(let c=0;c<size;c++)
-      if(out[r][c]===0||out[r][c]===1) if(fn(r,c)) out[r][c]^=1;
+
+  // Apply mask to data modules only (value 0 or 1)
+  const applyMask = (m, sz, mask) => {
+    const fn = MASK_FN[mask], out = m.map(row => [...row]);
+    for (let r = 0; r < sz; r++) for (let c = 0; c < sz; c++)
+      if (out[r][c] === 0 || out[r][c] === 1) if (fn(r,c)) out[r][c] ^= 1;
     return out;
   };
-  const penalty = (m,size) => {
-    let s=0;
-    for(let r=0;r<size;r++){let run=1;for(let c=1;c<size;c++){if(m[r][c]===m[r][c-1]){run++;if(run===5)s+=3;else if(run>5)s++;}else run=1;}}
-    for(let c=0;c<size;c++){let run=1;for(let r=1;r<size;r++){if(m[r][c]===m[r-1][c]){run++;if(run===5)s+=3;else if(run>5)s++;}else run=1;}}
-    for(let r=0;r<size-1;r++) for(let c=0;c<size-1;c++)
-      if(m[r][c]===m[r][c+1]&&m[r][c]===m[r+1][c]&&m[r][c]===m[r+1][c+1])s+=3;
+
+  // Penalty score (rules 1–2; sufficient for mask selection)
+  const penaltyScore = (m, sz) => {
+    let s = 0;
+    const v = (r,c) => (m[r][c]===1 || m[r][c]===DARK) ? 1 : 0;
+    for (let r = 0; r < sz; r++) {
+      let run = 1;
+      for (let c = 1; c < sz; c++) {
+        if (v(r,c)===v(r,c-1)) { run++; if (run===5) s+=3; else if (run>5) s++; }
+        else run = 1;
+      }
+    }
+    for (let c = 0; c < sz; c++) {
+      let run = 1;
+      for (let r = 1; r < sz; r++) {
+        if (v(r,c)===v(r-1,c)) { run++; if (run===5) s+=3; else if (run>5) s++; }
+        else run = 1;
+      }
+    }
+    for (let r = 0; r < sz-1; r++) for (let c = 0; c < sz-1; c++)
+      if (v(r,c)===v(r,c+1) && v(r,c)===v(r+1,c) && v(r,c)===v(r+1,c+1)) s += 3;
     return s;
   };
-  const placeFormat = (m,size,ecLevel,mask) => {
-    const fi=FORMAT_INFO[ecLevel][mask];
-    const fb=Array.from({length:15},(_,i)=>(fi>>(14-i))&1);
-    const seq=[0,1,2,3,4,5,7,8],seq2=[8,7,5,4,3,2,1,0];
-    for(let i=0;i<8;i++){m[8][seq[i]]=fb[i];m[seq2[i]][8]=fb[i];}
-    for(let i=0;i<7;i++){m[8][size-7+i]=fb[8+i];m[size-1-i][8]=fb[8+i];}
-    m[size-8][8]=1;
+
+  // Write format information (ISO 18004 §7.9)
+  // Bit order: fi bit-i (LSB=0) placed per standard layout
+  const placeFormat = (m, sz, ecLevel, mask) => {
+    const fi = FORMAT_INFO[ecLevel][mask];
+    // Vertical copy — col 8, rows 0-8 (skip row 6 = timing)
+    for (let i = 0; i < 8; i++) {
+      const r = i < 6 ? i : i + 1; // 0-5 direct, 6→7, 7→8
+      m[r][8] = ((fi >> i) & 1) ? DARK : LIGHT;
+    }
+    // Vertical second copy — col 8, rows (sz-7) to (sz-1)
+    for (let i = 8; i < 15; i++)
+      m[sz - 15 + i][8] = ((fi >> i) & 1) ? DARK : LIGHT;
+    // Horizontal copy — row 8
+    for (let i = 0; i < 15; i++) {
+      let c;
+      if      (i < 8) c = sz - 1 - i;   // cols sz-1 down to sz-8  (bits 0-7)
+      else if (i === 8) c = 7;            // col 7                   (bit 8)
+      else    c = 14 - i;                 // cols 5 down to 0        (bits 9-14)
+      m[8][c] = ((fi >> i) & 1) ? DARK : LIGHT;
+    }
+    m[sz - 8][8] = DARK; // always-dark module
   };
 
+  // ── Main encode ──────────────────────────────────────────
   const encode = (text, ecLevel) => {
     const data = utf8(text);
-    const idx = EC_IDX[ecLevel];
+    const idx  = EC_IDX[ecLevel];
+
     let version = -1;
-    for(let v=1;v<=10;v++){
-      const needed=4+(data.length<256?8:16)+data.length*8;
-      if(VER_EC[v][idx][0]*8>=needed+4){version=v;break;}
+    for (let v = 1; v <= 10; v++) {
+      const needed = 4 + (data.length < 256 ? 8 : 16) + data.length * 8;
+      if (VER_EC[v][idx][0] * 8 >= needed + 4) { version = v; break; }
     }
-    if(version===-1) return null;
+    if (version === -1) return null;
 
-    const [totalDC,ecPerBlock,groups]=VER_EC[version][idx];
-    const size=4*version+17;
+    const [totalDC, ecPerBlock, groups] = VER_EC[version][idx];
+    const sz = 4 * version + 17;
 
-    let bits=[];
-    const push=(v,n)=>{for(let i=n-1;i>=0;i--)bits.push((v>>i)&1);};
-    push(4,4);push(data.length,data.length<256?8:16);
-    for(const b of data)push(b,8);
-    push(0,4);
-    while(bits.length%8)bits.push(0);
-    const pads=[0xEC,0x11];let pi=0;
-    while(bits.length<totalDC*8){push(pads[pi%2],8);pi++;}
+    // Build data bitstream
+    const bits = [];
+    const push = (v, n) => { for (let i = n-1; i >= 0; i--) bits.push((v>>i)&1); };
+    push(4, 4);
+    push(data.length, data.length < 256 ? 8 : 16);
+    for (const b of data) push(b, 8);
+    push(0, 4);
+    while (bits.length % 8) bits.push(0);
+    const pads = [0xEC, 0x11]; let pi = 0;
+    while (bits.length < totalDC * 8) push(pads[pi++ % 2], 8);
 
-    const msgBytes=[];
-    for(let i=0;i<totalDC;i++)msgBytes.push(bits.slice(i*8,i*8+8).reduce((a,b)=>a*2+b,0));
+    const msgBytes = [];
+    for (let i = 0; i < totalDC; i++)
+      msgBytes.push(bits.slice(i*8, i*8+8).reduce((a,b) => a*2+b, 0));
 
-    let pos=0;
-    const dcBlocks=[],ecBlocks=[];
-    for(const [cnt,dcPerBlock] of groups){
-      for(let b=0;b<cnt;b++){
-        const slice=msgBytes.slice(pos,pos+dcPerBlock);
-        dcBlocks.push(slice);ecBlocks.push(rsEncode(slice,ecPerBlock));pos+=dcPerBlock;
+    // RS encode and interleave
+    let pos = 0;
+    const dcBlocks = [], ecBlocks = [];
+    for (const [cnt, dcPerBlock] of groups) {
+      for (let b = 0; b < cnt; b++) {
+        const sl = msgBytes.slice(pos, pos + dcPerBlock);
+        dcBlocks.push(sl); ecBlocks.push(rsEncode(sl, ecPerBlock)); pos += dcPerBlock;
       }
     }
-    const maxDC=Math.max(...dcBlocks.map(b=>b.length));
-    const finalData=[];
-    for(let i=0;i<maxDC;i++) for(const b of dcBlocks) if(i<b.length)finalData.push(b[i]);
-    for(let i=0;i<ecPerBlock;i++) for(const b of ecBlocks) finalData.push(b[i]);
+    const maxDC = Math.max(...dcBlocks.map(b => b.length));
+    const finalData = [];
+    for (let i = 0; i < maxDC; i++) for (const b of dcBlocks) if (i < b.length) finalData.push(b[i]);
+    for (let i = 0; i < ecPerBlock; i++) for (const b of ecBlocks) finalData.push(b[i]);
 
-    const m=makeMatrix(size);
-    placeFinder(m,0,0);placeFinder(m,0,size-7);placeFinder(m,size-7,0);
-    const ap=ALIGN_POS[version];
-    for(const r of ap) for(const c of ap)
-      if(!((r===6&&c===6)||(r===6&&c===ap[ap.length-1])||(r===ap[ap.length-1]&&c===6)))
-        placeAlign(m,r,c);
-    placeTiming(m,size);reserveFormat(m,size);
-    if(version>=7){
-      for(let i=0;i<6;i++) for(let j=0;j<3;j++){
-        if(m[i][size-11+j]===-1)m[i][size-11+j]=-2;
-        if(m[size-11+j][i]===-1)m[size-11+j][i]=-2;
+    // Build matrix
+    const m = makeMatrix(sz);
+    placeFinder(m, 0, 0); placeFinder(m, 0, sz-7); placeFinder(m, sz-7, 0);
+    const ap = ALIGN_POS[version];
+    for (const r of ap) for (const c of ap)
+      if (!((r===6&&c===6)||(r===6&&c===ap[ap.length-1])||(r===ap[ap.length-1]&&c===6)))
+        placeAlign(m, r, c);
+    placeTiming(m, sz);
+    reserveFormat(m, sz);
+    if (version >= 7) {
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) {
+        if (m[i][sz-11+j] < 0) m[i][sz-11+j] = LIGHT;
+        if (m[sz-11+j][i] < 0) m[sz-11+j][i] = LIGHT;
       }
     }
-    placeData(m,size,finalData);
+    placeData(m, sz, finalData);
 
-    let bestMask=0,bestScore=Infinity;
-    for(let mask=0;mask<8;mask++){
-      const sc=penalty(applyMask(m,size,mask),size);
-      if(sc<bestScore){bestScore=sc;bestMask=mask;}
+    // Choose mask with lowest penalty
+    let bestMask = 0, bestScore = Infinity;
+    for (let mask = 0; mask < 8; mask++) {
+      const sc = penaltyScore(applyMask(m, sz, mask), sz);
+      if (sc < bestScore) { bestScore = sc; bestMask = mask; }
     }
-    const final=applyMask(m,size,bestMask);
-    placeFormat(final,size,ecLevel,bestMask);
-    return {matrix:final,size};
+    const final = applyMask(m, sz, bestMask);
+    placeFormat(final, sz, ecLevel, bestMask);
+    return { matrix: final, size: sz };
   };
 
-  return {encode};
+  return { encode };
 })();
 
-// ============================================================
-//  UI
-// ============================================================
+// ── UI ───────────────────────────────────────────────────
 function showError(msg) {
   const el = document.getElementById('error-msg');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
 }
-function clearError() {
-  document.getElementById('error-msg').style.display = 'none';
-}
+function clearError() { document.getElementById('error-msg').style.display = 'none'; }
 
 function generateQR() {
   clearError();
   const text = document.getElementById('qr-text').value.trim();
   if (!text) { showError('テキストを入力してください。'); return; }
-
   const sizeInput = parseInt(document.getElementById('qr-size').value);
   if (!sizeInput || sizeInput < 100 || sizeInput > 2000) {
     showError('サイズは 100〜2000px の範囲で入力してください。'); return;
   }
-
   const ecLevel = document.getElementById('ec-level').value;
   const result = QR.encode(text, ecLevel);
-  if (!result) {
-    showError('テキストが長すぎます（最大約300バイト）。短くしてください。'); return;
-  }
+  if (!result) { showError('テキストが長すぎます（最大約300バイト）。短くしてください。'); return; }
 
-  const {matrix, size} = result;
-  const quiet = 4;
-  const total = size + quiet * 2;
+  const { matrix, size } = result;
+  const quiet = 4, total = size + quiet * 2;
   const scale = Math.max(1, Math.floor(sizeInput / total));
   const px = total * scale;
 
   const canvas = document.getElementById('qr-canvas');
-  canvas.width = px;
-  canvas.height = px;
-  // display cap for screen, but actual canvas is full resolution
-  const displayPx = Math.min(px, 380);
-  canvas.style.width  = displayPx + 'px';
-  canvas.style.height = displayPx + 'px';
+  canvas.width = px; canvas.height = px;
+  canvas.style.width  = Math.min(px, 380) + 'px';
+  canvas.style.height = Math.min(px, 380) + 'px';
 
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, px, px);
-  ctx.fillStyle = '#000000';
-  for (let r = 0; r < size; r++)
-    for (let c = 0; c < size; c++)
-      if (matrix[r][c] === 1)
-        ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, px, px);
+  ctx.fillStyle = '#000';
+  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++)
+    if (matrix[r][c] === 1 || matrix[r][c] === 2)  // data-dark or functional-dark
+      ctx.fillRect((c + quiet)*scale, (r + quiet)*scale, scale, scale);
 
   const card = document.getElementById('output-card');
   card.classList.add('visible');
-  card.scrollIntoView({behavior:'smooth', block:'nearest'});
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function downloadQR() {
-  const canvas = document.getElementById('qr-canvas');
   const a = document.createElement('a');
   a.download = 'qrcode.png';
-  a.href = canvas.toDataURL('image/png');
+  a.href = document.getElementById('qr-canvas').toDataURL('image/png');
   a.click();
 }
 

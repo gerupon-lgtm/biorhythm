@@ -496,7 +496,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by <span id="footerModelLabel">AI</span><br>ver 1.6.1
+    六星占術 × バイオリズム — Powered by <span id="footerModelLabel">AI</span><br>ver 1.6.2
   </footer>
 </div>
 
@@ -535,7 +535,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -1740,7 +1740,7 @@ function generateShareImage() {
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const footerModelLabel = formatUsedModelProviderOnly(lastDiagData && lastDiagData.usedModel);
-    ctx.fillText(`六星占術 × バイオリズム — Powered by ${footerModelLabel}  ver 1.6.1`, W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText(`六星占術 × バイオリズム — Powered by ${footerModelLabel}  ver 1.6.2`, W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

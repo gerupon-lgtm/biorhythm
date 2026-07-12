@@ -386,7 +386,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by <span id="poweredByModel">AI</span><br>
-    ver 3.a.4
+    ver 3.a.5
   </footer>
 </div>
 
@@ -445,7 +445,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.a.4';
+const APP_VERSION='3.a.5';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -1185,7 +1185,11 @@ function generateShareImage(){
     if(!d){resolve(null);return}
     const isSolo=d.mode==='solo';
     const fs=d.fiveScores;
-    const W=720,H=isSolo&&fs?800:620;
+    // 命式ブロック(約230px)＋日運ブロック(約96px)を下部に追加するため高さを拡張
+    const MEISHIKI_H=190, FORTUNE_H=76;
+    const baseH=isSolo&&fs?800:620;
+    const H_extra=MEISHIKI_H+FORTUNE_H;
+    const W=720,H=baseH+H_extra;
     const c=document.createElement('canvas');
     c.width=W;c.height=H;
     const ctx=c.getContext('2d');
@@ -1343,6 +1347,109 @@ function generateShareImage(){
     } else {
       luckyY=drawLuckyChips(d.luckyA,d._nameA,luckyY,'#fbbf24');
       luckyY=drawLuckyChips(d.luckyB,d._nameB,luckyY,'#60a5fa');
+    }
+
+    // ===== 命式ブロック（4柱表＋五行バランス） =====
+    // 区切り線
+    function sectionDivider(y,label,color){
+      ctx.strokeStyle='rgba(255,255,255,.10)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(70,y);ctx.lineTo(W-70,y);ctx.stroke();
+      ctx.fillStyle=color||'#a0a0c0';ctx.font='bold 14px sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.fillText(label,70,y-8);
+    }
+
+    // 命式ブロック（個人診断はご本人、相性診断はAさんの命式を描画）
+    const mk=d.meishikiA;
+    let curY=luckyY+16;
+    if(mk){
+      sectionDivider(curY,'命 式（'+d._nameA+'：日干 '+mk.day.stem+'・'+mk.dayElementJP+'）','#c084fc');
+      curY+=10;
+      // 4柱テーブル（時・日・月・年の順で表示）
+      const cols=[
+        {label:'時柱',p:mk.time},
+        {label:'日柱',p:mk.day},
+        {label:'月柱',p:mk.month},
+        {label:'年柱',p:mk.year},
+      ];
+      const tblX=70,tblW=W-140,colW=tblW/4;
+      const rowLabelY=curY+18;
+      // 列見出し
+      ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      cols.forEach((c,i)=>{
+        const cx=tblX+colW*i+colW/2;
+        ctx.fillStyle='#9090b0';ctx.fillText(c.label,cx,rowLabelY);
+      });
+      // セル群
+      const cellY=curY+30, cellH=34, gap=6;
+      // 行1: 天干  行2: 地支  行3: 通変星  行4: 十二運  行5: 蔵干
+      const rows=[
+        {key:'stem',   font:'bold 26px serif', color:'#e8c66a', h:46},
+        {key:'branch', font:'bold 26px serif', color:'#c9b8e8', h:46},
+        {key:'tsuhen', font:'12px sans-serif',  color:'#c0c0d8', h:24, label:true},
+        {key:'juniun', font:'12px sans-serif',  color:'#9fd0c0', h:24, label:true},
+        {key:'zoukan', font:'12px sans-serif',  color:'#d0a0c0', h:24, label:true, prefix:'蔵:'},
+      ];
+      let ry=cellY+4;
+      rows.forEach(row=>{
+        cols.forEach((c,i)=>{
+          const cx=tblX+colW*i+colW/2;
+          const p=c.p||{};
+          let val=p[row.key];
+          // 日柱の通変星は「(日主)」表示
+          if(row.key==='tsuhen'&&c.label==='日柱') val='(日主)';
+          if(val===undefined||val===null||val==='') { if(row.key==='zoukan'){return;} }
+          // セル背景（天干・地支のみ）
+          if(row.key==='stem'||row.key==='branch'){
+            ctx.fillStyle='rgba(255,255,255,.04)';
+            roundRect(ctx,tblX+colW*i+4,ry-row.h/2+4,colW-8,row.h-8,6);ctx.fill();
+          }
+          ctx.font=row.font;ctx.fillStyle=row.color;ctx.textAlign='center';ctx.textBaseline='middle';
+          const disp=(row.prefix&&val)?row.prefix+val:(val||'');
+          if(disp) ctx.fillText(disp,cx,ry);
+        });
+        ry+=row.h;
+      });
+
+      // 五行バランス（1行）
+      const gy=ry+4;
+      const gogyo=[['木','wood','#4ade80'],['火','fire','#f87171'],['土','earth','#fbbf24'],['金','metal','#cbd5e1'],['水','water','#60a5fa']];
+      const gW=(W-140)/5;
+      ctx.textBaseline='middle';
+      gogyo.forEach(([jp,key,col],i)=>{
+        const gx=70+gW*i+gW/2;
+        const cnt=(mk.gogyoCount&&mk.gogyoCount[key])||0;
+        ctx.fillStyle=col;ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+        ctx.fillText(jp+' '+cnt,gx,gy+10);
+        // ミニバー
+        const bw=gW-24, bx=70+gW*i+12, byy=gy+22;
+        ctx.fillStyle='rgba(255,255,255,.08)';roundRect(ctx,bx,byy,bw,5,2.5);ctx.fill();
+        const vw=bw*Math.min(1,cnt/4);
+        if(vw>0){ctx.fillStyle=col;roundRect(ctx,bx,byy,vw,5,2.5);ctx.fill();}
+      });
+      curY=gy+36;
+    }
+
+    // この日の運気ブロック（個人診断はご本人、相性診断はAさん基準）
+    const ft=d.fortuneA;
+    if(ft&&d.dayPillar){
+      sectionDivider(curY,'この日の運気','#f472b6');
+      curY+=8;
+      // 干支
+      ctx.fillStyle='#e0e0f0';ctx.font='bold 15px sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText('この日の干支：'+d.dayPillar.stem+d.dayPillar.branch+'（'+d.dayPillar.element+'の日）',70,curY+12);
+      // 日運の星・十二運・スコア
+      ctx.font='13px sans-serif';ctx.fillStyle='#c0c0d8';
+      ctx.fillText('日運の星：'+ft.tsuhen+'　十二運：'+ft.juniun,70,curY+34);
+      // 日運スコアバー
+      const sbX=70,sbW=W-140,sbY=curY+48,sbH=12;
+      ctx.fillStyle='#252540';roundRect(ctx,sbX,sbY,sbW,sbH,6);ctx.fill();
+      const sg=ctx.createLinearGradient(sbX,0,sbX+sbW,0);
+      sg.addColorStop(0,'#c084fc');sg.addColorStop(1,'#f472b6');
+      const svw=sbW*(ft.fortuneScore/100);
+      if(svw>0){ctx.fillStyle=sg;roundRect(ctx,sbX,sbY,svw,sbH,6);ctx.fill();}
+      ctx.fillStyle='#f0f0f8';ctx.font='bold 14px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+      ctx.fillText(ft.fortuneScore,W-70,sbY+sbH/2);
+      curY=sbY+sbH+16;
     }
 
     // フッター

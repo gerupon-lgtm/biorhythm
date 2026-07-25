@@ -246,7 +246,10 @@ input::placeholder{color:var(--text3)}
 .range-table .score-hi{color:var(--wood)}
 .range-table .score-mid{color:var(--earth)}
 .range-table .score-lo{color:var(--fire)}
-.range-table .today-row td{border-top:2px solid var(--accent);border-bottom:2px solid var(--accent)}
+.range-table .today-row td{border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);background:#f8e7e0;font-weight:700}
+.range-table .today-row td:first-child{border-left:2px solid var(--accent)}
+.range-table .today-row td:last-child{border-right:2px solid var(--accent)}
+.today-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--accent);vertical-align:middle}
 .range-table tr.lucky-row td{background:#f7edd2}
 .range-table tr.lucky-row td:first-child{box-shadow:inset 4px 0 0 #d3a13a}
 .range-table tr.unlucky-row td{background:#e6eef6}
@@ -406,7 +409,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by <span id="poweredByModel">AI</span><br>
-    ver 3.a.8
+    ver 3.a.9
   </footer>
 </div>
 
@@ -465,7 +468,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.a.8';
+const APP_VERSION='3.a.9';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -1115,6 +1118,7 @@ function renderRangeTable(data,targetDate,isPair,label){
     let icon='';
     if(r.date===maxDate) icon='✨';
     else if(r.date===minDate) icon='🌧️';
+    else if(isTarget) icon='<span class="today-dot" aria-label="当日"></span>';
     let rowCls=[];
     if(isTarget) rowCls.push('today-row');
     if(r.date===maxDate) rowCls.push('lucky-row');

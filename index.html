@@ -127,9 +127,9 @@ input::placeholder{color:var(--text3)}
 .bar-row .bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
 .bar-row .bar-fill{height:100%;border-radius:4px;transition:width 1s ease;width:0}
 .bar-row .bar-val{width:40px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif}
-.bar-bio .bar-fill{background:linear-gradient(90deg,#c0604a,#c0604a)}
-.bar-emo .bar-fill{background:linear-gradient(90deg,#2f5670,#fb7185)}
-.bar-int .bar-fill{background:linear-gradient(90deg,#fbbf24,#f59e0b)}
+.bar-bio .bar-fill{background:#6a9c5a}
+.bar-emo .bar-fill{background:#c0604a}
+.bar-int .bar-fill{background:#2f5670}
 .section-label{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:600;color:var(--text2);margin:28px 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
 .section-label::after{content:'';flex:1;height:1px;background:rgba(70,55,40,.10)}
 .meishiki-wrap{margin-bottom:16px}
@@ -220,7 +220,7 @@ input::placeholder{color:var(--text3)}
 .share-toast.show{opacity:1}
 /* ラッキー要素チップ */
 .lucky-strip{padding:6px 0 12px}
-.lucky-strip-title{font-size:12px;color:var(--earth);margin-bottom:7px;letter-spacing:1px;font-weight:700}
+.lucky-strip-title{font-size:12px;color:#9a6b15;margin-bottom:7px;letter-spacing:1px;font-weight:700}
 .lucky-chips{display:flex;flex-wrap:wrap;gap:6px}
 .lucky-chip{display:flex;align-items:center;gap:4px;background:rgba(70,55,40,.10);border:1px solid rgba(70,55,40,.10);border-radius:16px;padding:5px 10px 5px 7px;font-size:12px;color:var(--text2);white-space:nowrap}
 .lucky-chip{max-width:none;width:auto;flex-shrink:0;}
@@ -235,7 +235,7 @@ input::placeholder{color:var(--text3)}
 .range-comment{background:var(--surface);border:1px solid rgba(70,55,40,.10);border-radius:var(--radius);padding:16px;font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px;text-align:center}
 .lucky-badges{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
 .lucky-badge{padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600}
-.lucky-badge.lucky{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:var(--earth)}
+.lucky-badge.lucky{background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.3);color:#8a6015}
 .lucky-badge.unlucky{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:var(--water)}
 .range-table{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:13px}
 .range-table th{font-size:13px;color:var(--text2);font-weight:500;padding:6px 8px;text-align:left}
@@ -346,7 +346,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     <h2 class="result-title" id="resultTitle"></h2>
     <div class="score-section">
       <div class="score-ring">
-        <svg width="120" height="120" viewBox="0 0 120 120"><defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c0604a"/><stop offset="100%" stop-color="#2f5670"/></linearGradient></defs><circle class="track" cx="60" cy="60" r="50"/><circle class="fill" id="scoreCircle" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"/></svg>
+        <svg width="120" height="120" viewBox="0 0 120 120"><defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#c99a3b"/><stop offset="100%" stop-color="#b4703a"/></linearGradient></defs><circle class="track" cx="60" cy="60" r="50"/><circle class="fill" id="scoreCircle" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="314"/></svg>
         <div class="score-value"><span class="num" id="scoreNum">0</span><span class="pct" id="scorePct">%</span></div>
       </div>
       <div class="score-breakdown">
@@ -663,13 +663,13 @@ let nekoColorTimer=null;
 // 猫の色パレット（五行 + アクセントカラー）
 const NEKO_PALETTES=[
   {body:'#c0604a',face:'#2f5670',glow:'rgba(192,96,74,.4)'},  // 紫（デフォルト）
-  {body:'#4ade80',face:'#86efac',glow:'rgba(74,222,128,.4)'},   // 木・緑
-  {body:'#f87171',face:'#fbbf24',glow:'rgba(248,113,113,.4)'},   // 火・赤
-  {body:'#fbbf24',face:'#fde68a',glow:'rgba(251,191,36,.4)'},    // 土・黄
-  {body:'#e2e8f0',face:'#cbd5e1',glow:'rgba(226,232,240,.35)'},  // 金・白
-  {body:'#60a5fa',face:'#93c5fd',glow:'rgba(96,165,250,.4)'},    // 水・青
+  {body:'#6a9c5a',face:'#86efac',glow:'rgba(74,222,128,.4)'},   // 木・緑
+  {body:'#c0604a',face:'#b4703a',glow:'rgba(248,113,113,.4)'},   // 火・赤
+  {body:'#b4703a',face:'#fde68a',glow:'rgba(251,191,36,.4)'},    // 土・黄
+  {body:'#e2e8f0',face:'#8a8f96',glow:'rgba(226,232,240,.35)'},  // 金・白
+  {body:'#2f5670',face:'#7f97b0',glow:'rgba(96,165,250,.4)'},    // 水・青
   {body:'#2f5670',face:'#c0604a',glow:'rgba(244,114,182,.4)'},   // ピンク
-  {body:'#c0604a',face:'#60a5fa',glow:'rgba(47,86,112,.4)'},   // 薄紫
+  {body:'#c0604a',face:'#2f5670',glow:'rgba(47,86,112,.4)'},   // 薄紫
 ];
 
 function changeNekoColor(){
@@ -718,7 +718,7 @@ function hideLoading(){
 }
 
 // === メイン ===
-const ELEM_COLORS={wood:'var(--wood)',fire:'var(--fire)',earth:'var(--earth)',metal:'var(--metal)',water:'var(--water)'};
+const ELEM_COLORS={wood:'#5a8a49',fire:'#c0604a',earth:'#b0842f',metal:'#7c828a',water:'#2f5670'};
 const ELEM_JP={wood:'木',fire:'火',earth:'土',metal:'金',water:'水'};
 
 async function runDiagnosis(){
@@ -1003,15 +1003,15 @@ function drawBioGraph(data,nameA,nameB){
   const step=gw/(n-1);
 
   // 背景
-  ctx.fillStyle='rgba(22,22,42,.9)';
+  ctx.fillStyle='#faf6ec';
   ctx.fillRect(0,0,w,h);
 
   // グリッド
-  ctx.strokeStyle='rgba(160,160,200,.2)';ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(70,55,40,.13)';ctx.lineWidth=1;
   [0,25,50,75,100].forEach(v=>{
     const y=pad.top+gh-(v/100)*gh;
     ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(w-pad.right,y);ctx.stroke();
-    ctx.fillStyle='rgba(200,200,220,.5)';ctx.font='12px Outfit';ctx.textAlign='right';
+    ctx.fillStyle='rgba(106,95,78,.85)';ctx.font='12px Outfit';ctx.textAlign='right';
     ctx.fillText(v+'%',pad.left-6,y+4);
   });
 
@@ -1023,7 +1023,7 @@ function drawBioGraph(data,nameA,nameB){
   ctx.setLineDash([]);
 
   // 日付ラベル（日の数字のみ、月変わりだけM/を付加、幅に応じて間引き）
-  ctx.fillStyle='rgba(220,220,240,.8)';ctx.font='bold 12px Outfit';ctx.textAlign='center';
+  ctx.fillStyle='rgba(43,38,32,.85)';ctx.font='bold 12px Outfit';ctx.textAlign='center';
   const minGap=28; // ラベル間の最小px
   const labelEvery=Math.max(1,Math.ceil(minGap/step));
   let prevMonth='';
@@ -1036,8 +1036,8 @@ function drawBioGraph(data,nameA,nameB){
     ctx.fillText(lbl,x,h-pad.bottom+16);
   }
 
-  const colors={physical:'#c0604a',emotional:'#2f5670',intellectual:'#fbbf24'};
-  const colorsB={physical:'#6ee7b7',emotional:'#fb7185',intellectual:'#93c5fd'};
+  const colors={physical:'#6a9c5a',emotional:'#c0604a',intellectual:'#2f5670'};
+  const colorsB={physical:'#8fb98a',emotional:'#cf8f7f',intellectual:'#7f97b0'};
 
   function drawLine(vals,color,dashed){
     ctx.strokeStyle=color;ctx.lineWidth=2;
@@ -1064,13 +1064,13 @@ function drawBioGraph(data,nameA,nameB){
 
   // 凡例
   const legend=document.getElementById('bioLegend');
-  let lh='<span><span class="dot" style="background:#c0604a"></span>身体'+(nameA?'('+nameA+')':'')+'</span>';
-  lh+='<span><span class="dot" style="background:#2f5670"></span>感情</span>';
-  lh+='<span><span class="dot" style="background:#fbbf24"></span>知性</span>';
+  let lh='<span><span class="dot" style="background:#6a9c5a"></span>身体'+(nameA?'('+nameA+')':'')+'</span>';
+  lh+='<span><span class="dot" style="background:#c0604a"></span>感情</span>';
+  lh+='<span><span class="dot" style="background:#2f5670"></span>知性</span>';
   if(data.b&&nameB){
-    lh+='<span><span class="dot" style="background:#6ee7b7;border:1px dashed #6ee7b7"></span>身体('+nameB+')</span>';
-    lh+='<span><span class="dot" style="background:#fb7185;border:1px dashed #fb7185"></span>感情</span>';
-    lh+='<span><span class="dot" style="background:#93c5fd;border:1px dashed #93c5fd"></span>知性</span>';
+    lh+='<span><span class="dot" style="background:#8fb98a;border:1px dashed #8fb98a"></span>身体('+nameB+')</span>';
+    lh+='<span><span class="dot" style="background:#cf8f7f;border:1px dashed #cf8f7f"></span>感情</span>';
+    lh+='<span><span class="dot" style="background:#7f97b0;border:1px dashed #7f97b0"></span>知性</span>';
   }
   legend.innerHTML=lh;
 }
@@ -1195,18 +1195,18 @@ function drawRadar(scores){
   const cx=size/2,cy=size/2,r=90;
   const labels=['金運','恋愛運','仕事運','健康運','対人運'];
   const vals=[scores.money,scores.love,scores.work,scores.health,scores.social];
-  const colors=['#fbbf24','#2f5670','#c0604a','#4ade80','#60a5fa'];
+  const colors=['#74797f','#b04d37','#2f5670','#5a8a49','#b0842f'];
   const n=5;
   const angleStep=(Math.PI*2)/n;
   const startAngle=-Math.PI/2;
 
   // 背景
-  ctx.fillStyle='rgba(37,37,64,.8)';
+  ctx.fillStyle='rgba(0,0,0,0)';
   ctx.beginPath();ctx.arc(cx,cy,r+12,0,Math.PI*2);ctx.fill();
   // グリッド
   [25,50,75,100].forEach(v=>{
     const gr=r*(v/100);
-    ctx.strokeStyle='rgba(160,160,200,.25)';ctx.lineWidth=1.2;
+    ctx.strokeStyle='rgba(70,55,40,.16)';ctx.lineWidth=1.2;
     ctx.beginPath();
     for(let i=0;i<=n;i++){
       const a=startAngle+i*angleStep;
@@ -1217,12 +1217,12 @@ function drawRadar(scores){
   // 軸線
   for(let i=0;i<n;i++){
     const a=startAngle+i*angleStep;
-    ctx.strokeStyle='rgba(160,160,200,.2)';ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(70,55,40,.13)';ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));ctx.stroke();
   }
 
   // データ
-  ctx.fillStyle='rgba(192,96,74,.2)';ctx.strokeStyle='rgba(192,96,74,.7)';ctx.lineWidth=2.5;
+  ctx.fillStyle='rgba(120,110,80,.16)';ctx.strokeStyle='#8a7d55';ctx.lineWidth=2.5;
   ctx.beginPath();
   vals.forEach((v,i)=>{
     const a=startAngle+i*angleStep;
@@ -1240,7 +1240,7 @@ function drawRadar(scores){
     const lx=cx+(r+24)*Math.cos(a),ly=cy+(r+24)*Math.sin(a);
     ctx.fillStyle=colors[i];ctx.font='bold 13px "Zen Maru Gothic",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(labels[i],lx,ly-8);
-    ctx.fillStyle='#f0f0f8';ctx.font='bold 15px Outfit,sans-serif';
+    ctx.fillStyle='#2b2620';ctx.font='bold 15px Outfit,sans-serif';
     ctx.fillText(v,lx,ly+9);
   });
 }
@@ -1261,53 +1261,53 @@ function generateShareImage(){
     const H=Hmax; // 既存コードがHを参照するため暫定的にHmaxを割当（背景・区切り線幅用）
 
     // 背景（少し明るめに）
-    ctx.fillStyle='#12122a';ctx.fillRect(0,0,W,Hmax);
+    ctx.fillStyle='#f3ecdd';ctx.fillRect(0,0,W,Hmax);
     // 上部アクセント線
     const acc=ctx.createLinearGradient(0,0,W,0);
-    acc.addColorStop(0,'#c0604a');acc.addColorStop(1,'#2f5670');
+    acc.addColorStop(0,'#c99a3b');acc.addColorStop(1,'#b4703a');
     ctx.fillStyle=acc;ctx.fillRect(0,0,W,5);
 
     // タイトル
-    ctx.fillStyle='#f0f0f8';ctx.font='bold 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.fillStyle='#2b2620';ctx.font='bold 22px sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
     const title=isSolo?d._nameA+'のコンディション':d._nameA+' × '+d._nameB+' の運命相性';
     ctx.fillText(title,W/2,40);
     // 日付（明るい色＋大きめ）
-    ctx.fillStyle='#c0c0d0';ctx.font='bold 16px sans-serif';
+    ctx.fillStyle='#6a5f4e';ctx.font='bold 16px sans-serif';
     ctx.fillText(fmtDateFull(d.targetDate),W/2,64);
 
     // ===== 円グラフ（総合スコア）左側 =====
     const ringCx=130,ringCy=150,ringR=55;
     ctx.beginPath();ctx.arc(ringCx,ringCy,ringR,0,Math.PI*2);
-    ctx.strokeStyle='#252540';ctx.lineWidth=12;ctx.stroke();
+    ctx.strokeStyle='#e7ddc9';ctx.lineWidth=12;ctx.stroke();
     const scoreVal=d.overallScore/100;
     const startA=-Math.PI/2;
     const endA=startA+Math.PI*2*scoreVal;
     const grad=ctx.createLinearGradient(ringCx-ringR,ringCy,ringCx+ringR,ringCy);
-    grad.addColorStop(0,'#c0604a');grad.addColorStop(1,'#2f5670');
+    grad.addColorStop(0,'#c99a3b');grad.addColorStop(1,'#b4703a');
     ctx.beginPath();ctx.arc(ringCx,ringCy,ringR,startA,endA);
     ctx.strokeStyle=grad;ctx.lineWidth=12;ctx.lineCap='round';ctx.stroke();ctx.lineCap='butt';
-    ctx.fillStyle='#f0f0f8';ctx.font='bold 40px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#2b2620';ctx.font='bold 40px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(d.overallScore,ringCx,ringCy-4);
-    ctx.fillStyle='#b0b0c8';ctx.font='bold 16px sans-serif';
+    ctx.fillStyle='#6a5f4e';ctx.font='bold 16px sans-serif';
     ctx.fillText(isSolo?'点':'%',ringCx,ringCy+24);
 
     // ===== 棒グラフ（バイオリズム）右側 =====
     const barX=270,barW=360,barH=20;
     const bLabels=['身体','感情','知性'];
     const bVals=[d.physical,d.emotional,d.intellectual];
-    const bColors=['#c0604a','#2f5670','#fbbf24'];
+    const bColors=['#6a9c5a','#c0604a','#2f5670'];
     bLabels.forEach((label,i)=>{
       const y=105+i*40;
       // ラベル（明るく）
-      ctx.fillStyle='#d0d0e0';ctx.font='bold 15px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+      ctx.fillStyle='#4a4238';ctx.font='bold 15px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
       ctx.fillText(label,barX-10,y+barH/2);
       // トラック
-      ctx.fillStyle='#252540';roundRect(ctx,barX,y,barW,barH,6);ctx.fill();
+      ctx.fillStyle='#e7ddc9';roundRect(ctx,barX,y,barW,barH,6);ctx.fill();
       // 値バー
       const vw=barW*(bVals[i]/100);
       if(vw>0){ctx.fillStyle=bColors[i];roundRect(ctx,barX,y,vw,barH,6);ctx.fill();}
       // 数値
-      ctx.fillStyle='#f0f0f8';ctx.font='bold 15px sans-serif';ctx.textAlign='left';
+      ctx.fillStyle='#2b2620';ctx.font='bold 15px sans-serif';ctx.textAlign='left';
       ctx.fillText(bVals[i]+'%',barX+barW+10,y+barH/2);
     });
 
@@ -1316,17 +1316,17 @@ function generateShareImage(){
       const rCx=180,rCy=390,rR=110;
       const rLabels=['金運','恋愛運','仕事運','健康運','対人運'];
       const rVals=[fs.money,fs.love,fs.work,fs.health,fs.social];
-      const rColors=['#fbbf24','#2f5670','#c0604a','#4ade80','#60a5fa'];
+      const rColors=['#74797f','#b04d37','#2f5670','#5a8a49','#b0842f'];
       const n=5,aStep=(Math.PI*2)/n,sA=-Math.PI/2;
 
       // 背景
-      ctx.fillStyle='rgba(37,37,64,.8)';
+      ctx.fillStyle='rgba(0,0,0,0)';
       ctx.beginPath();ctx.arc(rCx,rCy,rR+8,0,Math.PI*2);ctx.fill();
 
       // グリッド
       [25,50,75,100].forEach(v=>{
         const gr=rR*(v/100);
-        ctx.strokeStyle='rgba(160,160,200,.3)';ctx.lineWidth=1.2;
+        ctx.strokeStyle='rgba(70,55,40,.18)';ctx.lineWidth=1.2;
         ctx.beginPath();
         for(let i=0;i<=n;i++){
           const a=sA+i*aStep;
@@ -1337,12 +1337,12 @@ function generateShareImage(){
       // 軸線
       for(let i=0;i<n;i++){
         const a=sA+i*aStep;
-        ctx.strokeStyle='rgba(160,160,200,.25)';ctx.lineWidth=1;
+        ctx.strokeStyle='rgba(70,55,40,.16)';ctx.lineWidth=1;
         ctx.beginPath();ctx.moveTo(rCx,rCy);ctx.lineTo(rCx+rR*Math.cos(a),rCy+rR*Math.sin(a));ctx.stroke();
       }
 
       // データ
-      ctx.fillStyle='rgba(192,96,74,.2)';ctx.strokeStyle='rgba(192,96,74,.7)';ctx.lineWidth=2.5;
+      ctx.fillStyle='rgba(120,110,80,.16)';ctx.strokeStyle='#8a7d55';ctx.lineWidth=2.5;
       ctx.beginPath();
       rVals.forEach((v,i)=>{
         const a=sA+i*aStep;
@@ -1359,22 +1359,22 @@ function generateShareImage(){
         const lx=rCx+(rR+26)*Math.cos(a),ly=rCy+(rR+26)*Math.sin(a);
         ctx.fillStyle=rColors[i];ctx.font='bold 14px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
         ctx.fillText(rLabels[i],lx,ly-9);
-        ctx.fillStyle='#f0f0f8';ctx.font='bold 16px sans-serif';
+        ctx.fillStyle='#2b2620';ctx.font='bold 16px sans-serif';
         ctx.fillText(v,lx,ly+10);
       });
 
       // 右側に5運勢バー
       const fBarX=370,fBarW=270,fBarH=16;
-      ctx.fillStyle='#d0d0e0';ctx.font='bold 15px sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.fillStyle='#4a4238';ctx.font='bold 15px sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
       ctx.fillText('各運勢スコア',fBarX,290);
       rLabels.forEach((label,i)=>{
         const y=310+i*34;
-        ctx.fillStyle='#d0d0e0';ctx.font='bold 14px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+        ctx.fillStyle='#4a4238';ctx.font='bold 14px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
         ctx.fillText(label,fBarX+52,y+fBarH/2);
-        ctx.fillStyle='#252540';roundRect(ctx,fBarX+60,y,fBarW-60,fBarH,5);ctx.fill();
+        ctx.fillStyle='#e7ddc9';roundRect(ctx,fBarX+60,y,fBarW-60,fBarH,5);ctx.fill();
         const vw=(fBarW-60)*(rVals[i]/100);
         if(vw>0){ctx.fillStyle=rColors[i];roundRect(ctx,fBarX+60,y,vw,fBarH,5);ctx.fill();}
-        ctx.fillStyle='#f0f0f8';ctx.font='bold 14px sans-serif';ctx.textAlign='left';
+        ctx.fillStyle='#2b2620';ctx.font='bold 14px sans-serif';ctx.textAlign='left';
         ctx.fillText(rVals[i],fBarX+fBarW+8,y+fBarH/2);
       });
     }
@@ -1388,7 +1388,7 @@ function generateShareImage(){
         ['🎨',lucky.color],['🔢',lucky.number],['🧭',lucky.direction],
         ['✨',lucky.item||lucky.material],['🍽️',lucky.food],['🕒',lucky.time],
       ].filter(item=>item[1]);
-      ctx.fillStyle=titleColor||'#fbbf24';ctx.font='bold 13px sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.fillStyle=titleColor||'#b4703a';ctx.font='bold 13px sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
       ctx.fillText('✦ '+(name||'あなた')+'のラッキー要素',70,startY+12);
       let chipX=70,chipY=startY+22;
       const chipH=24,chipGap=6,chipPadX=9;
@@ -1400,7 +1400,7 @@ function generateShareImage(){
         const tw=ctx.measureText(txt).width+chipPadX*2;
         if(chipX+tw>W-70){chipX=70;chipY+=chipH+chipGap;}
         ctx.fillStyle='rgba(70,55,40,.12)';roundRect(ctx,chipX,chipY,tw,chipH,12);ctx.fill();
-        ctx.fillStyle='#d0d0e0';ctx.textAlign='left';
+        ctx.fillStyle='#4a4238';ctx.textAlign='left';
         ctx.fillText(txt,chipX+chipPadX,chipY+chipH/2);
         chipX+=tw+chipGap;
       });
@@ -1411,7 +1411,7 @@ function generateShareImage(){
     function sectionDivider(y,label,color){
       ctx.strokeStyle='rgba(70,55,40,.14)';ctx.lineWidth=1;
       ctx.beginPath();ctx.moveTo(70,y);ctx.lineTo(W-70,y);ctx.stroke();
-      ctx.fillStyle=color||'#a0a0c0';ctx.font='bold 14px sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
+      ctx.fillStyle=color||'#8a7d64';ctx.font='bold 14px sans-serif';ctx.textAlign='left';ctx.textBaseline='alphabetic';
       ctx.fillText(label,70,y);
     }
 
@@ -1430,16 +1430,16 @@ function generateShareImage(){
       // 列見出し
       ctx.font='bold 13px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
       cols.forEach((c,i)=>{
-        ctx.fillStyle='#9090b0';ctx.fillText(c.label,tblX+colW*i+colW/2,y+8);
+        ctx.fillStyle='#8a7d64';ctx.fillText(c.label,tblX+colW*i+colW/2,y+8);
       });
       y+=20;
       // 行定義。各行は中心基準で高さhを持つ
       const rows=[
-        {key:'stem',   font:'bold 26px serif', color:'#e8c66a', h:46, box:true},
-        {key:'branch', font:'bold 26px serif', color:'#c9b8e8', h:46, box:true},
-        {key:'tsuhen', font:'12px sans-serif',  color:'#c0c0d8', h:22},
-        {key:'juniun', font:'12px sans-serif',  color:'#9fd0c0', h:22},
-        {key:'zoukan', font:'12px sans-serif',  color:'#d0a0c0', h:22, prefix:'蔵:'},
+        {key:'stem',   font:'bold 26px serif', color:'#b4703a', h:46, box:true},
+        {key:'branch', font:'bold 26px serif', color:'#2f5670', h:46, box:true},
+        {key:'tsuhen', font:'12px sans-serif',  color:'#6a5f4e', h:22},
+        {key:'juniun', font:'12px sans-serif',  color:'#3b6d55', h:22},
+        {key:'zoukan', font:'12px sans-serif',  color:'#8a5a72', h:22, prefix:'蔵:'},
       ];
       rows.forEach(row=>{
         const cy=y+row.h/2; // この行の中心
@@ -1456,7 +1456,7 @@ function generateShareImage(){
           // 柱が存在しない場合は天干・地支に薄い「—」を置き、他行は空
           if(!hasP){
             if(row.box){
-              ctx.font=row.font;ctx.fillStyle='rgba(200,200,220,.25)';ctx.textAlign='center';ctx.textBaseline='middle';
+              ctx.font=row.font;ctx.fillStyle='rgba(150,137,116,.55)';ctx.textAlign='center';ctx.textBaseline='middle';
               ctx.fillText('—',cx,cy);
             }
             return;
@@ -1470,7 +1470,7 @@ function generateShareImage(){
       });
       // 五行バランス（1行）
       y+=8;
-      const gogyo=[['木','wood','#4ade80'],['火','fire','#f87171'],['土','earth','#fbbf24'],['金','metal','#cbd5e1'],['水','water','#60a5fa']];
+      const gogyo=[['木','wood','#6a9c5a'],['火','fire','#c0604a'],['土','earth','#c99a3b'],['金','metal','#8a8f96'],['水','water','#2f5670']];
       const gW=(W-140)/5;
       gogyo.forEach(([jp,key,col],i)=>{
         const gx=70+gW*i+gW/2;
@@ -1491,29 +1491,29 @@ function generateShareImage(){
       if(!ft) return startY;
       let y=startY;
       if(name){
-        ctx.fillStyle='#e0e0f0';ctx.font='bold 13px sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+        ctx.fillStyle='#2b2620';ctx.font='bold 13px sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
         ctx.fillText(name,70,y+8);
         y+=20;
       }
-      ctx.font='13px sans-serif';ctx.fillStyle='#c0c0d8';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.font='13px sans-serif';ctx.fillStyle='#6a5f4e';ctx.textAlign='left';ctx.textBaseline='middle';
       ctx.fillText('日運の星：'+ft.tsuhen+'　十二運：'+ft.juniun,70,y+8);
       const sbX=70,sbW=W-140,sbY=y+20,sbH=12;
-      ctx.fillStyle='#252540';roundRect(ctx,sbX,sbY,sbW,sbH,6);ctx.fill();
+      ctx.fillStyle='#e7ddc9';roundRect(ctx,sbX,sbY,sbW,sbH,6);ctx.fill();
       const sg=ctx.createLinearGradient(sbX,0,sbX+sbW,0);
-      sg.addColorStop(0,'#c0604a');sg.addColorStop(1,'#2f5670');
+      sg.addColorStop(0,'#c99a3b');sg.addColorStop(1,'#b4703a');
       const svw=sbW*(ft.fortuneScore/100);
       if(svw>0){ctx.fillStyle=sg;roundRect(ctx,sbX,sbY,svw,sbH,6);ctx.fill();}
-      ctx.fillStyle='#f0f0f8';ctx.font='bold 14px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
+      ctx.fillStyle='#2b2620';ctx.font='bold 14px sans-serif';ctx.textAlign='right';ctx.textBaseline='middle';
       ctx.fillText(ft.fortuneScore,W-70,sbY+sbH/2);
       return sbY+sbH+16;
     }
 
     let luckyY=isSolo&&fs?555:245;
     if(isSolo){
-      luckyY=drawLuckyChips(d.lucky,d._nameA,luckyY,'#fbbf24');
+      luckyY=drawLuckyChips(d.lucky,d._nameA,luckyY,'#b4703a');
     } else {
-      luckyY=drawLuckyChips(d.luckyA,d._nameA,luckyY,'#fbbf24');
-      luckyY=drawLuckyChips(d.luckyB,d._nameB,luckyY,'#60a5fa');
+      luckyY=drawLuckyChips(d.luckyA,d._nameA,luckyY,'#b4703a');
+      luckyY=drawLuckyChips(d.luckyB,d._nameB,luckyY,'#2f5670');
     }
 
     // 命式ブロック（個人はご本人、相性はAさん→Bさんの順で両方）
@@ -1527,7 +1527,7 @@ function generateShareImage(){
     if((d.fortuneA||d.fortuneB) && d.dayPillar){
       sectionDivider(curY,'この日の運気','#2f5670');
       curY+=14;
-      ctx.fillStyle='#e0e0f0';ctx.font='bold 15px sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillStyle='#2b2620';ctx.font='bold 15px sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
       ctx.fillText('この日の干支：'+d.dayPillar.stem+d.dayPillar.branch+'（'+d.dayPillar.element+'の日）',70,curY+8);
       curY+=26;
       if(isSolo){
@@ -1541,7 +1541,7 @@ function generateShareImage(){
 
     // フッター（描画終端の下に配置）
     const footerY=curY+18;
-    ctx.fillStyle='#8080a0';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    ctx.fillStyle='#8a7d64';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';
     ctx.fillText('運命診断 — バイオリズム × 四柱推命  ver '+APP_VERSION,W/2,footerY);
 
     // 実際の描画終端でトリミングした最終キャンバスを生成

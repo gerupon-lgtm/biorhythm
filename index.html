@@ -222,7 +222,7 @@ input::placeholder{color:var(--text3)}
 .lucky-strip{padding:6px 0 12px}
 .lucky-strip-title{font-size:12px;color:#9a6b15;margin-bottom:7px;letter-spacing:1px;font-weight:700}
 .lucky-chips{display:flex;flex-wrap:wrap;gap:6px}
-.lucky-chip{display:flex;align-items:center;gap:4px;background:rgba(70,55,40,.10);border:1px solid rgba(70,55,40,.10);border-radius:16px;padding:5px 10px 5px 7px;font-size:12px;color:var(--text2);white-space:nowrap}
+.lucky-chip{display:flex;align-items:center;gap:4px;background:#f0e7d3;border:1px solid rgba(120,95,60,.24);border-radius:16px;padding:5px 10px 5px 7px;font-size:12px;color:#4a4238;white-space:nowrap}
 .lucky-chip{max-width:none;width:auto;flex-shrink:0;}
 .lucky-chip-icon{font-size:14px;flex-shrink:0}
 .lucky-note{font-size:12px;color:var(--text3);line-height:1.6;margin-top:7px}
@@ -235,8 +235,8 @@ input::placeholder{color:var(--text3)}
 .range-comment{background:var(--surface);border:1px solid rgba(70,55,40,.10);border-radius:var(--radius);padding:16px;font-size:15px;line-height:1.7;color:var(--text);margin-bottom:12px;text-align:center}
 .lucky-badges{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;justify-content:center}
 .lucky-badge{padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600}
-.lucky-badge.lucky{background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.3);color:#8a6015}
-.lucky-badge.unlucky{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);color:var(--water)}
+.lucky-badge.lucky{background:#f5e4b6;border:1px solid #e0c069;color:#785111}
+.lucky-badge.unlucky{background:#dce7f1;border:1px solid #b3c7dd;color:#2c5069}
 .range-table{width:100%;border-collapse:separate;border-spacing:0 3px;font-size:13px}
 .range-table th{font-size:13px;color:var(--text2);font-weight:500;padding:6px 8px;text-align:left}
 .range-table td{background:var(--surface);padding:8px;border:none;color:var(--text)}
@@ -247,6 +247,10 @@ input::placeholder{color:var(--text3)}
 .range-table .score-mid{color:var(--earth)}
 .range-table .score-lo{color:var(--fire)}
 .range-table .today-row td{border-top:2px solid var(--accent);border-bottom:2px solid var(--accent)}
+.range-table tr.lucky-row td{background:#f7edd2}
+.range-table tr.lucky-row td:first-child{box-shadow:inset 4px 0 0 #d3a13a}
+.range-table tr.unlucky-row td{background:#e6eef6}
+.range-table tr.unlucky-row td:first-child{box-shadow:inset 4px 0 0 #6f93b5}
 /* アプリ内ブラウザ警告 */
 .inapp-banner{position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(248,113,113,.95);color:#fff;padding:0;backdrop-filter:blur(8px)}
 .inapp-inner{max-width:660px;margin:0 auto;padding:14px 20px;text-align:center;font-size:14px;line-height:1.6}
@@ -461,7 +465,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.a.7';
+const APP_VERSION='3.a.8';
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -1111,7 +1115,11 @@ function renderRangeTable(data,targetDate,isPair,label){
     let icon='';
     if(r.date===maxDate) icon='✨';
     else if(r.date===minDate) icon='🌧️';
-    h+='<tr'+(isTarget?' class="today-row"':'')+'>';
+    let rowCls=[];
+    if(isTarget) rowCls.push('today-row');
+    if(r.date===maxDate) rowCls.push('lucky-row');
+    else if(r.date===minDate) rowCls.push('unlucky-row');
+    h+='<tr'+(rowCls.length?' class="'+rowCls.join(' ')+'"':'')+'>';
     h+='<td style="text-align:center;width:28px">'+icon+'</td>';
     h+='<td>'+fmtDateShort(r.date)+' ('+dow+')</td>';
     h+='<td>'+r.dayPillar+'</td>';

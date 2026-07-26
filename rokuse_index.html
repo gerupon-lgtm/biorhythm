@@ -86,6 +86,25 @@ input::placeholder{color:var(--text3)}
 .optional-hint{font-size:13px;color:var(--text3);margin-top:4px}
 .card-note{font-size:13px;color:var(--text2);text-align:center;margin-top:8px;line-height:1.6}
 
+/* --- 折りたたみカード（二人目） --- */
+.card.collapsible{padding-top:22px;padding-bottom:22px}
+.card.collapsible.is-open{padding-bottom:28px}
+.collapse-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;
+  background:none;border:none;padding:2px 0;margin:0;cursor:pointer;color:var(--text);
+  font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.5px;text-align:left;line-height:1.5;
+  -webkit-tap-highlight-color:transparent}
+.collapse-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:6px;border-radius:8px}
+.collapse-chevron{flex:0 0 auto;width:20px;height:20px;color:var(--text2);transition:transform .3s ease}
+.card.is-open .collapse-chevron{transform:rotate(180deg)}
+.collapse-body{overflow:hidden;max-height:0;opacity:0;margin-top:0;
+  transition:max-height .35s ease,opacity .25s ease,margin-top .35s ease}
+.card.is-open .collapse-body{max-height:800px;opacity:1;margin-top:18px}
+/* 初期描画時のアニメーション抑止 */
+.card.no-anim .collapse-body,.card.no-anim .collapse-chevron{transition:none}
+@media (prefers-reduced-motion:reduce){
+  .collapse-body,.collapse-chevron{transition:none}
+}
+
 .btn-wrap{text-align:center;margin:32px 0}
 .btn{display:inline-flex;align-items:center;gap:10px;padding:15px 44px;border:none;border-radius:50px;background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 24px rgba(192,132,252,.3);touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(192,132,252,.45)}
@@ -361,22 +380,29 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
     </div>
   </div>
 
-  <div class="card">
-    <span class="card-tag b">二人目（相性診断）</span>
-    <div class="field-row">
-      <div class="field-group"><label for="nameB">名前</label><input type="text" id="nameB" placeholder="ニックネーム可" maxlength="20"></div>
-      <div class="field-group" style="max-width:110px"><label for="genderB">性別</label><select id="genderB"><option value="" selected>未選択</option><option value="male">男性</option><option value="female">女性</option></select></div>
-    </div>
-    <div class="field-group"><label for="birthB_text">生年月日</label>
-      <div class="date-input-wrap" style="position:relative">
-        <input type="text" id="birthB_text" class="date-text-input" placeholder="YYYY/MM/DD" maxlength="10" inputmode="numeric" autocomplete="off">
-        <button type="button" class="date-cal-btn" onclick="openDatePicker('birthB')" title="カレンダーで選択">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        </button>
-        <input type="date" id="birthB" class="date-hidden" max="2026-12-31">
+  <div class="card collapsible" id="personBCard">
+    <span class="card-tag b">二人目</span>
+    <button type="button" class="collapse-toggle" id="personBToggle"
+            aria-expanded="false" aria-controls="personBBody" onclick="togglePersonB()">
+      <span>二人目を追加して相性診断（任意）</span>
+      <svg class="collapse-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="collapse-body" id="personBBody">
+      <div class="field-row">
+        <div class="field-group"><label for="nameB">名前</label><input type="text" id="nameB" placeholder="ニックネーム可" maxlength="20"></div>
+        <div class="field-group" style="max-width:110px"><label for="genderB">性別</label><select id="genderB"><option value="" selected>未選択</option><option value="male">男性</option><option value="female">女性</option></select></div>
       </div>
+      <div class="field-group"><label for="birthB_text">生年月日</label>
+        <div class="date-input-wrap" style="position:relative">
+          <input type="text" id="birthB_text" class="date-text-input" placeholder="YYYY/MM/DD" maxlength="10" inputmode="numeric" autocomplete="off">
+          <button type="button" class="date-cal-btn" onclick="openDatePicker('birthB')" title="カレンダーで選択">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </button>
+          <input type="date" id="birthB" class="date-hidden" max="2026-12-31">
+        </div>
+      </div>
+      <p class="card-note">生年月日未指定で一人目の個人診断になります</p>
     </div>
-    <p class="card-note">生年月日未指定で一人目の個人診断になります</p>
   </div>
 
   <div class="date-picker-row">
@@ -496,7 +522,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
   </div>
 
   <footer>
-    六星占術 × バイオリズム — Powered by <span id="footerModelLabel">AI</span><br>ver 1.6.2
+    六星占術 × バイオリズム — Powered by <span id="footerModelLabel">AI</span><br>ver 1.7.0
   </footer>
 </div>
 
@@ -535,7 +561,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
 <script>
 const API_URL = 'https://test-flax-omega-29.vercel.app/api/rokuse_diagnose';
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.7.0';
 
 // デフォルト生年月日（20年前）
 // ======== 日付入力ユーティリティ ========
@@ -675,6 +701,36 @@ function setupDateInput(textId, dateId) {
 }
 
 // ================================================================
+//  二人目カードの開閉
+//  ・見た目だけの折りたたみ（入力値は保持され、診断ロジックには影響しない）
+//  ・初期状態は閉じる。localStorage に二人目の生年月日があれば自動展開。
+// ================================================================
+function setPersonBOpen(open) {
+  const card   = document.getElementById('personBCard');
+  const toggle = document.getElementById('personBToggle');
+  if (!card) return;
+  card.classList.toggle('is-open', !!open);
+  if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function isPersonBOpen() {
+  const card = document.getElementById('personBCard');
+  return !!(card && card.classList.contains('is-open'));
+}
+
+function togglePersonB() {
+  const open = !isPersonBOpen();
+  setPersonBOpen(open);
+  if (open) {
+    // 展開直後に名前欄へフォーカス（モバイルではキーボードを出さない）
+    try {
+      const el = document.getElementById('nameB');
+      if (el && !('ontouchstart' in window)) el.focus({ preventScroll: true });
+    } catch (e) {}
+  }
+}
+
+// ================================================================
 //  入力内容の保存（LocalStorage）
 //  判定日（targetDate）は「その時の占い対象日」であり保存対象外。
 //  保存対象: 一人目/二人目の名前・性別・生年月日、および保存フラグ自体。
@@ -758,6 +814,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     updateClearBtnVisibility();
   } catch(e) { console.error('restore error:', e); }
+
+  // 二人目カードの初期開閉状態
+  // 復元された（＝localStorageに保存されていた）二人目の生年月日があれば自動展開
+  try {
+    const card = document.getElementById('personBCard');
+    if (card) card.classList.add('no-anim');
+    const birthBEl = document.getElementById('birthB');
+    setPersonBOpen(!!(birthBEl && birthBEl.value));
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { if (card) card.classList.remove('no-anim'); });
+    });
+  } catch(e) { console.error('personB init error:', e); }
 
   // birthAのデフォルト値（20年前）※保存データがある場合は上書きしない
   try {
@@ -1740,7 +1808,7 @@ function generateShareImage() {
     // フッター（コンテンツ末端の下に配置）
     ctx.fillStyle = '#5050a0'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const footerModelLabel = formatUsedModelProviderOnly(lastDiagData && lastDiagData.usedModel);
-    ctx.fillText(`六星占術 × バイオリズム — Powered by ${footerModelLabel}  ver 1.6.2`, W/2, contentBottom + FOOTER_H/2 + 4);
+    ctx.fillText(`六星占術 × バイオリズム — Powered by ${footerModelLabel}  ver ${APP_VERSION}`, W/2, contentBottom + FOOTER_H/2 + 4);
 
     c.toBlob(blob => resolve(blob), 'image/png');
   });

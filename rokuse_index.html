@@ -141,7 +141,13 @@ input::placeholder{color:var(--text3)}
 .loading-progress-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));border-radius:2px;width:0;transition:width .3s}
 
 /* 結果 */
-#result{margin-top:24px;opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+/* 結果ブロックは診断前・診断中は display:none で「場所ごと」たたむ。
+   opacity:0 だけだと空の結果枠（スコアゲージのSVG・タブバー・共有バー）が
+   レイアウトを占有し、「六星を診断する」ボタンとフッターの間に大きな余白ができる。
+   フェードイン演出は残すため、表示時は .mounted（display:block）→ 強制再描画 →
+   .visible（opacity/transform）の2段階で当てる（showResult() 参照）。 */
+#result{display:none;margin-top:24px;opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+#result.mounted{display:block}
 #result.visible{opacity:1;transform:translateY(0)}
 .result-title{text-align:center;font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700;margin-bottom:24px;line-height:1.5}
 
@@ -296,6 +302,8 @@ input::placeholder{color:var(--text3)}
 .line-banner-btn{background:#fff;color:#00b900;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:inherit}
 
 footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:12px;color:var(--text3);line-height:2}
+/* 屋号は SIKUMI LAB（確定） */
+.footer-copy{margin-top:6px;font-size:12px;letter-spacing:.06em;opacity:.8}
 </style>
 </head>
 <body>
@@ -523,6 +531,7 @@ footer{position:relative;z-index:1;text-align:center;padding:0 0 24px;font-size:
 
   <footer>
     六星占術 × バイオリズム — Powered by <span id="footerModelLabel">AI</span><br>ver 1.7.0
+    <div class="footer-copy">© 2026 SIKUMI LAB</div>
   </footer>
 </div>
 
@@ -974,7 +983,7 @@ async function runDiagnosis() {
 
   const btn = document.getElementById('diagnoseBtn');
   btn.disabled = true; btn.classList.add('loading');
-  document.getElementById('result').classList.remove('visible');
+  hideResult();
   document.getElementById('errorMsg').classList.remove('show');
   showLoading();
   try {
@@ -1249,7 +1258,21 @@ function setBars(d) {
 }
 function setBar(b, v, p) { setTimeout(() => { document.getElementById(b).style.width=p+'%'; document.getElementById(v).textContent=p+'%'; }, 300); }
 function animateNumber(id, t) { const el=document.getElementById(id); let c=0; const s=Math.max(1,Math.floor(t/40)); const iv=setInterval(()=>{c+=s;if(c>=t){c=t;clearInterval(iv)}el.textContent=c;},30); }
-function showResult() { const r=document.getElementById('result'); r.classList.add('visible'); r.scrollIntoView({behavior:'smooth',block:'start'}); }
+// 結果ブロックを開く。display:none → block に切り替えた直後に opacity を変えても
+// トランジションが走らないため、間に強制再描画（offsetHeight 参照）を挟む2段階にする。
+function showResult() {
+  const r = document.getElementById('result');
+  r.classList.add('mounted');
+  void r.offsetHeight; // 強制リフロー。これを消すとフェードインが効かなくなる
+  r.classList.add('visible');
+  r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+// 結果ブロックを閉じる（診断開始時・エラー時）。visible だけ外すと空枠が残るので mounted も外す。
+function hideResult() {
+  const r = document.getElementById('result');
+  r.classList.remove('visible');
+  r.classList.remove('mounted');
+}
 
 // ========== タブ ==========
 function switchTab(tab) {

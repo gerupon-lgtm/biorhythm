@@ -147,6 +147,7 @@ input::placeholder{color:var(--text3)}
 .gogyo-bar-outer{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
 .gogyo-bar-inner{height:100%;border-radius:3px;transition:width .8s ease}
 .gogyo-bar-count{font-size:13px;color:var(--text2);margin-top:2px}
+.gogyo-note{font-size:12px;color:var(--text2);text-align:center;margin:-4px 0 12px;line-height:1.5}
 .compat-row{display:flex;gap:10px;margin:12px 0}
 .compat-card{flex:1;background:var(--surface);border:1px solid rgba(70,55,40,.10);border-radius:10px;padding:12px;text-align:center}
 .compat-card .cc-label{font-size:13px;color:var(--text);margin-bottom:4px}
@@ -266,6 +267,8 @@ input::placeholder{color:var(--text3)}
 .inapp-inner p{margin:0 0 4px}
 .inapp-close{margin-top:8px;padding:6px 20px;border:1px solid rgba(255,255,255,.4);border-radius:16px;background:transparent;color:#fff;font-size:13px;font-family:inherit;cursor:pointer}
 footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-height:1.8}
+/* 屋号は SIKUMI LAB（確定） */
+.footer-copy{margin-top:6px;font-size:12px;letter-spacing:.06em;opacity:.8}
 </style>
 </head>
 <body>
@@ -415,7 +418,9 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
   </div>
   <footer>
     Biorhythm × 四柱推命 — Powered by <span id="poweredByModel">AI</span><br>
-    ver 3.b.1
+    <!-- ver は APP_VERSION から JS で流し込む（手書きすると更新漏れで実際の版とずれる） -->
+    ver <span id="footerVersion"></span>
+    <div class="footer-copy">© 2026 SIKUMI LAB</div>
   </footer>
 </div>
 
@@ -474,7 +479,13 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.b.1';
+const APP_VERSION='3.b.2';
+
+// フッターの版表示は APP_VERSION を単一の出所にする
+document.addEventListener('DOMContentLoaded',function(){
+  const el=document.getElementById('footerVersion');
+  if(el) el.textContent=APP_VERSION;
+});
 
 // 一人目の生年月日デフォルト: 今日の20年前
 document.addEventListener('DOMContentLoaded',function(){
@@ -900,12 +911,15 @@ function renderMeishiki(m,name){
   h+='</tr><tr>';
   pillars.forEach(p=>h+='<td class="juniun-cell">'+p.juniun+'</td>');
   h+='</tr></table>';
-  h+=renderGogyoBalance(m.gogyoCount);
+  h+=renderGogyoBalance(m.gogyoCount,m.monthZoukan);
   h+='</div>';
   return h;
 }
 
-function renderGogyoBalance(gc){
+// 五行カウントは「八字（天干4＋地支4）＋月令蔵干1」の合計。
+// 表に見えている8文字と数が合わない（合計9になる）ため、内訳を必ず注記する。
+// 注記を消すと「数え方が間違っている」という誤解を招くので削除しないこと。
+function renderGogyoBalance(gc,zoukan){
   if(!gc) return '';
   const max=Math.max(gc.wood,gc.fire,gc.earth,gc.metal,gc.water,1);
   let h='<div class="gogyo-balance">';
@@ -916,6 +930,9 @@ function renderGogyoBalance(gc){
     h+='<div class="gogyo-bar-count">'+gc[e]+'</div></div>';
   });
   h+='</div>';
+  h+='<p class="gogyo-note">八字（天干4・地支4）に月令蔵干'
+    +(zoukan?'（'+zoukan+'・'+ELEM_JP[STEM_ELEMENT_JS[zoukan]]+'）':'')
+    +'を加えて数えています。地支に隠れた他の蔵干は数に含めていません。</p>';
   return h;
 }
 

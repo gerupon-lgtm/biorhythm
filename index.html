@@ -109,7 +109,13 @@ input::placeholder{color:var(--text3)}
 .loading-progress{width:200px;height:3px;background:var(--surface2);border-radius:2px;margin-top:16px;overflow:hidden}
 .loading-progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent3));border-radius:2px;width:0;transition:width .3s}
 /* === 結果エリア === */
-#result{margin-top:24px;opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+/* 結果ブロックは診断前・診断中は display:none で「場所ごと」たたむ。
+   opacity:0 だけだと空の結果枠がレイアウトを占有し、
+   「診断する」ボタンとフッターの間に大きな余白ができてしまう。
+   フェードイン演出は残すため、表示時は .mounted（display:block）→ 再描画 →
+   .visible（opacity/transform）の2段階で当てる（showResult() 参照）。 */
+#result{display:none;margin-top:24px;opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+#result.mounted{display:block}
 #result.visible{opacity:1;transform:translateY(0)}
 .result-title{text-align:center;font-family:'Shippori Mincho',serif;font-size:22px;font-weight:700;margin-bottom:24px}
 .score-section{display:flex;align-items:center;gap:24px;margin-bottom:28px}
@@ -786,7 +792,7 @@ async function runDiagnosis(){
   if(!isSolo){payload.nameB=nameB||'Bさん';payload.birthB=birthB;payload.genderB=genderB;payload.timeB=timeB;payload.placeB=placeB}
 
   const btn=document.getElementById('diagnoseBtn');btn.disabled=true;btn.classList.add('loading');
-  document.getElementById('result').classList.remove('visible');document.getElementById('errorMsg').classList.remove('show');
+  hideResult();document.getElementById('errorMsg').classList.remove('show');
   showLoading();
   try{
     const res=await fetch(API_URL,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -978,7 +984,21 @@ function setBars(d){
   setBar('barEmotional','valEmotional',d.emotional??50);
   setBar('barIntellectual','valIntellectual',d.intellectual??50);
 }
-function showResult(){const r=document.getElementById('result');r.classList.add('visible');r.scrollIntoView({behavior:'smooth',block:'start'})}
+// 結果ブロックを開く。display:none → block に切り替えた直後に opacity を変えても
+// トランジションが走らないため、間に強制再描画（offsetHeight 参照）を挟む2段階にする。
+function showResult(){
+  const r=document.getElementById('result');
+  r.classList.add('mounted');
+  void r.offsetHeight; // 強制リフロー。これを消すとフェードインが効かなくなる
+  r.classList.add('visible');
+  r.scrollIntoView({behavior:'smooth',block:'start'});
+}
+// 結果ブロックを閉じる（診断開始時・エラー時）。visible だけ外すと空枠が残るので mounted も外す。
+function hideResult(){
+  const r=document.getElementById('result');
+  r.classList.remove('visible');
+  r.classList.remove('mounted');
+}
 function setBar(b,v,p){setTimeout(()=>{document.getElementById(b).style.width=p+'%';document.getElementById(v).textContent=p+'%'},300)}
 function animateNumber(id,t){const el=document.getElementById(id);let c=0;const s=Math.max(1,Math.floor(t/40)),iv=setInterval(()=>{c+=s;if(c>=t){c=t;clearInterval(iv)}el.textContent=c},30)}
 

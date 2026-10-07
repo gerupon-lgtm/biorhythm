@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>運命診断 — 四柱推命 × バイオリズム</title>
+<title>運命診断 — バイオリズム × 四柱推命</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Shippori+Mincho:wght@400;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -136,6 +136,16 @@ input::placeholder{color:var(--text3)}
 .bar-bio .bar-fill{background:#6a9c5a}
 .bar-emo .bar-fill{background:#c0604a}
 .bar-int .bar-fill{background:#2f5670}
+/* 日運＝四柱推命由来。バイオリズムの3本と色味を分け、由来が違うことを見せる */
+.bar-shichu .bar-fill{background:#c99a3b}
+.bar-shichu .bar-label{font-weight:600;color:var(--text)}
+/* 命式スコア（生まれ持った素質。総合スコアとは別枠） */
+.meishiki-score{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid rgba(70,55,40,.10);border-radius:10px;padding:12px 14px;margin:12px 0}
+.meishiki-score-num{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;color:#c99a3b;line-height:1;flex-shrink:0}
+.meishiki-score-num small{font-size:13px;font-weight:500;color:var(--text3);margin-left:2px}
+.meishiki-score-body{flex:1;font-size:13px;color:var(--text2);line-height:1.6}
+.meishiki-score-body strong{color:var(--text)}
+.meishiki-score-note{font-size:12px;color:var(--text3);margin-top:3px}
 .section-label{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:600;color:var(--text2);margin:28px 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
 .section-label::after{content:'';flex:1;height:1px;background:rgba(70,55,40,.10)}
 .meishiki-wrap{margin-bottom:16px}
@@ -318,7 +328,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="container">
   <header>
     <div class="logo-jp">運命診断</div>
-    <h1><em>四柱推命</em> × バイオリズム</h1>
+    <h1>バイオリズム × <em>四柱推命</em></h1>
     <p class="subtitle">四柱八字・通変星・十二運・五行バランスで深く読み解きます</p>
     <button class="help-btn" onclick="document.getElementById('termModal').classList.add('active')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>用語を知る</button>
     <div class="gogyo-strip">
@@ -375,6 +385,8 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
         <div class="bar-row bar-bio"><span class="bar-label">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
         <div class="bar-row bar-emo"><span class="bar-label">感情</span><div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div><span class="bar-val" id="valEmotional">0%</span></div>
         <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
+        <!-- 総合スコアの40%は四柱推命の日運。内訳に出さないと「バイオリズムだけの採点」に見える -->
+        <div class="bar-row bar-shichu"><span class="bar-label">日運</span><div class="bar-track"><div class="bar-fill" id="barShichu"></div></div><span class="bar-val" id="valShichu">0%</span></div>
       </div>
     </div>
     <!-- 5運勢レーダーチャート -->
@@ -485,7 +497,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
 <div class="share-toast" id="shareToast">クリップボードにコピーしました</div>
 <script>
 const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
-const APP_VERSION='3.b.2';
+const APP_VERSION='3.c.0';
 
 // フッターの版表示は APP_VERSION を単一の出所にする
 document.addEventListener('DOMContentLoaded',function(){
@@ -822,7 +834,7 @@ function displaySolo(d,name){
   document.getElementById('resultTitle').innerHTML=esc(name)+'のコンディション'+(d.targetDate?'<br>（'+esc(fmtDateFull(d.targetDate))+'）':'');
   document.getElementById('scorePct').textContent='点';
   setScore(d.overallScore);setBars(d);
-  document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,name);
+  document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,name)+renderMeishikiScore(d.meishikiScore);
   document.getElementById('fortuneLabel').style.display='';
   document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:name,fortune:d.fortuneA}],true);
   document.getElementById('luckyArea').innerHTML=renderLucky(d.lucky,d._nameA);
@@ -850,7 +862,9 @@ function displayPair(d,nA,nB){
   document.getElementById('resultTitle').innerHTML=esc(nA)+' × '+esc(nB)+' の運命相性'+(d.targetDate?'<br>（'+esc(fmtDateFull(d.targetDate))+'）':'');
   document.getElementById('scorePct').textContent='%';
   setScore(d.overallScore);setBars(d);
-  document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,nA)+renderMeishiki(d.meishikiB,nB);
+  document.getElementById('meishikiArea').innerHTML=
+    renderMeishiki(d.meishikiA,nA)+renderMeishikiScore(d.meishikiScoreA)+
+    renderMeishiki(d.meishikiB,nB)+renderMeishikiScore(d.meishikiScoreB);
   document.getElementById('fortuneLabel').style.display='';
   document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:nA,fortune:d.fortuneA},{name:nB,fortune:d.fortuneB}],false);
   let luckyHtml='';
@@ -983,6 +997,22 @@ function setBars(d){
   setBar('barPhysical','valPhysical',d.physical??50);
   setBar('barEmotional','valEmotional',d.emotional??50);
   setBar('barIntellectual','valIntellectual',d.intellectual??50);
+  // 四柱推命の日運。総合スコアの40%を占めるので内訳に出す。
+  setBar('barShichu','valShichu',d.shichuScore??50);
+}
+
+// 命式スコア（生まれ持った素質）。総合スコアには混ぜず、命式ブロックの下に別枠で出す。
+function renderMeishikiScore(ms){
+  if(!ms) return '';
+  const targets=(ms.targetElementsJP||[]).join('・');
+  let h='<div class="meishiki-score">';
+  h+='<div class="meishiki-score-num">'+ms.score+'<small>点</small></div>';
+  h+='<div class="meishiki-score-body">';
+  h+='生まれ持った素質は<strong>'+ms.strengthLabel+'</strong>タイプ。'+(ms.strengthSummary||'');
+  if(targets) h+='<br>追い風になる五行: <strong>'+targets+'</strong>';
+  h+='<div class="meishiki-score-note">命式そのものの整い方を採点したもので、日によって変わりません。上の総合スコア（その日の運勢）には含めていません。</div>';
+  h+='</div></div>';
+  return h;
 }
 // 結果ブロックを開く。display:none → block に切り替えた直後に opacity を変えても
 // トランジションが走らないため、間に強制再描画（offsetHeight 参照）を挟む2段階にする。

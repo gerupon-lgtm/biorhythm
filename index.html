@@ -226,6 +226,7 @@ input::placeholder{color:var(--text3)}
 /* 5運勢レーダー */
 #fortuneRadarWrap{text-align:center;margin:16px 0 4px}
 #radarCanvas{width:260px;height:260px;margin:0 auto;display:block}
+.radar-note{font-size:12px;color:var(--text3);line-height:1.6;margin:6px 16px 0}
 /* 共有ボタン */
 .share-bar{text-align:center;margin-top:24px}
 .share-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 24px;border:1px solid rgba(47,86,112,.25);border-radius:24px;background:transparent;color:var(--accent2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .2s}
@@ -393,6 +394,8 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     <!-- 5運勢レーダーチャート -->
     <div id="fortuneRadarWrap" style="display:none">
       <canvas id="radarCanvas" width="300" height="300"></canvas>
+      <!-- 5運勢は総合スコアを分野ごとに振り分けたもの（3.e.0〜）。総合との関係をここで一言説明する -->
+      <div class="radar-note" id="radarNote"></div>
     </div>
     <!-- タブ（スコア直下） -->
     <div class="tab-bar" id="tabBar">
@@ -501,7 +504,7 @@ const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
 // GitHub Pages は Source=「Deploy from a branch」/ ブランチ ver2.2 / ルート直下 で配信する。
 // Source を「GitHub Actions」にすると、このリポジトリにはワークフローが無いため
 // コミットしてもビルドが起動せず、サイトが古いまま更新されなくなる（2026-10に発生）。
-const APP_VERSION='3.d.4';
+const APP_VERSION='3.e.0';
 
 // フッターの版表示は APP_VERSION を単一の出所にする
 document.addEventListener('DOMContentLoaded',function(){
@@ -851,6 +854,7 @@ function displaySolo(d,name){
   // 5運勢レーダー
   if(d.fiveScores){
     document.getElementById('fortuneRadarWrap').style.display='';
+    document.getElementById('radarNote').textContent='5つの運勢は、総合スコア（'+d.overallScore+'点）をその日の星回りとバイオリズムで分野ごとに振り分けたものです。平均すると総合とほぼ同じになります。';
     setTimeout(()=>drawRadar(d.fiveScores),200);
   } else {
     document.getElementById('fortuneRadarWrap').style.display='none';

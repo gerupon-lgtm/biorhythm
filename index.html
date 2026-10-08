@@ -141,8 +141,7 @@ input::placeholder{color:var(--text3)}
 .bar-shichu .bar-label{font-weight:600;color:var(--text)}
 /* 命式スコア（生まれ持った素質。総合スコアとは別枠） */
 .meishiki-score{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid rgba(70,55,40,.10);border-radius:10px;padding:12px 14px;margin:12px 0}
-.meishiki-score-num{font-family:'Outfit',sans-serif;font-size:28px;font-weight:700;color:#c99a3b;line-height:1;flex-shrink:0}
-.meishiki-score-num small{font-size:13px;font-weight:500;color:var(--text3);margin-left:2px}
+.meishiki-score-num{font-size:22px;letter-spacing:2px;color:#c99a3b;line-height:1;flex-shrink:0}
 .meishiki-score-body{flex:1;font-size:13px;color:var(--text2);line-height:1.6}
 .meishiki-score-body strong{color:var(--text)}
 .meishiki-score-note{font-size:12px;color:var(--text3);margin-top:3px}
@@ -500,7 +499,7 @@ const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
 // GitHub Pages は Source=「Deploy from a branch」/ ブランチ ver2.2 / ルート直下 で配信する。
 // Source を「GitHub Actions」にすると、このリポジトリにはワークフローが無いため
 // コミットしてもビルドが起動せず、サイトが古いまま更新されなくなる（2026-10に発生）。
-const APP_VERSION='3.c.0';
+const APP_VERSION='3.d.0';
 
 // フッターの版表示は APP_VERSION を単一の出所にする
 document.addEventListener('DOMContentLoaded',function(){
@@ -1009,8 +1008,11 @@ function renderMeishikiScore(ms){
   if(!ms) return '';
   const targets=(ms.targetElementsJP||[]).join('・');
   let h='<div class="meishiki-score">';
-  h+='<div class="meishiki-score-num">'+ms.score+'<small>点</small></div>';
+  // 点数は出さず星で表す（3.d.0〜）。星だけだと読み上げで意味が取れないので aria-label に言葉を残す。
+  const lv=ms.starLevel||1;
+  h+='<div class="meishiki-score-num" role="img" aria-label="命式の整い方 星3つ中'+lv+'つ（'+(ms.starLabel||'')+'）">'+(ms.stars||'')+'</div>';
   h+='<div class="meishiki-score-body">';
+  if(ms.starLabel) h+='命式は<strong>'+ms.starLabel+'</strong>。';
   h+='生まれ持った素質は<strong>'+ms.strengthLabel+'</strong>タイプ。'+(ms.strengthSummary||'');
   if(targets) h+='<br>追い風になる五行: <strong>'+targets+'</strong>';
   h+='<div class="meishiki-score-note">命式そのものの整い方を採点したもので、日によって変わりません。上の総合スコア（その日の運勢）には含めていません。</div>';

@@ -217,10 +217,12 @@ input::placeholder{color:var(--text3)}
 .term-desc{font-size:14px;color:var(--text2);line-height:1.7;padding-left:16px}
 /* タブUI */
 .tab-bar{display:flex;gap:4px;margin:20px 0 0;background:var(--surface2);border-radius:12px;padding:4px;border:1px solid rgba(47,86,112,.15)}
-.tab-btn{flex:1;padding:12px 0;border:none;border-radius:9px;background:transparent;color:var(--text2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:.5px}
+.tab-btn{flex:1 1 auto;padding:12px 8px;white-space:nowrap;border:none;border-radius:9px;background:transparent;color:var(--text2);font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .25s;letter-spacing:.5px}
 .tab-btn:hover{color:var(--text);background:rgba(47,86,112,.08)}
 .tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent3));color:#fff;box-shadow:0 2px 12px rgba(192,96,74,.3)}
-.tab-pane{margin-top:12px;min-height:300px}
+/* タブ切替時にタブバーを画面上端まで送れるよう、中身が短いタブ（バイオリズム等）でも画面1枚分の高さを確保する */
+.tab-pane{margin-top:12px;min-height:300px;min-height:calc(100vh - 80px);min-height:calc(100svh - 80px)}
+@media(max-width:360px){.tab-btn{padding:12px 4px;font-size:13px;letter-spacing:0}}
 /* 5運勢レーダー */
 #fortuneRadarWrap{text-align:center;margin:16px 0 4px}
 #radarCanvas{width:260px;height:260px;margin:0 auto;display:block}
@@ -499,7 +501,7 @@ const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
 // GitHub Pages は Source=「Deploy from a branch」/ ブランチ ver2.2 / ルート直下 で配信する。
 // Source を「GitHub Actions」にすると、このリポジトリにはワークフローが無いため
 // コミットしてもビルドが起動せず、サイトが古いまま更新されなくなる（2026-10に発生）。
-const APP_VERSION='3.d.2';
+const APP_VERSION='3.d.3';
 
 // フッターの版表示は APP_VERSION を単一の出所にする
 document.addEventListener('DOMContentLoaded',function(){

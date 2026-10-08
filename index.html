@@ -140,7 +140,7 @@ input::placeholder{color:var(--text3)}
 .bar-shichu .bar-fill{background:#c99a3b}
 .bar-shichu .bar-label{font-weight:600;color:var(--text)}
 /* 命式スコア（生まれ持った素質。総合スコアとは別枠） */
-.meishiki-score{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid rgba(70,55,40,.10);border-radius:10px;padding:12px 14px;margin:12px 0}
+.meishiki-score{display:flex;align-items:center;gap:14px;background:var(--surface2);border-radius:10px;padding:12px 14px;margin:12px 0}
 .meishiki-score-num{font-size:22px;letter-spacing:2px;color:#c99a3b;line-height:1;flex-shrink:0}
 .meishiki-score-body{flex:1;font-size:13px;color:var(--text2);line-height:1.6}
 .meishiki-score-body strong{color:var(--text)}
@@ -499,7 +499,7 @@ const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
 // GitHub Pages は Source=「Deploy from a branch」/ ブランチ ver2.2 / ルート直下 で配信する。
 // Source を「GitHub Actions」にすると、このリポジトリにはワークフローが無いため
 // コミットしてもビルドが起動せず、サイトが古いまま更新されなくなる（2026-10に発生）。
-const APP_VERSION='3.d.0';
+const APP_VERSION='3.d.1';
 
 // フッターの版表示は APP_VERSION を単一の出所にする
 document.addEventListener('DOMContentLoaded',function(){

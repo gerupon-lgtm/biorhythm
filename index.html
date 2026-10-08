@@ -145,7 +145,7 @@ input::placeholder{color:var(--text3)}
 .meishiki-score-body{flex:1;font-size:13px;color:var(--text2);line-height:1.6}
 .meishiki-score-body strong{color:var(--text)}
 .meishiki-score-note{font-size:12px;color:var(--text3);margin-top:3px}
-/* 総合の内訳の補足（四柱＝年運・月運・日運の合成。3.f.0〜） */
+/* 総合の内訳の補足（四柱＝年運・月運・日運の合成。4.0.0〜） */
 .shichu-detail{font-size:12px;color:var(--text3);margin:2px 0 0 62px;line-height:1.5}
 /* 大運カード（10年ごとの流れ。点数には混ぜない表示専用） */
 .daiun-card{background:var(--surface2);border-radius:10px;padding:14px;margin:12px 0}
@@ -405,7 +405,7 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
         <div class="bar-row bar-bio"><span class="bar-label">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
         <div class="bar-row bar-emo"><span class="bar-label">感情</span><div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div><span class="bar-val" id="valEmotional">0%</span></div>
         <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
-        <!-- 総合スコアの四柱推命側。1人診断は年運・月運・日運の合成（3.f.0〜。総合の50%）、相性診断は2人の日運の平均 -->
+        <!-- 総合スコアの四柱推命側。1人診断は年運・月運・日運の合成（4.0.0〜。総合の50%）、相性診断は2人の日運の平均 -->
         <div class="bar-row bar-shichu"><span class="bar-label" id="labelShichu">四柱</span><div class="bar-track"><div class="bar-fill" id="barShichu"></div></div><span class="bar-val" id="valShichu">0%</span></div>
         <div class="shichu-detail" id="shichuDetail"></div>
       </div>
@@ -533,7 +533,7 @@ const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
 // GitHub Pages は Source=「Deploy from a branch」/ ブランチ ver2.2 / ルート直下 で配信する。
 // Source を「GitHub Actions」にすると、このリポジトリにはワークフローが無いため
 // コミットしてもビルドが起動せず、サイトが古いまま更新されなくなる（2026-10に発生）。
-const APP_VERSION='3.f.0';
+const APP_VERSION='4.0.0';
 
 // フッターの版表示は APP_VERSION を単一の出所にする
 document.addEventListener('DOMContentLoaded',function(){
@@ -1009,7 +1009,7 @@ function renderFortuneCards(items,solo){
     h+='<div class="fc-row"><span class="fc-label">十二運</span><span class="fc-value">'+f.juniun+'</span></div>';
     h+='<div class="fc-effect">'+f.gogyoEffect+'</div>';
     h+='<div class="fortune-score-bar"><span class="fsb-label">日運</span><div class="fsb-track"><div class="fsb-fill" style="width:'+f.fortuneScore+'%"></div></div><span class="fsb-val">'+f.fortuneScore+'</span></div>';
-    // 年運・月運（3.f.0〜。1人診断のみ）。年は立春、月は節入りで切り替わる
+    // 年運・月運（4.0.0〜。1人診断のみ）。年は立春、月は節入りで切り替わる
     if(it.shichu){
       const sc=it.shichu;
       h+='<div class="fortune-score-bar"><span class="fsb-label">月運</span><div class="fsb-track"><div class="fsb-fill" style="width:'+sc.month.score+'%"></div></div><span class="fsb-val">'+sc.month.score+'</span></div>';
@@ -1048,7 +1048,7 @@ function setBars(d){
   document.getElementById('shichuDetail').textContent=sc?('年運'+sc.year.score+'・月運'+sc.month.score+'・日運'+sc.day.score):'';
 }
 
-// 大運（10年ごとの運気の流れ。3.f.0〜）。点数には混ぜず「ボーナス期か」を見せるだけ。
+// 大運（10年ごとの運気の流れ。4.0.0〜）。点数には混ぜず「ボーナス期か」を見せるだけ。
 // 性別で順行・逆行が決まるので、未選択なら補完せず案内のみ出す。
 function renderDaiun(dy){
   if(!dy) return '';

@@ -174,7 +174,7 @@ input::placeholder{color:var(--text3)}
 .fortune-day-label strong{font-family:'Shippori Mincho',serif;font-size:18px;color:var(--text);margin:0 4px}
 .fortune-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fortune-cards.solo{grid-template-columns:1fr}
-.fortune-card{background:var(--surface);border:1px solid rgba(70,55,40,.10);border-radius:10px;padding:14px}
+.fortune-card{background:var(--surface2);border-radius:10px;padding:14px}
 .fortune-card .fc-name{font-size:14px;color:var(--text2);margin-bottom:8px;font-weight:600}
 .fortune-card .fc-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:13px}
 .fortune-card .fc-label{color:var(--text)}
@@ -182,7 +182,7 @@ input::placeholder{color:var(--text3)}
 .fortune-card .fc-effect{font-size:14px;color:var(--accent2);margin-top:6px;line-height:1.5}
 .fortune-score-bar{display:flex;align-items:center;gap:8px;margin-top:8px}
 .fortune-score-bar .fsb-label{font-size:14px;color:var(--text);white-space:nowrap}
-.fortune-score-bar .fsb-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.fortune-score-bar .fsb-track{flex:1;height:6px;background:rgba(70,55,40,.10);border-radius:3px;overflow:hidden}
 .fortune-score-bar .fsb-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent3));transition:width 1s ease}
 .fortune-score-bar .fsb-val{font-size:14px;font-weight:600;width:30px;text-align:right;font-family:'Outfit',sans-serif}
 .date-picker-row{display:flex;align-items:center;gap:12px;margin:0 0 8px;padding:12px 20px;background:var(--surface);border:1px solid rgba(70,55,40,.10);border-radius:var(--radius);flex-wrap:wrap}
@@ -499,7 +499,7 @@ const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
 // GitHub Pages は Source=「Deploy from a branch」/ ブランチ ver2.2 / ルート直下 で配信する。
 // Source を「GitHub Actions」にすると、このリポジトリにはワークフローが無いため
 // コミットしてもビルドが起動せず、サイトが古いまま更新されなくなる（2026-10に発生）。
-const APP_VERSION='3.d.1';
+const APP_VERSION='3.d.2';
 
 // フッターの版表示は APP_VERSION を単一の出所にする
 document.addEventListener('DOMContentLoaded',function(){

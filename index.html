@@ -145,6 +145,24 @@ input::placeholder{color:var(--text3)}
 .meishiki-score-body{flex:1;font-size:13px;color:var(--text2);line-height:1.6}
 .meishiki-score-body strong{color:var(--text)}
 .meishiki-score-note{font-size:12px;color:var(--text3);margin-top:3px}
+/* 総合の内訳の補足（四柱＝年運・月運・日運の合成。3.f.0〜） */
+.shichu-detail{font-size:12px;color:var(--text3);margin:2px 0 0 62px;line-height:1.5}
+/* 大運カード（10年ごとの流れ。点数には混ぜない表示専用） */
+.daiun-card{background:var(--surface2);border-radius:10px;padding:14px;margin:12px 0}
+.daiun-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:8px}
+.daiun-now{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 10px;font-size:14px;color:var(--text)}
+.daiun-now .pillar{font-family:'Shippori Mincho',serif;font-size:20px;font-weight:700}
+.daiun-badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:12px;background:rgba(70,55,40,.10);color:var(--text2)}
+.daiun-badge.big{background:linear-gradient(135deg,#d9a441,#c0604a);color:#fff}
+.daiun-text{font-size:13px;color:var(--text2);line-height:1.6;margin-top:6px}
+.daiun-next{font-size:13px;color:var(--text);margin-top:6px}
+.daiun-steps{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.daiun-step{font-size:11px;line-height:1.3;text-align:center;padding:4px 6px;border-radius:6px;background:rgba(255,252,246,.7);color:var(--text3);min-width:44px}
+.daiun-step b{display:block;font-size:13px;color:var(--text2);font-weight:600}
+.daiun-step.big{background:linear-gradient(135deg,rgba(217,164,65,.22),rgba(192,96,74,.18));color:var(--text2)}
+.daiun-step.big b{color:#a04a37}
+.daiun-step.now{outline:2px solid #c0604a;outline-offset:-2px}
+.daiun-note{font-size:12px;color:var(--text3);margin-top:8px;line-height:1.5}
 .section-label{font-family:'Shippori Mincho',serif;font-size:16px;font-weight:600;color:var(--text2);margin:28px 0 14px;letter-spacing:2px;display:flex;align-items:center;gap:10px}
 .section-label::after{content:'';flex:1;height:1px;background:rgba(70,55,40,.10)}
 .meishiki-wrap{margin-bottom:16px}
@@ -387,8 +405,9 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
         <div class="bar-row bar-bio"><span class="bar-label">身体</span><div class="bar-track"><div class="bar-fill" id="barPhysical"></div></div><span class="bar-val" id="valPhysical">0%</span></div>
         <div class="bar-row bar-emo"><span class="bar-label">感情</span><div class="bar-track"><div class="bar-fill" id="barEmotional"></div></div><span class="bar-val" id="valEmotional">0%</span></div>
         <div class="bar-row bar-int"><span class="bar-label">知性</span><div class="bar-track"><div class="bar-fill" id="barIntellectual"></div></div><span class="bar-val" id="valIntellectual">0%</span></div>
-        <!-- 総合スコアの40%は四柱推命の日運。内訳に出さないと「バイオリズムだけの採点」に見える -->
-        <div class="bar-row bar-shichu"><span class="bar-label">日運</span><div class="bar-track"><div class="bar-fill" id="barShichu"></div></div><span class="bar-val" id="valShichu">0%</span></div>
+        <!-- 総合スコアの四柱推命側。1人診断は年運・月運・日運の合成（3.f.0〜。総合の50%）、相性診断は2人の日運の平均 -->
+        <div class="bar-row bar-shichu"><span class="bar-label" id="labelShichu">四柱</span><div class="bar-track"><div class="bar-fill" id="barShichu"></div></div><span class="bar-val" id="valShichu">0%</span></div>
+        <div class="shichu-detail" id="shichuDetail"></div>
       </div>
     </div>
     <!-- 5運勢レーダーチャート -->
@@ -493,6 +512,16 @@ footer{text-align:center;margin-top:40px;font-size:13px;color:var(--text3);line-
     </div>
 
     <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--accent2)"></span>年運・月運</div>
+      <div class="term-desc">日運と同じ見方を、その年・その月の干支で行ったものです。年は立春（2月4日ごろ）、月は節入り（毎月4〜8日ごろ）で切り替わります。総合スコアの四柱推命側は、年運3割・月運3割・日運4割で合わせています。</div>
+    </div>
+
+    <div class="term-item">
+      <div class="term-name"><span class="term-dot" style="background:var(--accent2)"></span>大運</div>
+      <div class="term-desc">10年ごとに巡る、人生の大きな運気の流れです。生まれた月の干支から、性別と生まれ年によって順・逆に進みます。あなたにとって追い風になる五行が巡る10年は、とくに力を発揮しやすい時期とされます。</div>
+    </div>
+
+    <div class="term-item">
       <div class="term-name"><span class="term-dot" style="background:var(--accent3)"></span>バイオリズム</div>
       <div class="term-desc">生年月日から計算される3つの波です。身体（23日周期）・感情（28日周期）・知性（33日周期）がそれぞれ独立して上下し、その日の体調・気分・頭の回転に影響するとされています。</div>
     </div>
@@ -504,7 +533,7 @@ const API_URL='https://test-flax-omega-29.vercel.app/api/diagnose';
 // GitHub Pages は Source=「Deploy from a branch」/ ブランチ ver2.2 / ルート直下 で配信する。
 // Source を「GitHub Actions」にすると、このリポジトリにはワークフローが無いため
 // コミットしてもビルドが起動せず、サイトが古いまま更新されなくなる（2026-10に発生）。
-const APP_VERSION='3.e.0';
+const APP_VERSION='3.f.0';
 
 // フッターの版表示は APP_VERSION を単一の出所にする
 document.addEventListener('DOMContentLoaded',function(){
@@ -841,9 +870,9 @@ function displaySolo(d,name){
   document.getElementById('resultTitle').innerHTML=esc(name)+'のコンディション'+(d.targetDate?'<br>（'+esc(fmtDateFull(d.targetDate))+'）':'');
   document.getElementById('scorePct').textContent='点';
   setScore(d.overallScore);setBars(d);
-  document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,name)+renderMeishikiScore(d.meishikiScore);
+  document.getElementById('meishikiArea').innerHTML=renderMeishiki(d.meishikiA,name)+renderMeishikiScore(d.meishikiScore)+renderDaiun(d.daiun);
   document.getElementById('fortuneLabel').style.display='';
-  document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:name,fortune:d.fortuneA}],true);
+  document.getElementById('fortuneArea').innerHTML=renderFortuneDay(d.dayPillar)+renderFortuneCards([{name:name,fortune:d.fortuneA,shichu:d.shichu}],true);
   document.getElementById('luckyArea').innerHTML=renderLucky(d.lucky,d._nameA);
   document.getElementById('compatLabel').style.display='none';
   document.getElementById('compatArea').innerHTML='';
@@ -980,6 +1009,13 @@ function renderFortuneCards(items,solo){
     h+='<div class="fc-row"><span class="fc-label">十二運</span><span class="fc-value">'+f.juniun+'</span></div>';
     h+='<div class="fc-effect">'+f.gogyoEffect+'</div>';
     h+='<div class="fortune-score-bar"><span class="fsb-label">日運</span><div class="fsb-track"><div class="fsb-fill" style="width:'+f.fortuneScore+'%"></div></div><span class="fsb-val">'+f.fortuneScore+'</span></div>';
+    // 年運・月運（3.f.0〜。1人診断のみ）。年は立春、月は節入りで切り替わる
+    if(it.shichu){
+      const sc=it.shichu;
+      h+='<div class="fortune-score-bar"><span class="fsb-label">月運</span><div class="fsb-track"><div class="fsb-fill" style="width:'+sc.month.score+'%"></div></div><span class="fsb-val">'+sc.month.score+'</span></div>';
+      h+='<div class="fortune-score-bar"><span class="fsb-label">年運</span><div class="fsb-track"><div class="fsb-fill" style="width:'+sc.year.score+'%"></div></div><span class="fsb-val">'+sc.year.score+'</span></div>';
+      h+='<div class="fc-effect" style="font-size:12px;color:var(--text3)">この月は'+esc(sc.month.pillar)+'、この年は'+esc(sc.year.pillar)+'（月は節入り、年は立春で切り替わります）</div>';
+    }
     h+='</div>';
   });
   h+='</div>';
@@ -1005,10 +1041,42 @@ function setBars(d){
   setBar('barPhysical','valPhysical',d.physical??50);
   setBar('barEmotional','valEmotional',d.emotional??50);
   setBar('barIntellectual','valIntellectual',d.intellectual??50);
-  // 四柱推命の日運。総合スコアの40%を占めるので内訳に出す。
+  // 四柱推命側の点数。1人診断は年運・月運・日運の合成（総合の50%）、相性診断は2人の日運の平均。
   setBar('barShichu','valShichu',d.shichuScore??50);
+  const sc=d.shichu;
+  document.getElementById('labelShichu').textContent=sc?'四柱':'日運';
+  document.getElementById('shichuDetail').textContent=sc?('年運'+sc.year.score+'・月運'+sc.month.score+'・日運'+sc.day.score):'';
 }
 
+// 大運（10年ごとの運気の流れ。3.f.0〜）。点数には混ぜず「ボーナス期か」を見せるだけ。
+// 性別で順行・逆行が決まるので、未選択なら補完せず案内のみ出す。
+function renderDaiun(dy){
+  if(!dy) return '';
+  let h='<div class="daiun-card"><div class="daiun-title">大運（10年ごとの運気の流れ）</div>';
+  if(!dy.available){
+    h+='<div class="daiun-text">'+(dy.reason==='gender'?'性別を選ぶと、10年ごとの運気の流れ（大運）を表示します。':'大運を計算できませんでした。')+'</div></div>';
+    return h;
+  }
+  const c=dy.current;
+  if(c){
+    h+='<div class="daiun-now"><span>いま</span><span class="pillar">'+esc(c.pillar)+'</span><span>'+c.ageFrom+'〜'+c.ageTo+'歳</span><span class="daiun-badge'+(c.level==='big'?' big':'')+'">'+(c.level==='big'?'★ ':'')+esc(c.label)+'</span></div>';
+    h+='<div class="daiun-text">'+esc(c.text)+(c.yojinJP.length?'（巡る追い風の五行: '+esc(c.yojinJP.join('・'))+'）':'')+'</div>';
+  }else if(dy.beforeStart){
+    h+='<div class="daiun-text">大運は'+dy.startAge+'歳ごろから始まります。</div>';
+  }
+  const nb=dy.nextBonus;
+  if(nb) h+='<div class="daiun-next">次のボーナス期: <strong>'+nb.ageFrom+'〜'+nb.ageTo+'歳</strong>（'+esc(nb.pillar)+'）</div>';
+  else if(c&&c.level!=='big') h+='<div class="daiun-next">この先 '+dy.list[dy.list.length-1].ageTo+'歳までの間に、ボーナス期はありません。</div>';
+  h+='<div class="daiun-steps">';
+  dy.list.forEach(x=>{
+    const cls='daiun-step'+(x.level==='big'?' big':'')+(c&&x.pillar===c.pillar&&x.ageFrom===c.ageFrom?' now':'');
+    h+='<div class="'+cls+'" title="'+esc(x.label)+'"><b>'+esc(x.pillar)+'</b>'+x.ageFrom+'歳〜'+(x.level==='big'?'<br>★':'')+'</div>';
+  });
+  h+='</div>';
+  h+='<div class="daiun-note">★はボーナス期（追い風の五行が天干・地支の両方に巡る10年）。切り替わる年齢は目安で、前後1年ほどずれることがあります。総合スコアには含めていません。</div>';
+  h+='</div>';
+  return h;
+}
 // 命式スコア（生まれ持った素質）。総合スコアには混ぜず、命式ブロックの下に別枠で出す。
 function renderMeishikiScore(ms){
   if(!ms) return '';
